@@ -1,0 +1,59 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--color-navy);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebarLogo {
+  padding: var(--space-6) var(--space-4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.logoText {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-white);
+  letter-spacing: 0.02em;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4) 0;
+  gap: 2px;
+}
+
+.navLink {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.70);
+  text-decoration: none;
+  border-radius: 0;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.navLink:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--color-white);
+}
+
+.content {
+  flex: 1;
+  padding: var(--space-8) var(--space-6);
+  min-width: 0;
+}
