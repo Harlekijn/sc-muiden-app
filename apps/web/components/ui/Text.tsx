@@ -1,4 +1,4 @@
-import { CSSProperties, HTMLAttributes, ReactNode } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 
 type TextVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'label' | 'caption' | 'score';
 
@@ -22,7 +22,7 @@ const variantStyles: Record<TextVariant, CSSProperties> = {
 
 export function Text({ variant = 'body', children, style, className }: TextProps) {
   const merged: CSSProperties = { ...variantStyles[variant], ...style };
-  const shared: HTMLAttributes<HTMLElement> = { style: merged, className };
+  const shared = { style: merged, className };
 
   if (variant === 'h1') return <h1 {...shared}>{children}</h1>;
   if (variant === 'h2') return <h2 {...shared}>{children}</h2>;

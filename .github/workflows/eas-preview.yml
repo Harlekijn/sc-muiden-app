@@ -31,4 +31,4 @@ jobs:
 
       - name: Build preview
         working-directory: apps/mobile
-        run: eas build --profile preview --platform all --non-interactive
+        run: eas build --profile preview --platform android --non-interactive
