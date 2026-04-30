@@ -18,7 +18,7 @@ import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { queryClient } from '../lib/queryClient';
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const [barlowLoaded, barlowError] = useBarlowFonts({

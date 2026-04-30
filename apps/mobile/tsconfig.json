@@ -3,8 +3,18 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@sc-muiden/shared": ["../../packages/shared/src/index.ts"],
-      "@sc-muiden/api-clients": ["../../packages/api-clients/src/index.ts"]
+      "@sc-muiden/shared": [
+        "../../packages/shared/src/index.ts"
+      ],
+      "@sc-muiden/api-clients": [
+        "../../packages/api-clients/src/index.ts"
+      ]
     }
-  }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
 }
