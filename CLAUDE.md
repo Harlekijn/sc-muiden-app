@@ -152,12 +152,14 @@ Create `.env.local` in each app (never commit these):
 ```
 # apps/mobile/.env.local
 EXPO_PUBLIC_SUPABASE_URL=
-EXPO_PUBLIC_SUPABASE_ANON_KEY=
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=   # Supabase publishable key (replaces legacy anon key)
 
 # apps/web/.env.local
 SUPABASE_URL=
-SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=   # CMS only — never expose to mobile
+NEXT_PUBLIC_SUPABASE_URL=
+SUPABASE_PUBLISHABLE_KEY=               # Supabase publishable key (replaces legacy anon key)
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SECRET_KEY=                    # Supabase secret key (replaces legacy service_role key) — CMS only, never expose to mobile
 
 # supabase/.env.local (for edge functions)
 KNVB_API_KEY=

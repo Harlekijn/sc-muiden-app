@@ -1,0 +1,14 @@
+appId: nl.scmuiden.app
+---
+# Verify: correct credentials land the user on the main tabs (not the auth stack).
+- launchApp:
+    clearState: true
+- assertVisible: "Inloggen"
+- runFlow:
+    file: ../_utils/login.yaml
+    env:
+      EMAIL: ${MAESTRO_TEST_LID_EMAIL}
+      PASSWORD: ${MAESTRO_TEST_PASSWORD}
+- assertNotVisible: "Inloggen"
+# Tab bar confirms we reached the authenticated shell
+- assertVisible: "Profiel"

@@ -1,0 +1,14 @@
+# Reusable subflow: fill and submit the login form.
+# Precondition: app is on the login screen ("Inloggen" card visible).
+# Required env vars: EMAIL, PASSWORD
+- tapOn:
+    text: "naam@voorbeeld.nl"
+- clearText:
+- inputText: ${EMAIL}
+- tapOn:
+    text: "••••••••"
+- clearText:
+- inputText: ${PASSWORD}
+- hideKeyboard:
+- tapOn:
+    text: "Inloggen"

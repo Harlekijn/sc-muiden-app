@@ -1,0 +1,29 @@
+appId: nl.scmuiden.app
+---
+# Verify: an email present in the members table is allowed through registration
+# and the success screen is shown.
+# Precondition: MAESTRO_TEST_REGISTER_EMAIL has a members record but no auth user.
+# (seed.mjs creates the member record; teardown.mjs deletes the auth user created here)
+- launchApp:
+    clearState: true
+- assertVisible: "Inloggen"
+- tapOn:
+    text: "Registreren"
+- assertVisible: "Account aanmaken"
+- tapOn:
+    text: "Jan de Vries"
+- inputText: "Register Test"
+- tapOn:
+    text: "naam@voorbeeld.nl"
+- inputText: ${MAESTRO_TEST_REGISTER_EMAIL}
+- tapOn:
+    text: "Minimaal 8 tekens"
+- inputText: ${MAESTRO_TEST_PASSWORD}
+- tapOn:
+    text: "Herhaal wachtwoord"
+- inputText: ${MAESTRO_TEST_PASSWORD}
+- hideKeyboard:
+- tapOn:
+    text: "Account aanmaken"
+- assertVisible: "Controleer je e-mail"
+- assertNotVisible: "Je e-mailadres is niet gevonden in de ledenadministratie"

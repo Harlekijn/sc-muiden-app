@@ -1,0 +1,12 @@
+# Reusable subflow: navigate to Profiel tab and confirm sign-out.
+# Precondition: user is authenticated and tab bar is visible.
+- tapOn:
+    text: "Profiel"
+- scrollUntilVisible:
+    text: "Uitloggen"
+    direction: DOWN
+- tapOn:
+    text: "Uitloggen"
+# Confirm the native alert
+- tapOn:
+    text: "Uitloggen"

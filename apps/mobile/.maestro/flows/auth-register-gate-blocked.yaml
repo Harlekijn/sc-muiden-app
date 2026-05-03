@@ -1,0 +1,27 @@
+appId: nl.scmuiden.app
+---
+# Verify: an email address not present in the members table is blocked at registration
+# with the Dutch error message — no account is created.
+- launchApp:
+    clearState: true
+- assertVisible: "Inloggen"
+- tapOn:
+    text: "Registreren"
+- assertVisible: "Account aanmaken"
+- tapOn:
+    text: "Jan de Vries"
+- inputText: "Test Gebruiker"
+- tapOn:
+    text: "naam@voorbeeld.nl"
+- inputText: "onbekend-lid@example.com"
+- tapOn:
+    text: "Minimaal 8 tekens"
+- inputText: "Wachtwoord123!"
+- tapOn:
+    text: "Herhaal wachtwoord"
+- inputText: "Wachtwoord123!"
+- hideKeyboard:
+- tapOn:
+    text: "Account aanmaken"
+- assertVisible: "Je e-mailadres is niet gevonden in de ledenadministratie"
+- assertNotVisible: "Controleer je e-mail"

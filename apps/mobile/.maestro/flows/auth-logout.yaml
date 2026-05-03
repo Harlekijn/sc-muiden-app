@@ -1,0 +1,15 @@
+appId: nl.scmuiden.app
+---
+# Verify: signing out returns the user to the login screen and clears the session.
+- launchApp:
+    clearState: true
+- assertVisible: "Inloggen"
+- runFlow:
+    file: ../_utils/login.yaml
+    env:
+      EMAIL: ${MAESTRO_TEST_LID_EMAIL}
+      PASSWORD: ${MAESTRO_TEST_PASSWORD}
+- assertNotVisible: "Inloggen"
+- runFlow:
+    file: ../_utils/logout.yaml
+- assertVisible: "Inloggen"

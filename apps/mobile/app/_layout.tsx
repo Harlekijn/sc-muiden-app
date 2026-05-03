@@ -14,9 +14,11 @@ import {
 } from '@expo-google-fonts/barlow-condensed';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as SplashScreen from 'expo-splash-screen';
-import { Stack } from 'expo-router';
-import { useEffect } from 'react';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { useEffect, useRef } from 'react';
 import { queryClient } from '../lib/queryClient';
+import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../stores/authStore';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -38,11 +40,68 @@ export default function RootLayout() {
   const fontsLoaded = barlowLoaded && condensedLoaded;
   const fontError = barlowError ?? condensedError;
 
+  const { session, initialized, setSession, setProfile, setMember, setInitialized, reset } =
+    useAuthStore();
+  const segments = useSegments();
+  const router = useRouter();
+  const hasInitialized = useRef(false);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      setSession(newSession);
+
+      if (newSession?.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', newSession.user.id)
+          .single();
+
+        if (profileData) {
+          setProfile(profileData as Parameters<typeof setProfile>[0]);
+
+          if (profileData.member_id) {
+            const { data: memberData } = await supabase
+              .from('members')
+              .select('*')
+              .eq('id', profileData.member_id)
+              .single();
+
+            if (memberData) {
+              setMember(memberData as Parameters<typeof setMember>[0]);
+            }
+          }
+        }
+      } else {
+        reset();
+      }
+
+      if (!hasInitialized.current) {
+        hasInitialized.current = true;
+        setInitialized(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!initialized) return;
+    const inAuthGroup = segments[0] === '(auth)';
+    if (!session && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    } else if (session && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [session, initialized, segments]);
+
   useEffect(() => {
     if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
+      if (initialized) {
+        SplashScreen.hideAsync();
+      }
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded, fontError, initialized]);
 
   if (!fontsLoaded && !fontError) {
     return null;

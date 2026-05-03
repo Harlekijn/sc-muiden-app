@@ -31,6 +31,14 @@ supabase/.temp
 # Turbo
 .turbo/
 
+# Playwright
+playwright-report/
+test-results/
+apps/web/e2e/.auth/
+
+# Maestro
+apps/mobile/.maestro/.env
+
 # IDE
 .vscode/
 .idea/

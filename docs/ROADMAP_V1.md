@@ -1,6 +1,6 @@
 # SC Muiden App — V1 Roadmap
 
-**Target release:** Q4 2026  
+**Target release:** Q  2026  
 **Scope:** iOS + Android app with web CMS. Dutch language throughout.  
 **Sports:** Voetbal (KNVB) and hockey (KNHB).
 

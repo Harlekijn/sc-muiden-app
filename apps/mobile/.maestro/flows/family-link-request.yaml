@@ -1,0 +1,48 @@
+appId: nl.scmuiden.app
+---
+# Verify the full family link request flow:
+#   1. Submit a gezin/nieuw request → success state shown on screen
+#   2. Navigate back to profiel → pending request appears with "Wacht op goedkeuring"
+- launchApp:
+    clearState: true
+- assertVisible: "Inloggen"
+- runFlow:
+    file: ../_utils/login.yaml
+    env:
+      EMAIL: ${MAESTRO_TEST_LID_EMAIL}
+      PASSWORD: ${MAESTRO_TEST_PASSWORD}
+- assertNotVisible: "Inloggen"
+
+# Navigate to Profiel tab
+- tapOn:
+    text: "Profiel"
+- assertVisible: "Mijn gezin"
+
+# Open the gezin/nieuw stack screen
+- tapOn:
+    text: "Gezinslid toevoegen"
+- assertVisible: "Verzoek indienen"
+
+# Fill in the family member form (birth date is optional — omit it here)
+- tapOn:
+    text: "Voornaam"
+- inputText: "Emma"
+- tapOn:
+    text: "Achternaam"
+- inputText: "Testdochter"
+- hideKeyboard:
+- tapOn:
+    text: "Verzoek indienen"
+
+# Success state confirms the family_link_requests row was inserted
+- assertVisible: "Verzoek ingediend"
+- assertNotVisible: "Verzoek indienen mislukt"
+
+# Return to profiel and verify the pending request is listed
+- tapOn:
+    text: "Terug naar profiel"
+- waitForAnimationToEnd:
+- scrollUntilVisible:
+    text: "Wacht op goedkeuring"
+    direction: DOWN
+- assertVisible: "Wacht op goedkeuring"
