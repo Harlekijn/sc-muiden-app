@@ -2,6 +2,16 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { GeenToegang } from '../_components/GeenToegang';
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn() }),
+}));
+
+jest.mock('../../../lib/supabase-client', () => ({
+  createSupabaseBrowserClient: () => ({
+    auth: { signOut: jest.fn().mockResolvedValue({}) },
+  }),
+}));
+
 describe('GeenToegang', () => {
   it('renders the "Geen toegang" heading', () => {
     render(<GeenToegang />);
@@ -13,8 +23,8 @@ describe('GeenToegang', () => {
     expect(screen.getByText(/geen beheerdersrechten/i)).toBeInTheDocument();
   });
 
-  it('renders a link back to /login', () => {
+  it('renders a sign-out button labeled Uitloggen', () => {
     render(<GeenToegang />);
-    expect(screen.getByRole('link', { name: 'Uitloggen' })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('button', { name: 'Uitloggen' })).toBeInTheDocument();
   });
 });

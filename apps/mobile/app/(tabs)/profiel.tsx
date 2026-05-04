@@ -26,7 +26,13 @@ function AvatarCircle({ displayName, avatarUrl, onPress, uploading }: {
   onPress: () => void;
   uploading: boolean;
 }) {
-  const initials = displayName.charAt(0).toUpperCase();
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
   return (
     <TouchableOpacity onPress={onPress} style={styles.avatarContainer} activeOpacity={0.8}>

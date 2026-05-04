@@ -18,5 +18,10 @@
     "prettier": "^3.3.3",
     "turbo": "^2.3.3",
     "typescript": "^5.6.3"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "expo-image-picker@16.0.6": "patches/expo-image-picker@16.0.6.patch"
+    }
   }
 }
