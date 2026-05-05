@@ -1,8 +1,8 @@
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Link } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { colors, spacing, typography, loginSchema, type LoginInput } from '@sc-muiden/shared';
+import { colors, spacing, loginSchema, type LoginInput } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
 import { TextInput } from '../../components/ui/TextInput';
 import { FormField } from '../../components/ui/FormField';

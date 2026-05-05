@@ -4,12 +4,11 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Clock } from 'lucide-react-native';
-import { colors, spacing, radius, sportLabel, type Sport } from '@sc-muiden/shared';
+import { colors, spacing, sportLabel, type Sport } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -20,9 +19,9 @@ import { useFamilyLinkRequests } from '../../hooks/useFamilyLinkRequests';
 import { useAvatarUpload } from '../../hooks/useAvatarUpload';
 import { supabase } from '../../lib/supabase';
 
-function AvatarCircle({ displayName, avatarUrl, onPress, uploading }: {
+function AvatarCircle({ displayName, _avatarUrl, onPress, uploading }: {
   displayName: string;
-  avatarUrl: string | null;
+  _avatarUrl: string | null;
   onPress: () => void;
   uploading: boolean;
 }) {
