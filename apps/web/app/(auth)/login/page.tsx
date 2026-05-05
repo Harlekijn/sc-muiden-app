@@ -8,7 +8,6 @@ import { createSupabaseBrowserClient } from '../../../lib/supabase-client';
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createSupabaseBrowserClient();
 
   const {
     register,
@@ -20,6 +19,7 @@ export default function LoginPage() {
   });
 
   async function onSubmit(data: LoginInput) {
+    const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.auth.signInWithPassword({
       email: data.email.toLowerCase().trim(),
       password: data.password,
