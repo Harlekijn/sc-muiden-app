@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Clock } from 'lucide-react-native';
@@ -82,7 +83,7 @@ export default function ProfielScreen() {
       >
         <AvatarCircle
           displayName={profile.display_name}
-          avatarUrl={profile.avatar_url}
+          _avatarUrl={profile.avatar_url}
           onPress={pickAndUpload}
           uploading={uploading}
         />
