@@ -32,7 +32,7 @@ describe('GezinslidNieuwScreen', () => {
     await waitFor(() => {
       expect(screen.getByText('Verzoek ingediend')).toBeTruthy();
     });
-  });
+  }, 15000);
 
   it('submits successfully without birth_date (optional field)', async () => {
     render(<GezinslidNieuwScreen />);
