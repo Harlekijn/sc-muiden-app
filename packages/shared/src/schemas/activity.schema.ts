@@ -37,6 +37,11 @@ export const barAssignmentSchema = z.object({
   created_at: z.string().datetime(),
 });
 
+export const confirmBarAssignmentSchema = z.object({
+  id: z.string().uuid('Ongeldige toewijzing-ID'),
+});
+
 export type ActivityInput = z.infer<typeof activitySchema>;
 export type CreateActivityInput = z.infer<typeof createActivitySchema>;
 export type BarAssignmentInput = z.infer<typeof barAssignmentSchema>;
+export type ConfirmBarAssignmentInput = z.infer<typeof confirmBarAssignmentSchema>;
