@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { Tabs } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { Calendar, Home, Store, User } from 'lucide-react-native';
 import { colors } from '@sc-muiden/shared';
 import type { ComponentType } from 'react';
@@ -31,6 +32,8 @@ function makeTabIcon(Icon: ComponentType<LucideIconProps>) {
 
 export default function TabLayout() {
   return (
+    <>
+    <StatusBar style="light" backgroundColor={colors.navy} />
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -80,5 +83,6 @@ export default function TabLayout() {
       <Tabs.Screen name="teams" options={{ href: null }} />
       <Tabs.Screen name="nieuws" options={{ href: null }} />
     </Tabs>
+    </>
   );
 }

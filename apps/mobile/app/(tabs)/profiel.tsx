@@ -4,12 +4,13 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Clock } from 'lucide-react-native';
-import { colors, spacing, sportLabel, type Sport } from '@sc-muiden/shared';
+import { colors, radius, spacing, typography, sportLabel, type Sport } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -20,9 +21,8 @@ import { useFamilyLinkRequests } from '../../hooks/useFamilyLinkRequests';
 import { useAvatarUpload } from '../../hooks/useAvatarUpload';
 import { supabase } from '../../lib/supabase';
 
-function AvatarCircle({ displayName, _avatarUrl, onPress, uploading }: {
+function AvatarCircle({ displayName, onPress, uploading }: {
   displayName: string;
-  _avatarUrl: string | null;
   onPress: () => void;
   uploading: boolean;
 }) {
@@ -40,10 +40,11 @@ function AvatarCircle({ displayName, _avatarUrl, onPress, uploading }: {
         {uploading ? (
           <ActivityIndicator color={colors.white} />
         ) : (
-          <Text variant="h2" style={styles.avatarInitial}>{initials}</Text>
+          <Text style={styles.avatarInitial}>{initials}</Text>
         )}
       </View>
-      <Text variant="caption" style={styles.avatarHint}>Tik om te wijzigen</Text>
+      <Text variant="body" style={styles.avatarName}>{displayName}</Text>
+      <Text variant="caption" style={styles.avatarHint}>Tik om foto te wijzigen</Text>
     </TouchableOpacity>
   );
 }
@@ -83,7 +84,6 @@ export default function ProfielScreen() {
       >
         <AvatarCircle
           displayName={profile.display_name}
-          _avatarUrl={profile.avatar_url}
           onPress={pickAndUpload}
           uploading={uploading}
         />
@@ -107,7 +107,7 @@ export default function ProfielScreen() {
         </Card>
 
         {/* Sport */}
-        {member && member.sport.length > 0 ? (
+        {member && (member.sport as Sport[]).length > 0 ? (
           <Card style={styles.section}>
             <Text variant="label" style={styles.sectionLabel}>Mijn sport</Text>
             <View style={styles.sportBadges}>
@@ -170,13 +170,9 @@ export default function ProfielScreen() {
           </Button>
         </Card>
 
-        <Button
-          variant="ghost"
-          onPress={handleSignOut}
-          style={styles.signOutButton}
-        >
-          Uitloggen
-        </Button>
+        <Pressable style={styles.signOutButton} onPress={handleSignOut}>
+          <Text style={styles.signOutLabel}>Uitloggen</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -190,7 +186,8 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.navy,
     paddingHorizontal: spacing[4],
-    paddingVertical: spacing[4],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[4],
   },
   headerTitle: {
     color: colors.white,
@@ -207,24 +204,37 @@ const styles = StyleSheet.create({
   avatarContainer: {
     alignItems: 'center',
     paddingVertical: spacing[4],
+    gap: spacing[1],
   },
   avatar: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: colors.blue,
+    backgroundColor: colors.navy,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing[2],
+    shadowColor: colors.navy,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.20,
+    shadowRadius: 8,
+    elevation: 4,
   },
   avatarInitial: {
+    fontFamily: 'BarlowCondensed_800ExtraBold',
+    fontSize: typography.scale['2xl'],
     color: colors.white,
-    fontFamily: 'BarlowCondensed_700Bold',
+    lineHeight: typography.scale['2xl'],
+  },
+  avatarName: {
+    color: colors.text,
+    fontFamily: 'Barlow_600SemiBold',
   },
   avatarHint: {
     color: colors.text2,
   },
   section: {
+    padding: spacing[4],
     gap: spacing[3],
   },
   sectionHeader: {
@@ -234,11 +244,11 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: colors.text,
-    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   editLink: {
     color: colors.blue,
+    fontFamily: 'Barlow_500Medium',
   },
   field: {
     gap: spacing[1],
@@ -258,7 +268,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing[2],
+    paddingTop: spacing[3],
     borderTopWidth: 1,
     borderTopColor: colors.navy06,
   },
@@ -276,7 +286,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[2],
-    paddingVertical: spacing[2],
+    paddingTop: spacing[3],
     borderTopWidth: 1,
     borderTopColor: colors.navy06,
   },
@@ -293,12 +303,24 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   addButton: {
-    marginTop: spacing[2],
+    marginTop: spacing[1],
   },
   loader: {
     marginVertical: spacing[3],
   },
   signOutButton: {
+    borderRadius: radius.md,
+    borderWidth: 1.5,
     borderColor: colors.error,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  signOutLabel: {
+    fontFamily: 'Barlow_600SemiBold',
+    fontSize: typography.scale.base,
+    color: colors.error,
   },
 });
