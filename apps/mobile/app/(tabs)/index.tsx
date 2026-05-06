@@ -3,19 +3,23 @@ import {
   ScrollView,
   StyleSheet,
   SafeAreaView,
-  Image,
   Pressable,
   RefreshControl,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { colors, spacing, formatDutchDate } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
+import { Logo } from '../../components/ui/Logo';
 import { ActivityCard } from '../../components/agenda/ActivityCard';
 import { useUpcomingActivities } from '../../hooks/useUpcomingActivities';
 import { useFamilyMembers } from '../../hooks/useFamilyMembers';
 import { useAuthStore } from '../../stores/authStore';
 import { useAgendaStore } from '../../stores/agendaStore';
+
+const ANDROID_TOP = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : 0;
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -77,11 +81,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
-        <Image
-          source={require('../../assets/logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <Logo height={44} />
         <Pressable style={styles.bellBtn} accessibilityRole="button" accessibilityLabel="Meldingen">
           <Bell size={18} color={colors.white} strokeWidth={1.5} />
         </Pressable>
@@ -185,15 +185,11 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.navy,
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[3],
-    paddingBottom: spacing[1],
+    paddingTop: ANDROID_TOP + spacing[3],
+    paddingBottom: spacing[2],
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  logo: {
-    height: 34,
-    width: 110,
   },
   bellBtn: {
     width: 36,

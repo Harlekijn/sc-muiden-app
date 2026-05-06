@@ -4,7 +4,11 @@ import {
   StyleSheet,
   SafeAreaView,
   RefreshControl,
+  Platform,
+  StatusBar,
 } from 'react-native';
+
+const ANDROID_TOP = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : 0;
 import { useRouter } from 'expo-router';
 import { colors, spacing } from '@sc-muiden/shared';
 import type { ActivityWithDetails } from '@sc-muiden/shared';
@@ -140,7 +144,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.navy,
     paddingHorizontal: spacing[4],
-    paddingTop: spacing[3],
+    paddingTop: ANDROID_TOP + spacing[3],
     paddingBottom: spacing[2],
   },
   headerTitle: {

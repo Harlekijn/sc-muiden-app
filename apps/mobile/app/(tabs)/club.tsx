@@ -1,4 +1,6 @@
-import { View, StyleSheet, SafeAreaView } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Platform, StatusBar } from 'react-native';
+
+const ANDROID_TOP = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : 0;
 import { colors, spacing } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
 
@@ -23,7 +25,8 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.navy,
     paddingHorizontal: spacing[4],
-    paddingVertical: spacing[4],
+    paddingTop: ANDROID_TOP + spacing[4],
+    paddingBottom: spacing[4],
   },
   headerTitle: {
     color: colors.white,
