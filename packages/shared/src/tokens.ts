@@ -16,6 +16,8 @@ export const colors = {
   navy40: 'rgba(1, 29, 80, 0.40)',
   navy12: 'rgba(1, 29, 80, 0.12)',
   navy06: 'rgba(1, 29, 80, 0.06)',
+  white85: 'rgba(255, 255, 255, 0.85)',
+  white75: 'rgba(255, 255, 255, 0.75)',
 } as const;
 
 export const spacing = {

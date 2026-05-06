@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing[4],
     marginTop: spacing[4],
     padding: spacing[4],
-    shadowColor: '#011d50',
+    shadowColor: colors.navy,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.10,
     shadowRadius: 8,

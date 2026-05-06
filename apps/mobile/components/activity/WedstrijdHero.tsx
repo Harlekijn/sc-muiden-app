@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     lineHeight: 52,
   },
   datetime: {
-    color: 'rgba(255,255,255,0.85)',
+    color: colors.white85,
     fontSize: 15,
   },
 });

@@ -45,6 +45,6 @@ const styles = StyleSheet.create({
     color: colors.navy,
   },
   inactiveText: {
-    color: 'rgba(255,255,255,0.75)',
+    color: colors.white75,
   },
 });

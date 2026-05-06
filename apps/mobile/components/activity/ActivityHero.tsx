@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Barlow Condensed',
   },
   datetime: {
-    color: 'rgba(255,255,255,0.85)',
+    color: colors.white85,
     fontSize: 15,
   },
 });
