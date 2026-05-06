@@ -43,11 +43,36 @@ The `user_family_members` row already exists after seeding — Test Lid's profil
 
 ---
 
+### Teams (added in Phase 2)
+
+| Name | Sport | Age category | Season | Notes |
+|---|---|---|---|---|
+| E2E Voetbalteam JO11-1 | voetbal | JO11 | 2025/2026 | `clubbase_id = e2e-team-001`; Test Kindlid is speler via `team_members` |
+
+### Activities (added in Phase 2)
+
+All activities are seeded relative to the seed run date (`TODAY`). Adjust manually if the fixed dates fall outside the current month.
+
+| Title | Type | Sport | Team | Starts at | Notes |
+|---|---|---|---|---|---|
+| Training JO11-1 | training | voetbal | E2E Voetbalteam JO11-1 | TODAY 09:00 | Location: "Sportpark De Volharding" |
+| Wedstrijd JO11-1 vs FC Diemen | wedstrijd | voetbal | E2E Voetbalteam JO11-1 | TODAY+2 14:00 | Linked `matches` record; status: gepland |
+| Bardienst zaterdag | bardienst | — | — (clubbreed) | TODAY+7 12:00 | Bar_assignment for Test Kindlid (not confirmed) |
+| Ledenvergadering SC Muiden | clubactiviteit | — | — (clubbreed) | TODAY+3 20:00 | No team; visible to all members |
+
+### Bar assignments (added in Phase 2)
+
+| Activity | Family member | Confirmed |
+|---|---|---|
+| Bardienst zaterdag | Test Kindlid | No (confirmed_at = null) |
+
+---
+
 ## What the seed does NOT create
 
 - Any pending `family_link_requests` — the scenarios that test the request flow start from a clean slate.
 - Any extra auth users beyond the two above — the register scenario requires a member record with an email that does not yet have an auth user. The beheerder member email can be used for this if you run teardown first (removes auth users but not members), though typically you add a fresh member row in Supabase Studio for registration testing.
-- Any teams, activities, announcements, or other data — those tables are empty after seeding.
+- Any announcements, push tokens, or sync logs — those tables are empty after seeding.
 
 ---
 
