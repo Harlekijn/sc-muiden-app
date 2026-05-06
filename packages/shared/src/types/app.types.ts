@@ -98,6 +98,7 @@ export interface Activity {
   type: ActivityType;
   sport: Sport | null;
   team_id: string | null;
+  recurring_rule_id: string | null;
   title: string;
   starts_at: string;
   ends_at: string | null;
@@ -173,4 +174,29 @@ export interface SyncLog {
   records_updated: number | null;
   error: string | null;
   created_at: string;
+}
+
+export interface RecurringRule {
+  id: string;
+  team_id: string;
+  day_of_week: number; // 1=maandag, 7=zondag
+  start_time: string;  // "HH:MM:SS"
+  end_time: string | null;
+  location: string | null;
+  notes: string | null;
+  valid_from: string;
+  valid_until: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface BarAssignmentWithMember extends BarAssignment {
+  member: Pick<Member, 'id' | 'first_name' | 'last_name'>;
+}
+
+export interface ActivityWithDetails extends Activity {
+  team: Pick<Team, 'id' | 'name' | 'sport'> | null;
+  match: Pick<Match, 'id' | 'home_team' | 'away_team' | 'score_home' | 'score_away' | 'status'> | null;
+  bar_assignments: BarAssignmentWithMember[];
 }

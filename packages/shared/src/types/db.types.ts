@@ -42,6 +42,7 @@ export type Database = {
           id: string
           location: string | null
           notes: string | null
+          recurring_rule_id: string | null
           sport: string | null
           starts_at: string
           team_id: string | null
@@ -56,6 +57,7 @@ export type Database = {
           id?: string
           location?: string | null
           notes?: string | null
+          recurring_rule_id?: string | null
           sport?: string | null
           starts_at: string
           team_id?: string | null
@@ -70,6 +72,7 @@ export type Database = {
           id?: string
           location?: string | null
           notes?: string | null
+          recurring_rule_id?: string | null
           sport?: string | null
           starts_at?: string
           team_id?: string | null
@@ -78,6 +81,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "activities_recurring_rule_id_fkey"
+            columns: ["recurring_rule_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_rules"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "activities_team_id_fkey"
             columns: ["team_id"]
@@ -139,22 +149,22 @@ export type Database = {
           activity_id: string
           confirmed_at: string | null
           created_at: string
-          family_member_id: string
           id: string
+          member_id: string
         }
         Insert: {
           activity_id: string
           confirmed_at?: string | null
           created_at?: string
-          family_member_id: string
           id?: string
+          member_id: string
         }
         Update: {
           activity_id?: string
           confirmed_at?: string | null
           created_at?: string
-          family_member_id?: string
           id?: string
+          member_id?: string
         }
         Relationships: [
           {
@@ -165,49 +175,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "bar_assignments_family_member_id_fkey"
-            columns: ["family_member_id"]
+            foreignKeyName: "bar_assignments_member_id_fkey"
+            columns: ["member_id"]
             isOneToOne: false
-            referencedRelation: "family_members"
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
         ]
       }
-      family_members: {
+      family_link_requests: {
         Row: {
-          account_id: string
+          admin_notes: string | null
           birth_date: string | null
           created_at: string
-          deleted_at: string | null
           first_name: string
           id: string
           last_name: string
-          sport: string[]
+          member_id: string | null
+          profile_id: string
+          reviewed_by: string | null
+          status: string
+          updated_at: string
         }
         Insert: {
-          account_id: string
+          admin_notes?: string | null
           birth_date?: string | null
           created_at?: string
-          deleted_at?: string | null
           first_name: string
           id?: string
           last_name: string
-          sport?: string[]
+          member_id?: string | null
+          profile_id: string
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
         }
         Update: {
-          account_id?: string
+          admin_notes?: string | null
           birth_date?: string | null
           created_at?: string
-          deleted_at?: string | null
           first_name?: string
           id?: string
           last_name?: string
-          sport?: string[]
+          member_id?: string | null
+          profile_id?: string
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "family_members_account_id_fkey"
-            columns: ["account_id"]
+            foreignKeyName: "family_link_requests_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_link_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_link_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -270,6 +303,51 @@ export type Database = {
           },
         ]
       }
+      members: {
+        Row: {
+          birth_date: string | null
+          clubbase_id: string | null
+          created_at: string
+          deleted_at: string | null
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          role: string
+          sport: string[]
+          updated_at: string
+        }
+        Insert: {
+          birth_date?: string | null
+          clubbase_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          role?: string
+          sport?: string[]
+          updated_at?: string
+        }
+        Update: {
+          birth_date?: string | null
+          clubbase_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          role?: string
+          sport?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -319,6 +397,7 @@ export type Database = {
           display_name: string
           email: string
           id: string
+          member_id: string | null
           phone: string | null
           role: string
           sport: string[]
@@ -331,6 +410,7 @@ export type Database = {
           display_name: string
           email: string
           id: string
+          member_id?: string | null
           phone?: string | null
           role?: string
           sport?: string[]
@@ -343,12 +423,21 @@ export type Database = {
           display_name?: string
           email?: string
           id?: string
+          member_id?: string | null
           phone?: string | null
           role?: string
           sport?: string[]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       push_tokens: {
         Row: {
@@ -381,6 +470,59 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_rules: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          deleted_at: string | null
+          end_time: string | null
+          id: string
+          location: string | null
+          notes: string | null
+          start_time: string
+          team_id: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          deleted_at?: string | null
+          end_time?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          start_time: string
+          team_id: string
+          updated_at?: string
+          valid_from: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          deleted_at?: string | null
+          end_time?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          start_time?: string
+          team_id?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_rules_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
@@ -419,36 +561,36 @@ export type Database = {
         Row: {
           created_at: string
           deleted_at: string | null
-          family_member_id: string
           id: string
           jersey_number: number | null
+          member_id: string
           role: string
           team_id: string
         }
         Insert: {
           created_at?: string
           deleted_at?: string | null
-          family_member_id: string
           id?: string
           jersey_number?: number | null
+          member_id: string
           role?: string
           team_id: string
         }
         Update: {
           created_at?: string
           deleted_at?: string | null
-          family_member_id?: string
           id?: string
           jersey_number?: number | null
+          member_id?: string
           role?: string
           team_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "team_members_family_member_id_fkey"
-            columns: ["family_member_id"]
+            foreignKeyName: "team_members_member_id_fkey"
+            columns: ["member_id"]
             isOneToOne: false
-            referencedRelation: "family_members"
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
           {
@@ -496,12 +638,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_family_members: {
+        Row: {
+          id: string
+          linked_at: string
+          member_id: string
+          profile_id: string
+        }
+        Insert: {
+          id?: string
+          linked_at?: string
+          member_id: string
+          profile_id: string
+        }
+        Update: {
+          id?: string
+          linked_at?: string
+          member_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_family_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_family_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
