@@ -518,3 +518,41 @@ Uitbreiden met activiteitenfixtures: 1 training, 1 wedstrijd, 1 bardienst (met b
 - **Terugkerende trainingen in Phase 2:** De `recurring_rules` tabel wordt aangemaakt, maar de CMS-UI voor het aanmaken van terugkerende trainingen valt in Phase 5. Trainingen in Phase 2 worden handmatig als losse `activities` ingevoerd via de seed/Supabase Studio.
 - **Wedstrijddetail-scherm:** Het `/wedstrijd/[id]`-scherm gebruikt dezelfde route als in de bestaande placeholder. Beslissing: activiteiten van type `wedstrijd` navigeren naar `/activiteit/[id]` (met wedstrijdspecifieke hero), niet naar een apart `/wedstrijd/[id]`-scherm. Dit vereenvoudigt de routing.
 - **`family_members` vs `members`:** De `team_members`-tabel gebruikt `family_member_id` (verwijzend naar de `family_members`-tabel), maar `app.types.ts` heeft `TeamMember.member_id`. Dit is een inconsistentie die gerepareerd moet worden bij stap 3.
+
+---
+
+## SRE Notes
+
+**Datum:** 06-05-2026
+
+### Logging
+- Geen edge functions geïntroduceerd in Phase 2 — geen logging-aanpassingen nodig.
+- Geen console.log/console.error gevonden in implementatiebestanden — geslaagd.
+
+### Monitoring
+- Index `recurring_rules_team_id_idx` op FK-kolom `team_id` aanwezig ✅
+- Index `activities_recurring_rule_id_idx` en `activities_type_idx` toegevoegd in migratie ✅
+- Partial index `recurring_rules_active_idx` toegevoegd via `20260506120000_add_activiteiten_kalender_indexes.sql` voor RLS-filter op `deleted_at IS NULL`.
+- `useAgendaActivities`: staleTime 5 min, gcTime 24h ✅
+- `useActivityDetail`: staleTime 5 min ✅
+- Opmerking: `bar_assignments(member_id)` mist een index — pre-existing gap uit migration 4/8, niet geïntroduceerd in Phase 2. Aanbeveling: separaat patchen vóór productie.
+
+### Foutafhandeling
+- `activiteit/[id].tsx`: Dutch `isError`-staat ✅, CTA "Ga terug" ✅
+- `BardienstSectie`: "Kon niet bevestigen. Controleer je verbinding." ✅, knop uitgeschakeld tijdens in-flight ✅
+- `agenda.tsx`: `isError`-staat toegevoegd met bericht "Geen verbinding — controleer je internetverbinding en probeer opnieuw." (was ontbrekend).
+- Offline NetInfo-banner (UC-06 acceptatiecriterium) nog niet geïmplementeerd — openstaand punt.
+
+### Beveiliging
+- `recurring_rules` RLS: `authenticated_select_recurring_rules` vereist `auth.role() = 'authenticated'` ✅, geen PII in tabel ✅
+- `staff_manage_recurring_rules` filtert via `auth.uid()` ✅
+- Geen `USING (true)` op tabellen met persoonsgegevens ✅
+- `useConfirmBarAssignment.ts`: Zod-validatie (`confirmBarAssignmentSchema`) toegevoegd vóór de DB-write (was ontbrekend).
+- Geen secrets in `EXPO_PUBLIC_`-variabelen ✅
+
+### Bundle
+- Geen nieuwe packages toegevoegd in Phase 2 — alle dependencies waren pre-existing.
+
+### Openstaande punten
+- **Offline NetInfo-banner**: UC-06 vereist een "Geen verbinding"-banner bovenaan het scherm via NetInfo. Nog niet geïmplementeerd — plannen voor Phase 3 of apart ticket.
+- **`bar_assignments(member_id)` index ontbreekt**: Pre-existing gap — index toevoegen vóór productie om RLS-scan te optimaliseren.

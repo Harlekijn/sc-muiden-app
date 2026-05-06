@@ -1,11 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { confirmBarAssignmentSchema } from '@sc-muiden/shared';
 import { supabase } from '../lib/supabase';
 
 async function confirmBarAssignment(id: string): Promise<void> {
+  const { id: validId } = confirmBarAssignmentSchema.parse({ id });
   const { error } = await supabase
     .from('bar_assignments')
     .update({ confirmed_at: new Date().toISOString() })
-    .eq('id', id);
+    .eq('id', validId);
 
   if (error) throw error;
 }

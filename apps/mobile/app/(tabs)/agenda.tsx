@@ -35,7 +35,7 @@ export default function AgendaScreen() {
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth() + 1;
 
-  const { data: activities = [], isLoading, refetch } = useAgendaActivities(year, month);
+  const { data: activities = [], isLoading, isError, refetch } = useAgendaActivities(year, month);
   const { data: familyMembers = [] } = useFamilyMembers();
 
   const dayActivities = activitiesForDay(activities, selectedDate);
@@ -97,6 +97,10 @@ export default function AgendaScreen() {
         <View style={styles.daySection}>
           {isLoading ? (
             <SkeletonCards />
+          ) : isError ? (
+            <Text variant="body" style={styles.emptyText}>
+              Geen verbinding — controleer je internetverbinding en probeer opnieuw.
+            </Text>
           ) : dayActivities.length === 0 ? (
             <Text variant="body" style={styles.emptyText}>
               Geen activiteiten op deze dag.
