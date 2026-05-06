@@ -1,0 +1,35 @@
+appId: nl.scmuiden.app
+---
+# Verify that an approved family member appears on the profiel screen without a
+# clock / "Wacht op goedkeuring" indicator.
+#
+# Precondition: the seed has created an approved user_family_members link between
+# the lid account and the child member ("Test Kindlid").
+#
+# This flow runs alphabetically before family-link-request.yaml, so no pending
+# requests exist at this point and assertNotVisible: "Wacht op goedkeuring" is safe.
+- launchApp:
+    clearState: true
+- assertVisible: "Inloggen"
+- runFlow:
+    file: ../_utils/login.yaml
+    env:
+      EMAIL: ${MAESTRO_TEST_LID_EMAIL}
+      PASSWORD: ${MAESTRO_TEST_PASSWORD}
+- assertNotVisible: "Inloggen"
+
+# Navigate to Profiel tab
+- tapOn:
+    text: "Profiel"
+- assertVisible: "Mijn gezin"
+
+# Scroll down to the family section to ensure it is loaded
+- scrollUntilVisible:
+    text: "Test Kindlid"
+    direction: DOWN
+
+# Approved member must be visible
+- assertVisible: "Test Kindlid"
+
+# No pending indicator should be visible — the member is approved, not pending
+- assertNotVisible: "Wacht op goedkeuring"

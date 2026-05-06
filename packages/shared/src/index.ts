@@ -1,6 +1,7 @@
 export * from './tokens';
 export * from './types/app.types';
 export * from './types/federation.types';
+export * from './schemas/auth.schema';
 export * from './schemas/activity.schema';
 export * from './schemas/member.schema';
 export * from './schemas/announcement.schema';

@@ -15,6 +15,8 @@ export type MatchStatus = 'gepland' | 'live' | 'gespeeld' | 'afgelast';
 
 export type TeamMemberRole = 'speler' | 'trainer' | 'coach' | 'teammanager';
 
+export type FamilyLinkStatus = 'pending' | 'approved' | 'rejected';
+
 export type Platform = 'ios' | 'android';
 
 export type FederationSource = 'knvb' | 'knhb';
@@ -27,20 +29,46 @@ export interface Profile {
   avatar_url: string | null;
   role: UserRole;
   sport: Sport[];
+  member_id: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
 }
 
-export interface FamilyMember {
+export interface Member {
   id: string;
-  account_id: string;
   first_name: string;
   last_name: string;
   birth_date: string | null;
+  email: string | null;
+  phone: string | null;
   sport: Sport[];
+  role: UserRole;
+  clubbase_id: string | null;
   created_at: string;
+  updated_at: string;
   deleted_at: string | null;
+}
+
+export interface UserFamilyMember {
+  id: string;
+  profile_id: string;
+  member_id: string;
+  linked_at: string;
+}
+
+export interface FamilyLinkRequest {
+  id: string;
+  profile_id: string;
+  first_name: string;
+  last_name: string;
+  birth_date: string | null;
+  member_id: string | null;
+  status: FamilyLinkStatus;
+  admin_notes: string | null;
+  reviewed_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Team {
@@ -58,7 +86,7 @@ export interface Team {
 export interface TeamMember {
   id: string;
   team_id: string;
-  family_member_id: string;
+  member_id: string;
   role: TeamMemberRole;
   jersey_number: number | null;
   created_at: string;
@@ -99,7 +127,7 @@ export interface Match {
 export interface BarAssignment {
   id: string;
   activity_id: string;
-  family_member_id: string;
+  member_id: string;
   confirmed_at: string | null;
   created_at: string;
 }

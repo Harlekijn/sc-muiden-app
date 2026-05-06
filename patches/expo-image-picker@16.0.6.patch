@@ -1,0 +1,12 @@
+diff --git a/expo-module.config.json b/expo-module.config.json
+index 5ee7a94f4a441a07f9b96872e01a7e90f512a6d0..c6419a40aff870191eb4b1473c9c191b50817142 100644
+--- a/expo-module.config.json
++++ b/expo-module.config.json
+@@ -4,6 +4,6 @@
+     "modulesClassNames": ["ImagePickerModule"]
+   },
+   "android": {
+-    "modulesClassNames": ["expo.modules.imagepicker.ImagePickerModule"]
++    "modules": ["expo.modules.imagepicker.ImagePickerModule"]
+   }
+ }

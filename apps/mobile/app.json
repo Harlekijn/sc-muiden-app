@@ -34,6 +34,7 @@
     "plugins": [
       "expo-router",
       "expo-font",
+      "expo-image-picker",
       "expo-secure-store",
       [
         "expo-notifications",

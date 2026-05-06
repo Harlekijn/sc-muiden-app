@@ -1,0 +1,281 @@
+# Local Testing Guide
+
+How to run all tests locally. For the _what_ and _why_ behind each test layer, see [TESTING_STRATEGY.md](TESTING_STRATEGY.md).
+
+---
+
+## Quick reference
+
+| What | Command | Needs Supabase? |
+|---|---|---|
+| Type-check everything | `pnpm typecheck` (root) | No |
+| Shared utils / schemas | `cd packages/shared && pnpm test` | No |
+| Web unit / component | `cd apps/web && pnpm test` | No |
+| Mobile unit / component | `cd apps/mobile && pnpm test` | No |
+| Web E2E (Playwright) | `cd apps/web && pnpm test:e2e` | Yes |
+| Mobile E2E (Maestro) | `cd apps/mobile && pnpm test:maestro` | Yes |
+| All unit tests (root) | `pnpm test` | No |
+
+---
+
+## 1. Prerequisites
+
+Install these tools once:
+
+```bash
+# Supabase CLI
+brew install supabase/tap/supabase
+
+# Playwright browsers (first time only)
+cd apps/web && npx playwright install chromium
+
+# Maestro (mobile E2E)
+curl -Ls "https://get.maestro.mobile.dev" | bash
+```
+
+You also need Docker running for the local Supabase stack.
+
+---
+
+## 2. Backend — local Supabase stack
+
+All E2E tests (Playwright + Maestro) run against a local Supabase instance. Start it once before running those tests.
+
+### Start the local stack
+
+```bash
+supabase start
+```
+
+This starts PostgreSQL (port 54322), the API (port 54321), Auth, Storage, and Supabase Studio (port 54323). Docker must be running.
+
+### Apply migrations fresh
+
+```bash
+supabase db reset
+```
+
+Drops the local database and re-applies all migrations in `supabase/migrations/` in order. The database will be empty after this — no members, no auth users. Do this after pulling new migrations from the repo.
+
+### Seed test data manually
+
+The repo has no `seed.sql`. Test data is managed through a TypeScript seed script. After a `db reset`, run:
+
+```bash
+cd apps/web
+pnpm seed       # insert test members + auth users
+pnpm teardown   # remove them again
+```
+
+This requires `SUPABASE_URL` and `SUPABASE_SECRET_KEY` to be set — they are read from `apps/web/.env.test.local` (see section 4). The script creates the same fixture data that Playwright uses: a `beheerder` user, a `lid` user, and a child member with an approved family link.
+
+> **Note:** When running Playwright E2E tests (`pnpm test:e2e`), seeding and teardown happen automatically — you do not need to run `pnpm seed` manually beforehand.
+
+### Check the running services
+
+```bash
+supabase status
+```
+
+This prints URLs and keys you'll need for the env files:
+
+```
+API URL: http://127.0.0.1:54321
+DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+publishable key: eyJ...   ← SUPABASE_PUBLISHABLE_KEY
+secret key: eyJ...        ← SUPABASE_SECRET_KEY
+Studio URL: http://127.0.0.1:54323
+Inbucket URL: http://127.0.0.1:54324  ← inspect emails here
+```
+
+### Stop the local stack
+
+```bash
+supabase stop
+```
+
+---
+
+## 3. Shared package — unit tests (Vitest)
+
+Tests for Zod schemas and pure utilities. No Supabase or network needed.
+
+```bash
+cd packages/shared
+pnpm test          # run once
+pnpm test:watch    # watch mode during development
+```
+
+Covers: `loginSchema`, `registerSchema`, `createFamilyLinkRequestSchema`, `formatScore`, `formatDutchDate`, sport labels.
+
+---
+
+## 4. Web CMS — unit and component tests (Jest)
+
+Tests for Next.js components. No Supabase needed — Supabase client is mocked.
+
+```bash
+cd apps/web
+pnpm test
+```
+
+### Web CMS — E2E tests (Playwright)
+
+Playwright drives a real Chromium browser against the running Next.js dev server and a local Supabase instance.
+
+#### One-time setup: create `.env.test.local`
+
+```bash
+cd apps/web
+cp .env.test.example .env.test.local
+```
+
+Then open `.env.test.local` and fill in the keys from `supabase status`:
+
+```
+SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+SUPABASE_PUBLISHABLE_KEY=<publishable key from supabase status>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<same key>
+SUPABASE_SECRET_KEY=<secret key from supabase status>
+```
+
+#### Run E2E tests
+
+```bash
+# Make sure supabase is running first
+supabase start
+
+cd apps/web
+pnpm test:e2e
+```
+
+Playwright will:
+1. Start the Next.js dev server (`pnpm dev`) automatically
+2. Run `global-setup.ts` — seeds two test users (`e2e-beheerder@e2e.scmuiden.test` and `e2e-lid@e2e.scmuiden.test`) and writes auth tokens to `e2e/.auth/`
+3. Run all specs in `e2e/` sequentially (tests share the DB — no parallelism)
+4. Run `global-teardown.ts` — deletes seeded users
+
+#### Interactive / debug modes
+
+```bash
+pnpm test:e2e:ui      # opens Playwright UI — step through tests visually
+pnpm test:e2e:debug   # headed browser, Playwright inspector attached
+```
+
+#### What the E2E specs cover
+
+| File | What it tests |
+|---|---|
+| `auth.spec.ts` | Login form validation, error messages, successful login redirect |
+| `dashboard.spec.ts` | Middleware redirects, role-based access (`lid` sees "Geen toegang") |
+| `rls.spec.ts` | Row-Level Security — user A cannot read user B's data |
+
+#### Auth state files
+
+`e2e/.auth/beheerder.json` and `e2e/.auth/lid.json` are generated by `global-setup.ts` and are gitignored. If they are missing or stale (e.g. after `supabase db reset`), delete them and re-run `pnpm test:e2e` to regenerate.
+
+---
+
+## 5. Mobile — unit and component tests (Jest)
+
+Tests for Expo components using React Native Testing Library. No Supabase needed.
+
+```bash
+cd apps/mobile
+pnpm test
+```
+
+### Mobile — E2E tests (Maestro)
+
+Maestro drives the iOS Simulator via YAML flow files. An Android emulator is also supported but flows are only maintained for iOS.
+
+#### Prerequisites
+
+- Xcode installed with at least one simulator available
+- iOS Simulator running (open it via Xcode or `open -a Simulator`)
+- Expo dev client running: `cd apps/mobile && pnpm start`, then press `i`
+
+#### One-time setup: create `.maestro/.env`
+
+```bash
+cd apps/mobile/.maestro
+cp .env.example .env
+```
+
+Fill in `SUPABASE_SECRET_KEY` from `supabase status`. The test credentials are pre-filled in the example and match what the seed script creates.
+
+#### Run Maestro tests
+
+```bash
+# From apps/mobile — seeds data, runs all flows, then tears down
+pnpm test:maestro
+
+# Or step by step:
+pnpm test:maestro:seed       # create test members + auth users in local Supabase
+maestro test .maestro/flows  # run all YAML flows against the running simulator
+pnpm test:maestro:teardown   # clean up test data
+```
+
+#### What the Maestro flows cover
+
+| Flow file | What it tests |
+|---|---|
+| `auth-login-success.yaml` | Login with valid credentials → tabs visible |
+| `auth-login-wrong-credentials.yaml` | Wrong password → Dutch error message |
+| `auth-logout.yaml` | Logout → returns to login screen |
+| `auth-register-gate-blocked.yaml` | Email not in members → registration blocked |
+| `auth-register-gate-success.yaml` | Email in members → account created |
+| `family-link-request.yaml` | Submit gezin/nieuw form → pending request visible |
+| `family-link-approved.yaml` | Approved link visible on profiel screen |
+
+---
+
+## 6. Running everything
+
+There is no single command that runs E2E tests — those require Supabase running and (for Maestro) a simulator. The root `pnpm test` runs only unit tests across all packages via Turbo:
+
+```bash
+# From repo root — unit tests only (no Supabase needed)
+pnpm test
+
+# Full local test run (manual sequence):
+supabase start
+supabase db reset                    # clean slate — migrations only, no data
+pnpm test                            # all unit tests (no Supabase needed)
+cd apps/web && pnpm test:e2e         # Playwright E2E — seeds and tears down automatically
+cd apps/mobile && pnpm test:maestro  # Maestro E2E — seeds and tears down automatically
+supabase stop
+```
+
+---
+
+## 7. Inspecting local state
+
+### Supabase Studio
+
+[http://127.0.0.1:54323](http://127.0.0.1:54323) — browse tables, run SQL, inspect RLS policies, view auth users.
+
+### Inbucket (email inbox)
+
+[http://127.0.0.1:54324](http://127.0.0.1:54324) — captures all outbound emails from local Supabase Auth (password resets, confirmations). Useful when testing auth flows manually.
+
+### Postgres direct connection
+
+```bash
+psql postgresql://postgres:postgres@127.0.0.1:54322/postgres
+```
+
+---
+
+## 8. Troubleshooting
+
+**`supabase start` fails** — make sure Docker is running and no other service occupies ports 54321–54324.
+
+**Playwright: `global-setup` fails with auth error** — the keys in `apps/web/.env.test.local` are stale. Run `supabase status` and update the file with fresh keys.
+
+**Playwright: tests fail after `supabase db reset`** — delete `apps/web/e2e/.auth/*.json` and re-run `pnpm test:e2e`. The stored auth tokens become invalid after a DB reset.
+
+**Maestro: flows hang or can't find elements** — make sure the Expo dev client is open on the simulator _before_ running flows. Maestro does not launch the app itself.
+
+**Vitest / Jest: module resolution errors** — run `pnpm install` from the repo root to ensure all workspace symlinks are in place.
