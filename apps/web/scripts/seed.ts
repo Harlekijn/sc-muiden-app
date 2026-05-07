@@ -30,10 +30,17 @@ if (command === 'teardown') {
   seed(admin as unknown as Parameters<typeof seed>[0])
     .then((result) => {
       console.log('[seed] Done.');
-      console.log(`[seed]   beheerder  → member ${result.beheerderMemberId}  (${E2E_BEHEERDER_EMAIL})`);
-      console.log(`[seed]   lid        → member ${result.lidMemberId}  (${E2E_LID_EMAIL})`);
-      console.log(`[seed]   kindlid    → member ${result.childMemberId}  (no email)`);
-      console.log(`[seed]   family link → ${result.familyLinkId}`);
+      console.log('[seed] Phase 1:');
+      console.log(`[seed]   beheerder      → member ${result.beheerderMemberId}  (${E2E_BEHEERDER_EMAIL})`);
+      console.log(`[seed]   lid            → member ${result.lidMemberId}  (${E2E_LID_EMAIL})`);
+      console.log(`[seed]   kindlid        → member ${result.childMemberId}  (no email)`);
+      console.log(`[seed]   family link    → ${result.familyLinkId}`);
+      console.log('[seed] Phase 2:');
+      console.log(`[seed]   team           → ${result.teamId}`);
+      console.log(`[seed]   training       → activity ${result.activityTrainingId}`);
+      console.log(`[seed]   wedstrijd      → activity ${result.activityWedstrijdId}`);
+      console.log(`[seed]   bardienst      → activity ${result.activityBardienstId}`);
+      console.log(`[seed]   clubactiviteit → activity ${result.activityClubactiviteitId}`);
     })
     .catch((err: Error) => { console.error('[seed] Error:', err.message); process.exit(1); });
 }

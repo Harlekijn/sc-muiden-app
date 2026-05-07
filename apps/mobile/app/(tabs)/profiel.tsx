@@ -7,15 +7,12 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
-  Platform,
-  StatusBar,
 } from 'react-native';
-
-const ANDROID_TOP = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : 0;
 import { useRouter } from 'expo-router';
 import { Clock } from 'lucide-react-native';
 import { colors, radius, spacing, typography, sportLabel, type Sport } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
+import { AppHeader } from '../../components/ui/AppHeader';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -77,8 +74,11 @@ export default function ProfielScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Text variant="h3" style={styles.headerTitle}>Profiel</Text>
+      <AppHeader />
+
+      {/* Sub-header: page title */}
+      <View style={styles.subHeader}>
+        <Text variant="h3" style={styles.subHeaderTitle}>Profiel</Text>
       </View>
 
       <ScrollView
@@ -187,13 +187,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.navy,
   },
-  header: {
+  subHeader: {
     backgroundColor: colors.navy,
-    paddingHorizontal: spacing[4],
-    paddingTop: ANDROID_TOP + spacing[3],
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[2],
     paddingBottom: spacing[4],
   },
-  headerTitle: {
+  subHeaderTitle: {
     color: colors.white,
   },
   scroll: {

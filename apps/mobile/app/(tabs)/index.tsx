@@ -5,21 +5,16 @@ import {
   SafeAreaView,
   Pressable,
   RefreshControl,
-  Platform,
-  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bell } from 'lucide-react-native';
 import { colors, spacing, formatDutchDate } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
-import { Logo } from '../../components/ui/Logo';
+import { AppHeader } from '../../components/ui/AppHeader';
 import { ActivityCard } from '../../components/agenda/ActivityCard';
 import { useUpcomingActivities } from '../../hooks/useUpcomingActivities';
 import { useFamilyMembers } from '../../hooks/useFamilyMembers';
 import { useAuthStore } from '../../stores/authStore';
 import { useAgendaStore } from '../../stores/agendaStore';
-
-const ANDROID_TOP = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : 0;
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -79,15 +74,9 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Logo height={44} />
-        <Pressable style={styles.bellBtn} accessibilityRole="button" accessibilityLabel="Meldingen">
-          <Bell size={18} color={colors.white} strokeWidth={1.5} />
-        </Pressable>
-      </View>
+      <AppHeader />
 
-      {/* Greeting strip */}
+      {/* Sub-header: greeting strip */}
       <View style={styles.greetingStrip}>
         <Text variant="h2" style={styles.greetingName}>
           {greeting()}, {displayName}
@@ -181,23 +170,6 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.navy,
-  },
-  header: {
-    backgroundColor: colors.navy,
-    paddingHorizontal: spacing[5],
-    paddingTop: ANDROID_TOP + spacing[3],
-    paddingBottom: spacing[2],
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  bellBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   greetingStrip: {
     backgroundColor: colors.navy,

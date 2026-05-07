@@ -1,15 +1,18 @@
-import { View, StyleSheet, SafeAreaView, Platform, StatusBar } from 'react-native';
-
-const ANDROID_TOP = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : 0;
+import { View, StyleSheet, SafeAreaView } from 'react-native';
 import { colors, spacing } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
+import { AppHeader } from '../../components/ui/AppHeader';
 
 export default function ClubScreen() {
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Text variant="h3" style={styles.headerTitle}>Club</Text>
+      <AppHeader />
+
+      {/* Sub-header: page title */}
+      <View style={styles.subHeader}>
+        <Text variant="h3" style={styles.subHeaderTitle}>Club</Text>
       </View>
+
       <View style={styles.body}>
         <Text variant="body" style={styles.placeholder}>Wordt binnenkort gevuld</Text>
       </View>
@@ -22,13 +25,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.navy,
   },
-  header: {
+  subHeader: {
     backgroundColor: colors.navy,
-    paddingHorizontal: spacing[4],
-    paddingTop: ANDROID_TOP + spacing[4],
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[2],
     paddingBottom: spacing[4],
   },
-  headerTitle: {
+  subHeaderTitle: {
     color: colors.white,
   },
   body: {
