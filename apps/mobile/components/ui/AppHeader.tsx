@@ -1,5 +1,5 @@
 import { View, StyleSheet, Platform, StatusBar, Pressable } from 'react-native';
-import { Bell, Settings } from 'lucide-react-native';
+import { Bell, ChevronLeft, Settings } from 'lucide-react-native';
 import { colors, spacing } from '@sc-muiden/shared';
 import { Logo } from './Logo';
 
@@ -8,12 +8,26 @@ const ANDROID_TOP = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) 
 interface AppHeaderProps {
   onBell?: () => void;
   onSettings?: () => void;
+  onBack?: () => void;
 }
 
-export function AppHeader({ onBell, onSettings }: AppHeaderProps) {
+export function AppHeader({ onBell, onSettings, onBack }: AppHeaderProps) {
   return (
     <View style={styles.header}>
-      <Logo height={44} />
+      <View style={styles.left}>
+        {onBack && (
+          <Pressable
+            style={styles.iconBtn}
+            onPress={onBack}
+            accessibilityRole="button"
+            accessibilityLabel="Terug"
+            hitSlop={8}
+          >
+            <ChevronLeft size={18} color={colors.white} strokeWidth={1.5} />
+          </Pressable>
+        )}
+        <Logo height={44} />
+      </View>
       <View style={styles.actions}>
         <Pressable
           style={styles.iconBtn}
@@ -45,6 +59,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  left: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
   },
   actions: {
     flexDirection: 'row',

@@ -6,10 +6,12 @@ import {
   Pressable,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Clock, MapPin, Users } from 'lucide-react-native';
+import { Clock, MapPin, Users } from 'lucide-react-native';
 import { colors, spacing } from '@sc-muiden/shared';
 import type { BarAssignmentWithMember } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
+import { AppHeader } from '../../components/ui/AppHeader';
+import { BottomTabBar } from '../../components/ui/BottomTabBar';
 import { ActivityHero } from '../../components/activity/ActivityHero';
 import { WedstrijdHero } from '../../components/activity/WedstrijdHero';
 import { InfoRow, InfoSection } from '../../components/activity/InfoRow';
@@ -36,12 +38,14 @@ export default function ActiviteitScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safe}>
+        <AppHeader onBack={() => router.back()} />
         <View style={styles.skeletonHero} />
         <View style={styles.body}>
           {[0, 1, 2].map((i) => (
             <View key={i} style={styles.skeletonRow} />
           ))}
         </View>
+        <BottomTabBar />
       </SafeAreaView>
     );
   }
@@ -49,6 +53,7 @@ export default function ActiviteitScreen() {
   if (isError || !activity) {
     return (
       <SafeAreaView style={styles.safe}>
+        <AppHeader onBack={() => router.back()} />
         <View style={styles.errorContainer}>
           <Text variant="body" style={styles.errorText}>
             Deze activiteit is niet meer beschikbaar.
@@ -57,6 +62,7 @@ export default function ActiviteitScreen() {
             <Text variant="body" style={styles.backLinkText}>Ga terug</Text>
           </Pressable>
         </View>
+        <BottomTabBar />
       </SafeAreaView>
     );
   }
@@ -66,11 +72,8 @@ export default function ActiviteitScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <AppHeader onBack={() => router.back()} />
       <ScrollView style={styles.scroll} bounces={false}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
-          <ChevronLeft size={24} color={colors.white} />
-        </Pressable>
-
         {isWedstrijd ? (
           <WedstrijdHero activity={activity} />
         ) : (
@@ -100,6 +103,7 @@ export default function ActiviteitScreen() {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+      <BottomTabBar />
     </SafeAreaView>
   );
 }
@@ -111,12 +115,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
-  },
-  backBtn: {
-    position: 'absolute',
-    top: spacing[4],
-    left: spacing[4],
-    zIndex: 10,
   },
   body: {
     flex: 1,
