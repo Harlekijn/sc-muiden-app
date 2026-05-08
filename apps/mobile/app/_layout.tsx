@@ -19,6 +19,7 @@ import { useEffect, useRef } from 'react';
 import { queryClient } from '../lib/queryClient';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -95,16 +96,14 @@ export default function RootLayout() {
     }
   }, [session, initialized, segments]);
 
+  // Hide the native splash immediately — LoadingScreen needs no fonts.
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      if (initialized) {
-        SplashScreen.hideAsync();
-      }
-    }
-  }, [fontsLoaded, fontError, initialized]);
+    SplashScreen.hideAsync();
+  }, []);
 
-  if (!fontsLoaded && !fontError) {
-    return null;
+  // Show LoadingScreen until both auth and fonts are ready.
+  if (!initialized || (!fontsLoaded && !fontError)) {
+    return <LoadingScreen />;
   }
 
   return (
