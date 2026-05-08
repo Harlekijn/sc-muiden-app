@@ -87,6 +87,7 @@ interface AdminClient {
         single(): Promise<{ data: Row | null; error: { message: string } | null }>;
       };
     };
+    upsert(rows: Row | Row[], opts?: { onConflict?: string }): Promise<{ error: { message: string } | null }>;
   };
   auth: {
     admin: {
