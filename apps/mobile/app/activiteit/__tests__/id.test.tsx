@@ -3,15 +3,22 @@ import { render, screen } from '@testing-library/react-native';
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'act-1' }),
-  useRouter: () => ({ back: jest.fn() }),
+  usePathname: () => '/activiteit/act-1',
+  useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
 }));
 
 jest.mock('lucide-react-native', () => ({
+  Bell: () => null,
+  Calendar: () => null,
   ChevronLeft: () => null,
-  Clock: () => null,
-  MapPin: () => null,
-  Users: () => null,
   CheckCircle: () => null,
+  Clock: () => null,
+  Home: () => null,
+  MapPin: () => null,
+  Settings: () => null,
+  Store: () => null,
+  User: () => null,
+  Users: () => null,
 }));
 
 let mockActivity: object | null = null;
