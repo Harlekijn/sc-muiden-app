@@ -166,6 +166,27 @@ export interface PushToken {
   updated_at: string;
 }
 
+export type NotificationType =
+  | 'wedstrijd_herinnering'
+  | 'bardienst_herinnering'
+  | 'training_herinnering'
+  | 'aankondiging';
+
+export interface NotificationPreferences {
+  id: string;
+  profile_id: string;
+  wedstrijd: boolean;
+  bardienst: boolean;
+  training: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationWithMeta extends Notification {
+  activity_id: string | null;
+  type: NotificationType | null;
+}
+
 export interface SyncLog {
   id: string;
   sport: Sport;

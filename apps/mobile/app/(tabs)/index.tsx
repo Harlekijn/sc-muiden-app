@@ -15,6 +15,7 @@ import { useUpcomingActivities } from '../../hooks/useUpcomingActivities';
 import { useFamilyMembers } from '../../hooks/useFamilyMembers';
 import { useAuthStore } from '../../stores/authStore';
 import { useAgendaStore } from '../../stores/agendaStore';
+import type { ActivityWithDetails } from '@sc-muiden/shared';
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -42,12 +43,7 @@ interface FamilyAvatarChipProps {
 function FamilyAvatarChip({ initials, name, active, onPress }: FamilyAvatarChipProps) {
   return (
     <Pressable style={styles.famChip} onPress={onPress} accessibilityRole="button">
-      <View
-        style={[
-          styles.famAvatar,
-          active && styles.famAvatarActive,
-        ]}
-      >
+      <View style={[styles.famAvatar, active && styles.famAvatarActive]}>
         <Text variant="label" style={styles.famInitials}>{initials}</Text>
       </View>
       <Text
@@ -61,22 +57,53 @@ function FamilyAvatarChip({ initials, name, active, onPress }: FamilyAvatarChipP
   );
 }
 
+interface ActivitySectionProps {
+  label: string;
+  activities: ActivityWithDetails[];
+  emptyText: string;
+  onPress: (id: string) => void;
+}
+
+function ActivitySection({ label, activities, emptyText, onPress }: ActivitySectionProps) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionLabel}>{label}</Text>
+      {activities.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text variant="body" style={styles.emptyText}>{emptyText}</Text>
+        </View>
+      ) : (
+        <View style={styles.cardList}>
+          {activities.map((activity) => (
+            <ActivityCard
+              key={activity.id}
+              activity={activity}
+              onPress={() => onPress(activity.id)}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const { profile } = useAuthStore();
   const { familyFilter, setFamilyFilter } = useAgendaStore();
   const { data: familyMembers = [] } = useFamilyMembers();
-  const { data: activities = [], isLoading, refetch } = useUpcomingActivities();
+  const { data, isLoading, refetch } = useUpcomingActivities();
 
   if (!profile) return null;
 
   const displayName = profile.display_name.split(' ')[0] ?? profile.display_name;
+  const vandaag = data?.vandaag ?? [];
+  const binnenkort = data?.binnenkort ?? [];
 
   return (
     <SafeAreaView style={styles.safe}>
       <AppHeader />
 
-      {/* Sub-header: greeting strip */}
       <View style={styles.greetingStrip}>
         <Text variant="h2" style={styles.greetingName}>
           {greeting()}, {displayName}
@@ -96,7 +123,6 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Family switcher */}
         {familyMembers.length > 0 && (
           <View>
             <Text variant="label" style={styles.sectionMeta}>Mijn familie</Text>
@@ -110,7 +136,7 @@ export default function HomeScreen() {
                   profile.display_name.split(' ')[0] ?? '',
                   profile.display_name.split(' ').slice(-1)[0] ?? '',
                 )}
-                name={(profile.display_name.split(' ')[0] ?? profile.display_name)}
+                name={profile.display_name.split(' ')[0] ?? profile.display_name}
                 active={familyFilter === 'all'}
                 onPress={() => setFamilyFilter('all')}
               />
@@ -127,29 +153,23 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Upcoming activities */}
-        <View style={styles.sectionHead}>
-          <Text variant="h4" style={styles.sectionTitle}>Aankomend</Text>
-        </View>
-
         {isLoading ? (
           <SkeletonCards />
-        ) : activities.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text variant="body" style={styles.emptyText}>
-              Geen activiteiten gepland voor de komende 30 dagen.
-            </Text>
-          </View>
         ) : (
-          <View style={styles.cardList}>
-            {activities.map((activity) => (
-              <ActivityCard
-                key={activity.id}
-                activity={activity}
-                onPress={() => router.push(`/activiteit/${activity.id}`)}
-              />
-            ))}
-          </View>
+          <>
+            <ActivitySection
+              label="VANDAAG"
+              activities={vandaag}
+              emptyText="Geen activiteiten vandaag."
+              onPress={(id) => router.push(`/activiteit/${id}`)}
+            />
+            <ActivitySection
+              label="BINNENKORT"
+              activities={binnenkort}
+              emptyText="Niets gepland de komende week."
+              onPress={(id) => router.push(`/activiteit/${id}`)}
+            />
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -159,7 +179,7 @@ export default function HomeScreen() {
 function SkeletonCards() {
   return (
     <View style={styles.cardList}>
-      {[0, 1, 2].map((i) => (
+      {[0, 1].map((i) => (
         <View key={i} style={styles.skeleton} />
       ))}
     </View>
@@ -238,12 +258,17 @@ const styles = StyleSheet.create({
     color: colors.blue,
     fontFamily: 'Barlow_700Bold',
   },
-  sectionHead: {
+  section: {
+    marginTop: spacing[4],
+  },
+  sectionLabel: {
+    fontFamily: 'Barlow_700Bold',
+    fontSize: 13,
+    color: colors.text2,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
     paddingHorizontal: spacing[4],
     paddingBottom: spacing[2],
-  },
-  sectionTitle: {
-    color: colors.text,
   },
   cardList: {
     paddingHorizontal: spacing[4],
@@ -251,17 +276,16 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     paddingHorizontal: spacing[4],
-    paddingTop: spacing[6],
-    alignItems: 'center',
+    paddingTop: spacing[3],
   },
   emptyText: {
     color: colors.text2,
-    textAlign: 'center',
   },
   skeleton: {
     height: 80,
     backgroundColor: colors.mid,
     borderRadius: 10,
     marginHorizontal: spacing[4],
+    marginTop: spacing[3],
   },
 });

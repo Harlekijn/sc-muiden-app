@@ -46,3 +46,9 @@ enable_confirmations = false
 enabled = false
 
 [functions]
+
+[functions.reminder-scheduler]
+verify_jwt = false
+
+[functions.push-trigger]
+verify_jwt = false

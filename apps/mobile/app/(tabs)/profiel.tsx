@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Clock } from 'lucide-react-native';
+import { Bell, Clock } from 'lucide-react-native';
 import { colors, radius, spacing, typography, sportLabel, type Sport } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
 import { AppHeader } from '../../components/ui/AppHeader';
@@ -174,6 +174,15 @@ export default function ProfielScreen() {
           </Button>
         </Card>
 
+        <Pressable
+          style={styles.settingsRow}
+          onPress={() => router.push('/notificatie-instellingen')}
+          accessibilityRole="button"
+        >
+          <Bell size={20} color={colors.blue} />
+          <Text variant="body" style={styles.settingsRowLabel}>Notificatie-instellingen</Text>
+        </Pressable>
+
         <Pressable style={styles.signOutButton} onPress={handleSignOut}>
           <Text style={styles.signOutLabel}>Uitloggen</Text>
         </Pressable>
@@ -311,6 +320,20 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginVertical: spacing[3],
+  },
+  settingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    backgroundColor: colors.white,
+    borderRadius: radius.lg,
+    minHeight: 44,
+  },
+  settingsRowLabel: {
+    color: colors.text,
+    flex: 1,
   },
   signOutButton: {
     borderRadius: radius.md,

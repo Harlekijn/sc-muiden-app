@@ -348,8 +348,47 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          bardienst: boolean
+          created_at: string
+          id: string
+          profile_id: string
+          training: boolean
+          updated_at: string
+          wedstrijd: boolean
+        }
+        Insert: {
+          bardienst?: boolean
+          created_at?: string
+          id?: string
+          profile_id: string
+          training?: boolean
+          updated_at?: string
+          wedstrijd?: boolean
+        }
+        Update: {
+          bardienst?: boolean
+          created_at?: string
+          id?: string
+          profile_id?: string
+          training?: boolean
+          updated_at?: string
+          wedstrijd?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
+          activity_id: string | null
           body: string
           created_at: string
           data: Json | null
@@ -358,8 +397,10 @@ export type Database = {
           recipient_profile_id: string
           sent_at: string | null
           title: string
+          type: string | null
         }
         Insert: {
+          activity_id?: string | null
           body: string
           created_at?: string
           data?: Json | null
@@ -368,8 +409,10 @@ export type Database = {
           recipient_profile_id: string
           sent_at?: string | null
           title: string
+          type?: string | null
         }
         Update: {
+          activity_id?: string | null
           body?: string
           created_at?: string
           data?: Json | null
@@ -378,8 +421,16 @@ export type Database = {
           recipient_profile_id?: string
           sent_at?: string | null
           title?: string
+          type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_recipient_profile_id_fkey"
             columns: ["recipient_profile_id"]
@@ -1365,4 +1416,3 @@ export const Constants = {
     },
   },
 } as const
-
