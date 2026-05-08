@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(swift /tmp/render_adaptive_icon.swift)",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

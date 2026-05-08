@@ -96,19 +96,13 @@ export default function RootLayout() {
     }
   }, [session, initialized, segments]);
 
-  // Hide the native OS splash as soon as fonts are ready; the in-app
-  // LoadingScreen takes over while auth initializes.
+  // Hide the native splash immediately — LoadingScreen needs no fonts.
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
+    SplashScreen.hideAsync();
+  }, []);
 
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
-
-  if (!initialized) {
+  // Show LoadingScreen until both auth and fonts are ready.
+  if (!initialized || (!fontsLoaded && !fontError)) {
     return <LoadingScreen />;
   }
 
