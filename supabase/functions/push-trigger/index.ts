@@ -53,8 +53,8 @@ async function sendPushNotifications(notification: NotificationRecord): Promise<
   });
 
   if (!response.ok) {
-    const body = await response.text();
-    console.error(JSON.stringify({ event: 'push_api_error', notification_id: notification.id, status: response.status, body }));
+    // Body niet gelogd — kan push-tokens bevatten
+    console.error(JSON.stringify({ event: 'push_api_error', notification_id: notification.id, status: response.status }));
     return;
   }
 
@@ -67,6 +67,8 @@ async function sendPushNotifications(notification: NotificationRecord): Promise<
 }
 
 Deno.serve(async (req) => {
+  const startedAt = new Date().toISOString();
+  console.log(JSON.stringify({ event: 'push_trigger_start', ts: startedAt }));
   try {
     const payload = await req.json();
     const record: NotificationRecord = payload.record;
@@ -80,6 +82,7 @@ Deno.serve(async (req) => {
 
     await sendPushNotifications(record);
 
+    console.log(JSON.stringify({ event: 'push_trigger_done', notification_id: record.id, ts: new Date().toISOString() }));
     return new Response(JSON.stringify({ ok: true }), {
       headers: { 'Content-Type': 'application/json' },
     });

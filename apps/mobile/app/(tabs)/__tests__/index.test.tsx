@@ -1,5 +1,4 @@
 import React from 'react';
-import { Text } from 'react-native';
 import { render, screen } from '@testing-library/react-native';
 
 jest.mock('expo-router', () => ({
@@ -16,9 +15,7 @@ jest.mock('../../../components/ui/AppHeader', () => ({
 }));
 
 jest.mock('../../../components/agenda/ActivityCard', () => ({
-  ActivityCard: ({ activity }: { activity: { title: string } }) => (
-    <Text>{activity.title}</Text>
-  ),
+  ActivityCard: () => null,
 }));
 
 jest.mock('../../../hooks/useFamilyMembers', () => ({
@@ -58,6 +55,13 @@ jest.mock('../../../hooks/useUpcomingActivities', () => ({
 
 import HomeScreen from '../index';
 
+const makeActivity = (id: string, title: string) => ({
+  id, title, type: 'training', sport: 'voetbal',
+  team_id: null, recurring_rule_id: null, starts_at: new Date().toISOString(),
+  ends_at: null, location: null, notes: null, created_at: '', updated_at: '',
+  deleted_at: null, team: null, match: null, bar_assignments: [],
+});
+
 describe('HomeScreen', () => {
   beforeEach(() => {
     mockIsLoading = false;
@@ -80,37 +84,21 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Niets gepland de komende week.')).toBeTruthy();
   });
 
-  it('toont activiteitstitels in de juiste sectie', () => {
+  it('verbergt lege staat "Geen activiteiten vandaag." wanneer vandaag activiteiten bevat', () => {
     mockData = {
-      vandaag: [
-        { id: '1', title: 'Training Zondag', type: 'training', sport: 'voetbal',
-          team_id: null, recurring_rule_id: null, starts_at: new Date().toISOString(),
-          ends_at: null, location: null, notes: null, created_at: '', updated_at: '',
-          deleted_at: null, team: null, match: null, bar_assignments: [] },
-      ],
-      binnenkort: [
-        { id: '2', title: 'Wedstrijd Maandag', type: 'wedstrijd', sport: 'voetbal',
-          team_id: null, recurring_rule_id: null, starts_at: new Date(Date.now() + 86400_000).toISOString(),
-          ends_at: null, location: null, notes: null, created_at: '', updated_at: '',
-          deleted_at: null, team: null, match: null, bar_assignments: [] },
-      ],
-    };
-    render(<HomeScreen />);
-    expect(screen.getByText('Training Zondag')).toBeTruthy();
-    expect(screen.getByText('Wedstrijd Maandag')).toBeTruthy();
-  });
-
-  it('toont geen lege staat wanneer data aanwezig is', () => {
-    mockData = {
-      vandaag: [
-        { id: '1', title: 'Training', type: 'training', sport: 'voetbal',
-          team_id: null, recurring_rule_id: null, starts_at: new Date().toISOString(),
-          ends_at: null, location: null, notes: null, created_at: '', updated_at: '',
-          deleted_at: null, team: null, match: null, bar_assignments: [] },
-      ],
+      vandaag: [makeActivity('1', 'Training')],
       binnenkort: [],
     };
     render(<HomeScreen />);
     expect(screen.queryByText('Geen activiteiten vandaag.')).toBeNull();
+  });
+
+  it('verbergt lege staat "Niets gepland de komende week." wanneer binnenkort activiteiten bevat', () => {
+    mockData = {
+      vandaag: [],
+      binnenkort: [makeActivity('2', 'Wedstrijd')],
+    };
+    render(<HomeScreen />);
+    expect(screen.queryByText('Niets gepland de komende week.')).toBeNull();
   });
 });

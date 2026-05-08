@@ -149,6 +149,8 @@ async function processWindow(window: ReminderWindow): Promise<number> {
 }
 
 Deno.serve(async () => {
+  const startedAt = new Date().toISOString();
+  console.log(JSON.stringify({ event: 'scheduler_start', ts: startedAt }));
   try {
     let total = 0;
     for (const window of WINDOWS) {
@@ -157,6 +159,7 @@ Deno.serve(async () => {
       total += count;
     }
 
+    console.log(JSON.stringify({ event: 'scheduler_done', scheduled: total, ts: new Date().toISOString() }));
     return new Response(JSON.stringify({ ok: true, scheduled: total }), {
       headers: { 'Content-Type': 'application/json' },
     });

@@ -429,3 +429,35 @@ Scenario S10-A t/m S10-D
 - Moeten notificaties ook zichtbaar zijn in een in-app notificatiecentrum (bell-icoon in header)? Roadmap noemt dit voor Phase 6 — voor nu alleen push; bell-icoon navigeert nog nergens naartoe.
 - Hoe lang worden `notifications`-records bewaard? Voorstel: 12 maanden (cleanup in V2).
 - Is de Supabase EU-regio al ingesteld? Verifieer vóór productie-release (GDPR-vereiste).
+
+---
+
+## SRE Notes
+
+**Datum:** 08-05-2026
+
+### Logging
+- `push-trigger`: body van Expo API-fout niet meer gelogd — kon push-tokens (PII) bevatten. Opgelost: alleen `status` gelogd.
+- `reminder-scheduler` en `push-trigger`: start- en eindtijdstempel toegevoegd aan beide handlers.
+
+### Monitoring
+- `notification_preferences.profile_id`: zowel `unique`-constraint als expliciete index aanwezig — redundant maar niet schadelijk.
+- `notifications.activity_id`: index aanwezig via `notifications_activity_id_idx`.
+- `notifications_dedup_idx` dekt `(recipient_profile_id, activity_id, type)` — voorkomt dubbele cron-retry inserts.
+- Alle React Query hooks hebben expliciete `staleTime` (5 minuten).
+
+### Foutafhandeling
+- `notificatie-instellingen.tsx`: `Switch` krijgt `disabled={isPending}` — voorkomt dubbele mutations tijdens in-flight opslaan.
+- Optimistische rollback aanwezig via `onMutate`/`onError` in `useUpdateNotificationPreferences`.
+- Foutmelding `Alert` is Dutch en geeft gebruiker vervolgactie.
+
+### Beveiliging
+- RLS `FOR ALL USING (auth.uid() = profile_id)`: PostgreSQL gebruikt USING automatisch als WITH CHECK bij INSERT — insert-bescherming correct.
+- Geen secrets in `EXPO_PUBLIC_` of `NEXT_PUBLIC_` variabelen.
+- Alle secrets via `Deno.env.get()`.
+
+### Bundle
+- Geen nieuwe packages toegevoegd aan `apps/mobile/package.json`.
+
+### Openstaande punten
+- `push-trigger` heeft `verify_jwt = false` — het endpoint is publiek bereikbaar. Voeg vóór productie een webhook-signature validatie toe (bijv. `X-Supabase-Signature` header controleren) om request-forgery te voorkomen.

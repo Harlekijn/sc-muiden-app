@@ -19,13 +19,14 @@ interface ToggleRowProps {
   label: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
+  disabled?: boolean;
   isLast?: boolean;
 }
 
-function ToggleRow({ icon, label, value, onValueChange, isLast }: ToggleRowProps) {
+function ToggleRow({ icon, label, value, onValueChange, disabled, isLast }: ToggleRowProps) {
   return (
     <>
-      <View style={styles.row}>
+      <View style={[styles.row, disabled && styles.rowDisabled]}>
         <View style={styles.rowLeft}>
           {icon}
           <Text variant="body" style={styles.rowLabel}>{label}</Text>
@@ -36,6 +37,7 @@ function ToggleRow({ icon, label, value, onValueChange, isLast }: ToggleRowProps
           trackColor={{ false: colors.mid, true: colors.blue }}
           thumbColor={colors.white}
           accessibilityLabel={label}
+          disabled={disabled}
         />
       </View>
       {!isLast && <View style={styles.divider} />}
@@ -46,7 +48,7 @@ function ToggleRow({ icon, label, value, onValueChange, isLast }: ToggleRowProps
 export default function NotificatieInstellingenScreen() {
   const router = useRouter();
   const { data: prefs, isLoading } = useNotificationPreferences();
-  const { mutate: update } = useUpdateNotificationPreferences();
+  const { mutate: update, isPending } = useUpdateNotificationPreferences();
 
   function handleToggle(field: 'wedstrijd' | 'bardienst' | 'training', value: boolean) {
     update(
@@ -95,18 +97,21 @@ export default function NotificatieInstellingenScreen() {
               label="Wedstrijdherinneringen"
               value={wedstrijd}
               onValueChange={(v) => handleToggle('wedstrijd', v)}
+              disabled={isPending}
             />
             <ToggleRow
               icon={<Clock size={20} color={colors.blue} />}
               label="Bardienst-herinneringen"
               value={bardienst}
               onValueChange={(v) => handleToggle('bardienst', v)}
+              disabled={isPending}
             />
             <ToggleRow
               icon={<Dumbbell size={20} color={colors.blue} />}
               label="Trainingsherinneringen"
               value={training}
               onValueChange={(v) => handleToggle('training', v)}
+              disabled={isPending}
               isLast
             />
           </View>
@@ -168,6 +173,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     minHeight: 52,
+  },
+  rowDisabled: {
+    opacity: 0.5,
   },
   rowLeft: {
     flexDirection: 'row',
