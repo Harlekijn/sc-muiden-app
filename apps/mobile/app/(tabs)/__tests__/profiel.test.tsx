@@ -6,7 +6,10 @@ jest.mock('expo-router', () => ({
 }));
 
 jest.mock('lucide-react-native', () => ({
+  Bell: () => null,
+  ChevronLeft: () => null,
   Clock: () => null,
+  Settings: () => null,
 }));
 
 jest.mock('../../../lib/supabase', () => ({

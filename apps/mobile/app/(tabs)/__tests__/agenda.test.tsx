@@ -6,12 +6,14 @@ jest.mock('expo-router', () => ({
 }));
 
 jest.mock('lucide-react-native', () => ({
+  Bell: () => null,
   ChevronLeft: () => null,
   ChevronRight: () => null,
+  CheckCircle: () => null,
   Clock: () => null,
   MapPin: () => null,
+  Settings: () => null,
   Users: () => null,
-  CheckCircle: () => null,
 }));
 
 jest.mock('../../../components/agenda/MonthCalendar', () => ({

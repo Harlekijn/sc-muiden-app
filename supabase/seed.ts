@@ -10,20 +10,25 @@
 //
 // What gets seeded
 // ─────────────────
-//  members:
-//    1. beheerder  – role beheerder, email E2E_BEHEERDER_EMAIL
-//    2. lid        – role lid,       email E2E_LID_EMAIL
-//    3. kindlid    – role lid,       no email  (represents a child club member)
-//  auth.users:    beheerder + lid  (trigger auto-creates profiles + links member_id)
-//  user_family_members: lid ↔ kindlid  (approved link)
+//  Phase 1
+//    members:     beheerder, lid, kindlid
+//    auth.users:  beheerder + lid  (trigger auto-creates profiles + links member_id)
+//    user_family_members: lid ↔ kindlid  (approved link)
+//
+//  Phase 2
+//    teams:          E2E Voetbalteam JO11-1  (federation_team_id = 'e2e-team-001')
+//    team_members:   kindlid → team  (role: speler)
+//    activities:     training, wedstrijd, bardienst, clubactiviteit  (relative to seed date)
+//    matches:        linked to wedstrijd  (status: gepland)
+//    bar_assignments: bardienst → kindlid  (not confirmed)
 //
 // Never hard-code the returned UUIDs in assertions — use the SeedResult fields.
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 export const E2E_BEHEERDER_EMAIL = 'e2e-beheerder@e2e.scmuiden.test';
-export const E2E_LID_EMAIL = 'e2e-lid@e2e.scmuiden.test';
-export const E2E_PASSWORD = 'E2eTestWachtwoord123!';
+export const E2E_LID_EMAIL       = 'e2e-lid@e2e.scmuiden.test';
+export const E2E_PASSWORD        = 'E2eTestWachtwoord123!';
 
 const ALL_E2E_EMAILS = [E2E_BEHEERDER_EMAIL, E2E_LID_EMAIL] as const;
 
@@ -31,13 +36,34 @@ const ALL_E2E_EMAILS = [E2E_BEHEERDER_EMAIL, E2E_LID_EMAIL] as const;
 export const E2E_CHILD_CLUBBASE_ID = 'e2e-child-001';
 const CHILD_CLUBBASE_ID = E2E_CHILD_CLUBBASE_ID;
 
+// Stable identifier for the E2E team (stored in federation_team_id).
+const E2E_TEAM_FEDERATION_ID = 'e2e-team-001';
+
+// Stable identifier for the E2E match row.
+const E2E_MATCH_FEDERATION_ID = 'e2e-match-001';
+
+// Activity titles — used to identify and clean up E2E rows.
+const E2E_ACTIVITY_TITLES = [
+  'Training JO11-1',
+  'Wedstrijd JO11-1 vs FC Diemen',
+  'Bardienst zaterdag',
+  'Ledenvergadering SC Muiden',
+] as const;
+
 // ── Return type ──────────────────────────────────────────────────────────────
 
 export interface SeedResult {
+  // Phase 1
   beheerderMemberId: string;
   lidMemberId: string;
   childMemberId: string;
   familyLinkId: string;
+  // Phase 2
+  teamId: string;
+  activityTrainingId: string;
+  activityWedstrijdId: string;
+  activityBardienstId: string;
+  activityClubactiviteitId: string;
 }
 
 // ── Client interface ─────────────────────────────────────────────────────────
@@ -94,11 +120,22 @@ async function createAuthUser(admin: AdminClient, email: string): Promise<void> 
   }
 }
 
+// Return a timestamptz string for `daysOffset` days from today at the given time.
+function activityAt(daysOffset: number, hours: number, minutes: number): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + daysOffset);
+  d.setHours(hours, minutes, 0, 0);
+  return d.toISOString();
+}
+
 // ── Seed ─────────────────────────────────────────────────────────────────────
 
 export async function seed(admin: AdminClient): Promise<SeedResult> {
   // Always start clean so runs are idempotent.
   await teardown(admin);
+
+  // ── Phase 1 ───────────────────────────────────────────────────────────────
 
   // 1. Create member records.
   const { data: members, error: membersErr } = await admin
@@ -137,28 +174,132 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
 
   const link = must(linkRows, linkErr, 'seed family link');
 
+  // ── Phase 2 ───────────────────────────────────────────────────────────────
+
+  // 5. Create the E2E team.
+  const { data: teamRows, error: teamErr } = await admin
+    .from('teams')
+    .insert({
+      name: 'E2E Voetbalteam JO11-1',
+      sport: 'voetbal',
+      age_category: 'JO11',
+      season: '2025/2026',
+      federation_team_id: E2E_TEAM_FEDERATION_ID,
+    })
+    .select('id');
+
+  const teamRow = must(teamRows, teamErr, 'seed team');
+  const teamId = (teamRow[0] as Row).id as string;
+
+  // 6. Add kindlid as speler in the team.
+  const { error: teamMemberErr } = await admin
+    .from('team_members')
+    .insert({ team_id: teamId, member_id: childMember.id, role: 'speler' })
+    .select('id');
+
+  if (teamMemberErr) throw new Error(`seed team_members: ${teamMemberErr.message}`);
+
+  // 7. Create activities (all relative to the seed date).
+  const { data: activityRows, error: activityErr } = await admin
+    .from('activities')
+    .insert([
+      {
+        type: 'training',
+        sport: 'voetbal',
+        team_id: teamId,
+        title: 'Training JO11-1',
+        starts_at: activityAt(0, 9, 0),
+        location: 'Sportpark De Volharding',
+      },
+      {
+        type: 'wedstrijd',
+        sport: 'voetbal',
+        team_id: teamId,
+        title: 'Wedstrijd JO11-1 vs FC Diemen',
+        starts_at: activityAt(2, 14, 0),
+      },
+      {
+        type: 'bardienst',
+        sport: null,
+        team_id: null,
+        title: 'Bardienst zaterdag',
+        starts_at: activityAt(7, 12, 0),
+      },
+      {
+        type: 'clubactiviteit',
+        sport: null,
+        team_id: null,
+        title: 'Ledenvergadering SC Muiden',
+        starts_at: activityAt(3, 20, 0),
+      },
+    ])
+    .select('id, title');
+
+  const activityRowList = must(activityRows, activityErr, 'seed activities');
+  const findActivity = (title: string) =>
+    (activityRowList.find((r) => r.title === title) as Row).id as string;
+
+  const activityTrainingId      = findActivity('Training JO11-1');
+  const activityWedstrijdId     = findActivity('Wedstrijd JO11-1 vs FC Diemen');
+  const activityBardienstId     = findActivity('Bardienst zaterdag');
+  const activityClubactiviteitId = findActivity('Ledenvergadering SC Muiden');
+
+  // 8. Create match record for the wedstrijd.
+  const { error: matchErr } = await admin
+    .from('matches')
+    .insert({
+      activity_id: activityWedstrijdId,
+      federation_match_id: E2E_MATCH_FEDERATION_ID,
+      home_team: 'JO11-1',
+      away_team: 'FC Diemen JO11-1',
+      status: 'gepland',
+    })
+    .select('id');
+
+  if (matchErr) throw new Error(`seed matches: ${matchErr.message}`);
+
+  // 9. Assign kindlid to bardienst (not confirmed).
+  const { error: barErr } = await admin
+    .from('bar_assignments')
+    .insert({
+      activity_id: activityBardienstId,
+      member_id: childMember.id,
+      confirmed_at: null,
+    })
+    .select('id');
+
+  if (barErr) throw new Error(`seed bar_assignments: ${barErr.message}`);
+
   return {
     beheerderMemberId: beheerderMember.id as string,
     lidMemberId:       lidMember.id as string,
     childMemberId:     childMember.id as string,
     familyLinkId:      (link[0] as Row).id as string,
+    teamId,
+    activityTrainingId,
+    activityWedstrijdId,
+    activityBardienstId,
+    activityClubactiviteitId,
   };
 }
 
 // ── Teardown ─────────────────────────────────────────────────────────────────
 
 export async function teardown(admin: AdminClient): Promise<void> {
-  // Delete auth users first — profiles (and family links via cascade) follow.
+  // Phase 2: delete in dependency order.
+  // matches and bar_assignments cascade from activities (on delete cascade),
+  // team_members cascade from teams (on delete cascade).
+  await admin.from('activities').delete().in('title', E2E_ACTIVITY_TITLES);
+  await admin.from('teams').delete().eq('federation_team_id', E2E_TEAM_FEDERATION_ID);
+
+  // Phase 1: delete auth users first — profiles (and family links via cascade) follow.
   const { data } = await admin.auth.admin.listUsers({ perPage: 1000 });
   const testUsers = (data?.users ?? []).filter((u) =>
     u.email && (ALL_E2E_EMAILS as readonly string[]).includes(u.email)
   );
   await Promise.all(testUsers.map((u) => admin.auth.admin.deleteUser(u.id)));
 
-  // Delete named member records.
   await admin.from('members').delete().in('email', ALL_E2E_EMAILS);
-
-  // Delete child member (no email — identified by clubbase_id).
   await admin.from('members').delete().eq('clubbase_id', CHILD_CLUBBASE_ID);
 }
 

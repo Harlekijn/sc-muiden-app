@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { colors, spacing } from '@sc-muiden/shared';
 import type { ActivityWithDetails } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
+import { AppHeader } from '../../components/ui/AppHeader';
 import { MonthCalendar } from '../../components/agenda/MonthCalendar';
 import { ActivityCard } from '../../components/agenda/ActivityCard';
 import { FamilyFilterChip } from '../../components/agenda/FamilyFilterChip';
@@ -52,8 +53,11 @@ export default function AgendaScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Text variant="h3" style={styles.headerTitle}>Agenda</Text>
+      <AppHeader />
+
+      {/* Sub-header: page title */}
+      <View style={styles.subHeader}>
+        <Text variant="h3" style={styles.subHeaderTitle}>Agenda</Text>
       </View>
 
       <View style={styles.filterBar}>
@@ -137,13 +141,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.navy,
   },
-  header: {
+  subHeader: {
     backgroundColor: colors.navy,
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[3],
-    paddingBottom: spacing[2],
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[4],
   },
-  headerTitle: {
+  subHeaderTitle: {
     color: colors.white,
   },
   filterBar: {
