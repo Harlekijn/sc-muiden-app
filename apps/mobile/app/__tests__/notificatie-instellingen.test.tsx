@@ -27,6 +27,9 @@ jest.mock('../../hooks/useNotificationPreferences', () => ({
 
 import NotificatieInstellingenScreen from '../notificatie-instellingen';
 
+// S09-A — Notificatie-instellingenscherm toont actuele voorkeuren
+// S09-B — Toggle uitschakelen slaat voorkeur op
+// S09-C — Nieuw account heeft standaard alle notificaties aan
 describe('NotificatieInstellingenScreen', () => {
   beforeEach(() => {
     mockPrefs = { wedstrijd: true, bardienst: true, training: true };

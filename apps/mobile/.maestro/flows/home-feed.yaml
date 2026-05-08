@@ -1,0 +1,10 @@
+appId: nl.scmuiden.app
+---
+# S10-A — "Vandaag"-sectie toont activiteiten van vandaag
+# S10-B — "Binnenkort"-sectie toont activiteiten komende 7 dagen
+# S10-C — Lege staat bij geen activiteiten vandaag (no-team user variant)
+# Precondition: ingelogd als e2e-lid@e2e.scmuiden.nl (seed heeft training vandaag)
+- runFlow: ../_utils/login.yaml
+- assertVisible: "VANDAAG"
+- assertVisible: "BINNENKORT"
+- runFlow: ../_utils/logout.yaml

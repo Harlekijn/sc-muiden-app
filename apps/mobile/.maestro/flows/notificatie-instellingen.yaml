@@ -1,0 +1,17 @@
+appId: nl.scmuiden.app
+---
+# S09-A — Notificatie-instellingenscherm toont actuele voorkeuren
+# S09-B — Toggle uitschakelen slaat voorkeur op
+# Precondition: ingelogd als e2e-lid@e2e.scmuiden.nl (seed heeft notification_preferences aan)
+- runFlow: ../_utils/login.yaml
+- tapOn:
+    text: "Profiel"
+- assertVisible: "Profiel"
+- tapOn:
+    text: "Notificatie-instellingen"
+- assertVisible: "Notificatie-instellingen"
+- assertVisible: "Wedstrijdherinneringen"
+- assertVisible: "Bardienst-herinneringen"
+- assertVisible: "Trainingsherinneringen"
+- assertVisible: "24 uur van tevoren"
+- runFlow: ../_utils/logout.yaml

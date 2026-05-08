@@ -174,6 +174,16 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
 
   const link = must(linkRows, linkErr, 'seed family link');
 
+  // 4b. Create default notification preferences for the lid (all types on).
+  const { error: prefErr } = await admin
+    .from('notification_preferences')
+    .upsert(
+      { profile_id: profile.id, wedstrijd: true, bardienst: true, training: true },
+      { onConflict: 'profile_id' }
+    );
+
+  if (prefErr) throw new Error(`seed notification_preferences: ${prefErr.message}`);
+
   // ── Phase 2 ───────────────────────────────────────────────────────────────
 
   // 5. Create the E2E team.

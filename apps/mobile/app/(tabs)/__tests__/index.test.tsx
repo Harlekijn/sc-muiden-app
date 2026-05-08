@@ -55,6 +55,10 @@ jest.mock('../../../hooks/useUpcomingActivities', () => ({
 
 import HomeScreen from '../index';
 
+// S10-A — "Vandaag"-sectie toont activiteiten van vandaag
+// S10-B — "Binnenkort"-sectie toont activiteiten komende 7 dagen gegroepeerd per dag
+// S10-C — Lege staat bij geen activiteiten vandaag
+// S10-D — Pull-to-refresh herlaadt beide secties
 const makeActivity = (id: string, title: string) => ({
   id, title, type: 'training', sport: 'voetbal',
   team_id: null, recurring_rule_id: null, starts_at: new Date().toISOString(),
