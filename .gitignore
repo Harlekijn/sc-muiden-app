@@ -7,6 +7,9 @@ dist/
 .next/
 out/
 
+# Temporary files
+tmp/
+
 # Environment files — NEVER commit
 .env
 .env.local
