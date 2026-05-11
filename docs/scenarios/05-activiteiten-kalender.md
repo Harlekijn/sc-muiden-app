@@ -8,6 +8,7 @@ End-to-end flow voor de Agenda-tab: maandoverzicht, gezinsfilter, lege staat, en
 - Mobile app open en ingelogd als Test Lid (`e2e-lid@e2e.scmuiden.test` / `E2eTestWachtwoord123!`)
 - De seed heeft activiteiten aangemaakt: 1 training (vandaag), 1 wedstrijd (overmorgen), 1 bardienst (volgende week), 1 clubactiviteit (deze week)
 - Test Kindlid is via `team_members` gekoppeld aan het voetbalteam waarvoor de training en wedstrijd zijn gepland
+- **Let op (vanaf federatie-integratie):** wedstrijd-activiteiten worden gevuld door de federatiesync. Het seed-script maakt een wedstrijd-activiteit + bijbehorend `matches` record met `status: 'gepland'` aan voor testdoeleinden.
 
 ---
 

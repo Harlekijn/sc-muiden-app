@@ -112,6 +112,7 @@ export interface Activity {
 export interface Match {
   id: string;
   activity_id: string | null;
+  team_id: string | null;
   federation_match_id: string | null;
   home_team: string;
   away_team: string;
@@ -123,6 +124,24 @@ export interface Match {
   raw_data: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface MatchWithActivity {
+  id: string;
+  activityId: string;
+  teamId: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  scoreHome: number | null;
+  scoreAway: number | null;
+  status: MatchStatus;
+  federationMatchId: string | null;
+  federationSource: FederationSource | null;
+  startsAt: string;
+  endsAt: string | null;
+  location: string | null;
+  sport: Sport | null;
+  teamName: string | null;
 }
 
 export interface BarAssignment {
@@ -190,6 +209,7 @@ export interface NotificationWithMeta extends Notification {
 export interface SyncLog {
   id: string;
   sport: Sport;
+  triggered_by: 'cron' | 'manual';
   started_at: string;
   finished_at: string | null;
   records_updated: number | null;

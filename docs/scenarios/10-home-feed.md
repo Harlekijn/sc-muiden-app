@@ -82,6 +82,40 @@ Open Supabase Studio → `activities`. Controleer dat de training `starts_at` va
 
 ---
 
+## S10-E — Volgende wedstrijd hero card zichtbaar op thuisscherm
+
+**Goal:** Als er een komende wedstrijd gesynchroniseerd is voor de sport van het lid, is de hero card "VOLGENDE WEDSTRIJD" zichtbaar op het thuisscherm.
+
+**Prerequisites:**
+- Federation-sync uitgevoerd (S11-A); minimaal 1 wedstrijd met `status = 'gepland'` en `starts_at > now()` aanwezig in `matches`.
+- Test Kindlid is gekoppeld aan het voetbalteam.
+
+**Steps:**
+
+1. Open het thuisscherm als Test Lid.
+
+**Expected result:**
+
+- Sectielabel "VOLGENDE WEDSTRIJD" is zichtbaar (ALL CAPS, ds-label).
+- Hero card (navy achtergrond) toont: thuisclub vs uitclub, datum + tijd, statusbadge "GEPLAND".
+- Tikken op de hero card navigeert naar het wedstrijddetail-scherm (`/wedstrijd/[id]`).
+
+**Steps (geen komende wedstrijden):**
+
+2. Stel alle wedstrijden in op `status = 'gespeeld'` of verwijder ze.
+3. Herlaad het thuisscherm.
+
+**Expected result:**
+
+- De sectie "VOLGENDE WEDSTRIJD" is volledig verborgen. Geen lege staat of placeholder.
+
+**Verificatie via Supabase Studio:**
+
+`SELECT * FROM matches WHERE status = 'gepland' AND activity_id IN (SELECT id FROM activities WHERE starts_at > now());`
+→ Als leeg: hero card moet verborgen zijn.
+
+---
+
 ## S10-D — Pull-to-refresh herlaadt beide secties
 
 **Goal:** Trekken aan het scherm herlaadt de activiteiten van beide secties.
