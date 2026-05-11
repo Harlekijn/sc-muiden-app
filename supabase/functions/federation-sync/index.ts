@@ -178,18 +178,25 @@ Deno.serve(async (req) => {
     // empty body is fine — defaults to sport: 'all', triggered_by: 'cron'
   }
 
-  const sport = body.sport ?? 'all';
-  const triggeredBy = body.triggered_by ?? 'cron';
+  const rawSport = body.sport ?? 'all';
+  const triggeredBy: 'cron' | 'manual' = body.triggered_by === 'manual' ? 'manual' : 'cron';
+
+  if (rawSport !== 'voetbal' && rawSport !== 'hockey' && rawSport !== 'all') {
+    return new Response(
+      JSON.stringify({ error: 'Ongeldige sport. Gebruik "voetbal", "hockey" of "all".' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 
   const sportsToSync: Array<'voetbal' | 'hockey'> =
-    sport === 'all' ? ['voetbal', 'hockey'] : [sport];
+    rawSport === 'all' ? ['voetbal', 'hockey'] : [rawSport];
 
   for (const s of sportsToSync) {
     await syncSport(s, triggeredBy);
   }
 
   return new Response(
-    JSON.stringify({ ok: true, sport, triggered_by: triggeredBy }),
+    JSON.stringify({ ok: true, sport: rawSport, triggered_by: triggeredBy }),
     { status: 200, headers: { 'Content-Type': 'application/json' } }
   );
 });

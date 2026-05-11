@@ -27,7 +27,7 @@ export function SyncTriggerButton({ sport, onSuccess }: SyncTriggerButtonProps) 
 
       onSuccess(json.lastSyncAt ?? new Date().toISOString());
     } catch {
-      setError('Synchronisatie mislukt. Controleer de verbinding en probeer het opnieuw.');
+      setError('Geen verbinding — controleer je internetverbinding en probeer opnieuw.');
     } finally {
       setLoading(false);
     }

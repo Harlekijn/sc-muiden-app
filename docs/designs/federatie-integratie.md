@@ -496,3 +496,42 @@ Voeg toe: S10-E — "Volgende wedstrijd hero card zichtbaar op thuisscherm" (ver
 1. **KNVB/KNHB API-authenticatie:** API-sleutels zijn nog niet aangevraagd. Mock-clients worden gebouwd zodat de rest van het systeem volledig functioneert. Zodra sleutels beschikbaar zijn, worden `KNVB_API_KEY` en `KNHB_API_KEY` als Supabase secrets toegevoegd en worden de mock-guards in de clients verwijderd.
 2. **KNVB/KNHB werkelijke API-structuur:** De Zod-schemas zijn gebaseerd op aannames over de API-structuur. Bij ontvangst van API-documentatie moeten de schemas en clients worden gevalideerd en bijgesteld.
 3. **Cron in productie:** Voor local dev wordt de cron handmatig getriggerd. Voor productie wordt de cron geconfigureerd via het Supabase dashboard (pg_cron of Supabase Scheduled Functions). Dit is een post-deploy configuratiestap.
+
+---
+
+## SRE Notes
+
+**Datum:** 11-05-2026
+
+### Logging
+- Edge function `federation-sync` logt uitsluitend: sport, team_id (UUID), fouttype, record counts. Geen PII. ✓
+- Supabase ingebouwde audit log is de primaire data-access log. ✓
+- Start- en eindtijd per sync worden opgeslagen in `sync_log` (started_at, finished_at). ✓
+
+### Monitoring
+- Indexes geverifieerd: `idx_matches_team_id`, `idx_matches_fed_match_id`, `idx_matches_status` (migratie 1). ✓
+- Index geverifieerd: `idx_sync_log_sport_started` op `(sport, started_at DESC)` (migratie 2). ✓
+- `useMatch` en `useNextMatch`: `staleTime: 5 * 60 * 1000` ingesteld. ✓
+- RLS `matches_select_authenticated` gebruikt `auth.role() = 'authenticated'` (geen volledige tabelscan; intentioneel voor publieke clubdata). ✓
+- RLS `sync_log_select_admin` gebruikt `auth.uid()` subquery. ✓
+
+### Foutafhandeling
+- Alle foutmeldingen in het Nederlands geverifieerd. ✓
+- Netwerk catch-fout in `SyncTriggerButton` aangepast naar standaard: "Geen verbinding — controleer je internetverbinding en probeer opnieuw." (was: "Synchronisatie mislukt. Controleer de verbinding..."). 1 probleem opgelost.
+- Knop `disabled={loading}` tijdens in-flight request. ✓
+- Succesfeedback pas na serverbevestiging (`res.ok && json.ok`). ✓
+
+### Beveiliging
+- RLS: geen `USING (true)` op tabellen met persoonsgegevens. ✓
+- `SUPABASE_SECRET_KEY` uitsluitend in `apps/web/lib/supabase-admin.ts` (server-side). ✓
+- KNVB/KNHB API-sleutels uitsluitend via `Deno.env.get()` in edge function. ✓
+- API route: sport-parameter gevalideerd tegen `ALLOWED_SPORTS` whitelist vóór DB-toegang. ✓
+- Edge function: runtime sport-validatie toegevoegd (retourneert 400 bij ongeldige sport). 1 probleem opgelost.
+
+### Bundle
+Geen nieuwe packages toegevoegd aan `apps/mobile/package.json`.
+
+### Openstaande punten
+- KNVB/KNHB API-sleutels nog niet aangevraagd; mock-implementaties actief. Actie vereist voor productie.
+- Cron-configuratie in Supabase dashboard moet nog worden ingesteld voor productie (post-deploy stap).
+- Zod-schemas valideren op aangenomen API-structuur; moeten worden geverifieerd zodra officiële API-documentatie beschikbaar is.
