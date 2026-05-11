@@ -52,3 +52,6 @@ verify_jwt = false
 
 [functions.push-trigger]
 verify_jwt = false
+
+[functions.federation-sync]
+verify_jwt = false

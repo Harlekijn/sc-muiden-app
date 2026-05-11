@@ -7,15 +7,17 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Calendar } from 'lucide-react-native';
 import { colors, spacing, formatDutchDate } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
 import { AppHeader } from '../../components/ui/AppHeader';
 import { ActivityCard } from '../../components/agenda/ActivityCard';
 import { useUpcomingActivities } from '../../hooks/useUpcomingActivities';
+import { useNextMatch } from '../../hooks/useNextMatch';
 import { useFamilyMembers } from '../../hooks/useFamilyMembers';
 import { useAuthStore } from '../../stores/authStore';
 import { useAgendaStore } from '../../stores/agendaStore';
-import type { ActivityWithDetails } from '@sc-muiden/shared';
+import type { ActivityWithDetails, MatchWithActivity } from '@sc-muiden/shared';
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -57,6 +59,45 @@ function FamilyAvatarChip({ initials, name, active, onPress }: FamilyAvatarChipP
   );
 }
 
+const DUTCH_DAYS = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
+const DUTCH_MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  return `${DUTCH_DAYS[d.getDay()]} ${d.getDate()} ${DUTCH_MONTHS[d.getMonth()]} · ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+}
+
+interface NextMatchHeroProps {
+  match: MatchWithActivity;
+  onPress: () => void;
+}
+
+function NextMatchHero({ match, onPress }: NextMatchHeroProps) {
+  return (
+    <Pressable style={styles.heroCard} onPress={onPress} accessibilityRole="button">
+      <View style={styles.heroTopRow}>
+        {match.sport && (
+          <View style={styles.heroBadgeSport}>
+            <Text variant="label" style={styles.heroBadgeSportText}>
+              {match.sport === 'voetbal' ? 'Voetbal' : 'Hockey'}
+            </Text>
+          </View>
+        )}
+        <View style={styles.heroBadgeStatus}>
+          <Text variant="label" style={styles.heroBadgeStatusText}>GEPLAND</Text>
+        </View>
+      </View>
+      <Text variant="h4" style={styles.heroTeams} numberOfLines={2}>
+        {match.homeTeam} – {match.awayTeam}
+      </Text>
+      <View style={styles.heroDateRow}>
+        <Calendar size={14} color="rgba(255,255,255,0.6)" />
+        <Text variant="body" style={styles.heroDate}>{shortDate(match.startsAt)}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
 interface ActivitySectionProps {
   label: string;
   activities: ActivityWithDetails[];
@@ -93,6 +134,7 @@ export default function HomeScreen() {
   const { familyFilter, setFamilyFilter } = useAgendaStore();
   const { data: familyMembers = [] } = useFamilyMembers();
   const { data, isLoading, refetch } = useUpcomingActivities();
+  const { data: nextMatch } = useNextMatch();
 
   if (!profile) return null;
 
@@ -150,6 +192,16 @@ export default function HomeScreen() {
                 />
               ))}
             </ScrollView>
+          </View>
+        )}
+
+        {nextMatch && (
+          <View style={styles.heroSection}>
+            <Text style={styles.sectionLabel}>VOLGENDE WEDSTRIJD</Text>
+            <NextMatchHero
+              match={nextMatch}
+              onPress={() => router.push(`/wedstrijd/${nextMatch.activityId}`)}
+            />
           </View>
         )}
 
@@ -287,5 +339,59 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginHorizontal: spacing[4],
     marginTop: spacing[3],
+  },
+  heroSection: {
+    marginTop: spacing[4],
+  },
+  heroCard: {
+    marginHorizontal: spacing[4],
+    backgroundColor: colors.navy,
+    borderRadius: 10,
+    padding: spacing[4],
+    shadowColor: colors.navy,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
+    elevation: 5,
+    gap: spacing[2],
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  heroBadgeSport: {
+    backgroundColor: colors.yellow,
+    borderRadius: 999,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 2,
+  },
+  heroBadgeSportText: {
+    color: colors.navy,
+    fontSize: 11,
+  },
+  heroBadgeStatus: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 999,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 2,
+  },
+  heroBadgeStatusText: {
+    color: colors.white,
+    fontSize: 11,
+  },
+  heroTeams: {
+    color: colors.white,
+    marginTop: spacing[1],
+  },
+  heroDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+    marginTop: spacing[1],
+  },
+  heroDate: {
+    color: colors.white75,
+    fontSize: 13,
   },
 });

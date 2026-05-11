@@ -1,6 +1,6 @@
 import { Pressable, View, StyleSheet } from 'react-native';
 import { ChevronRight, Clock } from 'lucide-react-native';
-import { colors, radius, spacing, formatActivityType, getActivityTypeColor } from '@sc-muiden/shared';
+import { colors, radius, spacing, formatActivityType, getActivityTypeColor, formatScore } from '@sc-muiden/shared';
 import type { ActivityWithDetails } from '@sc-muiden/shared';
 import { Text } from '../ui/Text';
 import { sportLabel } from '@sc-muiden/shared';
@@ -19,6 +19,9 @@ function formatTime(iso: string): string {
 
 export function ActivityCard({ activity, onPress }: ActivityCardProps) {
   const typeColor = getActivityTypeColor(activity.type);
+  const match = activity.match;
+  const isGespeeld = match?.status === 'gespeeld';
+  const hasScore = isGespeeld && match?.score_home != null && match?.score_away != null;
 
   return (
     <Pressable style={styles.card} onPress={onPress} accessibilityRole="button">
@@ -28,7 +31,13 @@ export function ActivityCard({ activity, onPress }: ActivityCardProps) {
           <Text variant="h4" style={styles.title} numberOfLines={1}>
             {activity.title}
           </Text>
-          <ChevronRight size={20} color={colors.text2} />
+          {hasScore ? (
+            <Text variant="label" style={styles.score}>
+              {formatScore(match!.score_home!, match!.score_away!)}
+            </Text>
+          ) : (
+            <ChevronRight size={20} color={colors.text2} />
+          )}
         </View>
         <View style={styles.timeRow}>
           <Clock size={14} color={colors.text2} />
@@ -114,5 +123,9 @@ const styles = StyleSheet.create({
   sportBadgeText: {
     fontSize: 11,
     color: colors.white,
+  },
+  score: {
+    color: colors.text2,
+    fontSize: 13,
   },
 });

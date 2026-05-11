@@ -6,6 +6,7 @@ export * from './schemas/activity.schema';
 export * from './schemas/member.schema';
 export * from './schemas/announcement.schema';
 export * from './schemas/notificationPreferences.schema';
+export * from './schemas/federation.schema';
 export * from './utils/activity';
 export * from './utils/date';
 export * from './utils/score';

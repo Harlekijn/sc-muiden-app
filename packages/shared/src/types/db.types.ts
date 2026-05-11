@@ -261,6 +261,7 @@ export type Database = {
           score_away: number | null
           score_home: number | null
           status: string
+          team_id: string | null
           updated_at: string
         }
         Insert: {
@@ -276,6 +277,7 @@ export type Database = {
           score_away?: number | null
           score_home?: number | null
           status?: string
+          team_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -291,6 +293,7 @@ export type Database = {
           score_away?: number | null
           score_home?: number | null
           status?: string
+          team_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -299,6 +302,13 @@ export type Database = {
             columns: ["activity_id"]
             isOneToOne: false
             referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
@@ -590,6 +600,7 @@ export type Database = {
           records_updated: number | null
           sport: string
           started_at: string
+          triggered_by: string
         }
         Insert: {
           created_at?: string
@@ -599,6 +610,7 @@ export type Database = {
           records_updated?: number | null
           sport: string
           started_at?: string
+          triggered_by?: string
         }
         Update: {
           created_at?: string
@@ -608,6 +620,7 @@ export type Database = {
           records_updated?: number | null
           sport?: string
           started_at?: string
+          triggered_by?: string
         }
         Relationships: []
       }
@@ -734,6 +747,7 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      member_email_exists: { Args: { p_email: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
@@ -1419,3 +1433,4 @@ export const Constants = {
     },
   },
 } as const
+

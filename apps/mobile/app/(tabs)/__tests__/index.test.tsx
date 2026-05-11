@@ -53,6 +53,10 @@ jest.mock('../../../hooks/useUpcomingActivities', () => ({
   }),
 }));
 
+jest.mock('../../../hooks/useNextMatch', () => ({
+  useNextMatch: () => ({ data: null }),
+}));
+
 import HomeScreen from '../index';
 
 // S10-A — "Vandaag"-sectie toont activiteiten van vandaag
