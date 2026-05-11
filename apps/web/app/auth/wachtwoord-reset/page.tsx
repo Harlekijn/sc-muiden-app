@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from '../../../lib/supabase-server';
 import { NieuwWachtwoordForm } from './NieuwWachtwoordForm';
 
-function KoppelingNietGeldig() {
+export function KoppelingNietGeldig() {
   return (
     <main style={s.main}>
       <div style={s.card}>

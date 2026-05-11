@@ -150,7 +150,7 @@ const s: Record<string, React.CSSProperties> = {
     gap: 'var(--space-4)',
   },
   errorBanner: {
-    background: '#fde8e8',
+    background: 'var(--color-error-bg)',
     borderRadius: 6,
     padding: 'var(--space-3)',
   },
