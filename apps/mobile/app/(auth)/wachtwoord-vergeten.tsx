@@ -25,7 +25,7 @@ export default function WachtwoordVergetenScreen() {
   async function onSubmit(data: ForgotPasswordInput) {
     const { error } = await supabase.auth.resetPasswordForEmail(
       data.email.toLowerCase().trim(),
-      { redirectTo: 'scmuiden://auth/callback' }
+      { redirectTo: process.env.EXPO_PUBLIC_RESET_REDIRECT_URL }
     );
 
     if (error) {

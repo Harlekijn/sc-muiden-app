@@ -398,6 +398,7 @@ export type Database = {
           email: string
           id: string
           member_id: string | null
+          password_changed_at: string | null
           phone: string | null
           role: string
           sport: string[]
@@ -411,6 +412,7 @@ export type Database = {
           email: string
           id: string
           member_id?: string | null
+          password_changed_at?: string | null
           phone?: string | null
           role?: string
           sport?: string[]
@@ -424,6 +426,7 @@ export type Database = {
           email?: string
           id?: string
           member_id?: string | null
+          password_changed_at?: string | null
           phone?: string | null
           role?: string
           sport?: string[]
