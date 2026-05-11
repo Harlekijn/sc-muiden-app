@@ -1,6 +1,15 @@
 # /design — Feature Design
 
-Perform a deep design for a SC Muiden feature: functional, UI/graphical, and technical. Produces a design artifact at `docs/designs/<feature-slug>.md` and creates or updates scenario files in `docs/scenarios/`.
+This command guides claude code through a structured brainstorming session that transforms a rough idea or problem into a complete set of functional, UI/graphical, and technical designs. Produces a design artifact at `docs/designs/<feature-slug>.md` and creates or updates scenario files in `docs/scenarios/`.
+
+This command exists to prevent:
+
+- premature implementation
+- hidden assumptions
+- misaligned solutions
+- fragile systems
+
+You are **not allowed** to implement, code, or modify behavior while this skill is active.
 
 ## Usage
 
@@ -8,15 +17,18 @@ Perform a deep design for a SC Muiden feature: functional, UI/graphical, and tec
 /design <feature-slug>
 /design wedstrijd-herinnering
 /design bardienst-bevestiging
+/design <feature description>
 ```
 
 ---
 
 ## Instructions
 
-The feature slug is: **$ARGUMENTS**
+The input is: **$ARGUMENTS**
 
-If $ARGUMENTS is empty, ask: "Welke feature wil je ontwerpen? Geef een kebab-case slug (bijv. `push-notificaties`)." Wait for the answer before continuing.
+If $ARGUMENTS looks like a kebab-case slug (e.g. `wedstrijd-herinnering`), use it as the feature slug directly. If it is a free-form description, derive a concise kebab-case slug from it and confirm it with the user before proceeding.
+
+If $ARGUMENTS is empty, ask: "Welke feature wil je ontwerpen? Geef een high-level beschrijving van de feature (bijv. `'gebruikers kunnen wedstrijdherinneringen instellen'`)." Wait for the answer before continuing.
 
 ---
 
@@ -41,103 +53,73 @@ After reading, determine the next available scenario number by finding all files
 
 **Critical rule: Ask exactly ONE question at a time. Wait for the user's answer. Do not proceed to the next question until you have received the answer. Do not show all questions at once.**
 
-For each question, present the options clearly and allow a free-text answer if none of the options fit.
+Ask questions **one category at a time**, not all at once. Wait for the user's response before proceeding to the next category. Adapt follow-up questions based on their answers.
+
+Your goal here is **shared clarity**, not speed.
+
+**Rules:**
+
+- Ask **one question per message**
+- Prefer **multiple-choice questions** when possible
+- Use open-ended questions only when necessary
+- If a topic needs depth, split it into multiple questions
+
+Focus on understanding:
+
+- purpose
+- target users
+- constraints
+- success criteria
+- explicit non-goals
+
+#### Question Categories (in order):
+
+**1. Problem & Goal**
+
+- What problem does this solve for the user?
+- Who specifically experiences this problem? (user persona)
+- What does success look like — how would you know this feature "worked"?
+
+**2. Scope & Boundaries**
+
+- What is explicitly IN scope for this feature?
+- What should this NOT do? (anti-goals)
+- Is this a new feature, an enhancement to something existing, or a rethink of something broken?
+- Sport scope: voetbal, hockey, beide, of sport-onafhankelijk?
+
+**3. User Interaction**
+
+- How does the user trigger or interact with this?
+- Is there a UI involved, or is this backend/API/automated?
+- What does the happy path look like, step by step?
+
+**4. Edge Cases & Constraints**
+
+- What could go wrong or be misused?
+- Are there performance, security, or compliance constraints?
+- What happens if the user does something unexpected?
+
+**5. Dependencies & Integration**
+
+- Does this touch existing systems, APIs, or data models? Existing tables: `profiles`, `members`, `user_family_members`, `family_link_requests`, `teams`, `team_members`, `activities`, `matches`, `bar_assignments`, `announcements`, `notifications`, `push_tokens`
+- Are there third-party services involved?
+- What needs to exist before this can be built?
+
+**6. Priority & Phasing**
+
+- What's the minimum version of this that would still be valuable (MVP)?
+- What can be deferred to a later phase?
+- Is there a deadline or urgency?
 
 ---
 
-**Question 1 — Primary user**
+After all categories are covered, summarize back to the user:
 
-Ask this question and wait for the answer:
+- Restate the core problem in one sentence
+- List the key decisions made during the session
+- Flag any open questions or areas of ambiguity
 
-"**Vraag 1/7 — Primaire gebruiker**
-
-Wie is de primaire gebruiker van `<feature-slug>`?
-
-**A)** Lid / ouder — mobiele app
-**B)** Beheerder / commissielid — web CMS
-**C)** Beide (mobiel + CMS)"
-
-Wait for answer. Then ask Question 2.
-
----
-
-**Question 2 — Core action**
-
-"**Vraag 2/7 — Kern-actie**
-
-Wat is de kern-actie die de gebruiker uitvoert? Beschrijf in één zin wat de gebruiker wil bereiken met deze feature."
-
-Wait for answer. Then ask Question 3.
-
----
-
-**Question 3 — Trigger**
-
-"**Vraag 3/7 — Activering**
-
-Hoe wordt de feature geactiveerd?
-
-**A)** Gebruiker initieert — tikt op knop, vult formulier in
-**B)** Systeem initieert — push notificatie, achtergrondtaak, cron-job
-**C)** Admin initieert vanuit web CMS"
-
-Wait for answer. Then ask Question 4.
-
----
-
-**Question 4 — Data scope**
-
-"**Vraag 4/7 — Betrokken data**
-
-Welke bestaande tabellen zijn betrokken? Noem de namen, of zeg 'nieuw' als er nieuwe tabellen nodig zijn.
-
-Bestaande tabellen: `profiles`, `members`, `user_family_members`, `family_link_requests`, `teams`, `team_members`, `activities`, `matches`, `bar_assignments`, `announcements`, `notifications`, `push_tokens`"
-
-Wait for answer. Then ask Question 5.
-
----
-
-**Question 5 — Sport scope**
-
-"**Vraag 5/7 — Sport**
-
-Is deze feature sport-specifiek?
-
-**A)** Voetbal én hockey (beide sporten)
-**B)** Alleen voetbal
-**C)** Alleen hockey
-**D)** Sport-onafhankelijk"
-
-Wait for answer. Then ask Question 6.
-
----
-
-**Question 6 — Personal data**
-
-"**Vraag 6/7 — Persoonsgegevens**
-
-Verwerkt deze feature bijzondere of gevoelige persoonsgegevens?
-
-**A)** Ja — data van kinderen (leeftijd < 16 jaar)
-**B)** Ja — locatiedata of aanwezigheidsregistratie
-**C)** Ja — andere gevoelige data (beschrijf welke in je antwoord)
-**D)** Nee — geen bijzondere persoonsgegevens"
-
-Wait for answer. Then ask Question 7.
-
----
-
-**Question 7 — Edge cases**
-
-"**Vraag 7/7 — Foutgevallen en edge cases**
-
-Wat zijn de 2–3 belangrijkste foutgevallen of randgevallen voor deze feature? Voorbeelden: 'geen internetverbinding', 'admin keurt af', 'dubbele inzending', 'lege lijst'.
-
-Beschrijf ze kort."
-
-Wait for answer. Once you have all 7 answers, proceed to Step 3.
-
----
+Ask: _"Does this capture everything? Anything to change before I generate the requirements?"_
 
 ### Step 3 — Functional design
 

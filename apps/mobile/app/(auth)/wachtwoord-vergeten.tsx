@@ -25,11 +25,16 @@ export default function WachtwoordVergetenScreen() {
   async function onSubmit(data: ForgotPasswordInput) {
     const { error } = await supabase.auth.resetPasswordForEmail(
       data.email.toLowerCase().trim(),
-      { redirectTo: 'scmuiden://auth/callback' }
+      { redirectTo: process.env.EXPO_PUBLIC_RESET_REDIRECT_URL }
     );
 
     if (error) {
-      setError('root', { message: 'Er is een fout opgetreden. Probeer het opnieuw.' });
+      const isNetworkError = error.message?.toLowerCase().includes('fetch');
+      setError('root', {
+        message: isNetworkError
+          ? 'Geen verbinding — controleer je internetverbinding en probeer opnieuw.'
+          : 'Er is een fout opgetreden. Probeer het opnieuw.',
+      });
       return;
     }
 

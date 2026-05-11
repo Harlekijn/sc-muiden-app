@@ -157,6 +157,49 @@ Covers login, registration, password recovery, and logout on the mobile app.
 
 ---
 
+## S01-J — Nieuw wachtwoord instellen via webpagina (vervolg op S01-G)
+
+**Doel:** Een gebruiker die de herstelmail heeft ontvangen, kan via de webpagina een nieuw wachtwoord instellen.
+
+**Vereisten:** S01-G doorlopen; reset-e-mail staat in Inbucket.
+
+**Stappen:**
+
+1. Open Inbucket op http://127.0.0.1:54324.
+2. Open de inbox voor `e2e-lid@e2e.scmuiden.test`.
+3. Open de reset-e-mail en klik op de herstelkoppeling.
+4. De browser navigeert naar `http://localhost:3000/auth/wachtwoord-reset?code=xxx`.
+5. Het formulier "Nieuw wachtwoord instellen" verschijnt.
+6. Vul in: Nieuw wachtwoord `NieuwWachtwoord123!`, Bevestiging `NieuwWachtwoord123!`.
+7. Klik op "Wachtwoord opslaan".
+
+**Verwacht resultaat:**
+
+- De succesmelding "Je wachtwoord is gewijzigd. Je kunt nu inloggen in de app of het CMS." verschijnt.
+- Het formulier is niet meer zichtbaar.
+
+**Verificatie via Supabase Studio:**
+
+- Navigeer naar Table Editor → `profiles`.
+- De rij voor `e2e-lid@e2e.scmuiden.test` heeft een gevulde `password_changed_at`.
+
+---
+
+## S01-K — Vervallen herstelkoppeling
+
+**Doel:** Een verlopen of al gebruikte koppeling toont een foutmelding, zonder formulier.
+
+**Stappen:**
+
+1. Navigeer handmatig naar `http://localhost:3000/auth/wachtwoord-reset` (zonder `?code=` parameter).
+
+**Verwacht resultaat:**
+
+- De pagina toont "Deze koppeling is niet meer geldig."
+- Er is geen wachtwoordformulier zichtbaar.
+
+---
+
 ## S01-H — Logout
 
 **Goal:** A logged-in user can sign out and is returned to the login screen.

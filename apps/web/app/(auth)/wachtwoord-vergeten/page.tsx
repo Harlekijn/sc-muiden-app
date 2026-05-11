@@ -1,40 +1,57 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
-import { loginSchema, type LoginInput } from '@sc-muiden/shared';
+import { forgotPasswordSchema, type ForgotPasswordInput } from '@sc-muiden/shared';
 import { createSupabaseBrowserClient } from '../../../lib/supabase-client';
 
-export default function LoginPage() {
-  const router = useRouter();
+export default function WachtwoordVergetenPage() {
+  const [success, setSuccess] = useState(false);
 
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<ForgotPasswordInput>({
+    resolver: zodResolver(forgotPasswordSchema),
   });
 
-  async function onSubmit(data: LoginInput) {
+  async function onSubmit(data: ForgotPasswordInput) {
     const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email.toLowerCase().trim(),
-      password: data.password,
-    });
+    const redirectTo = `${window.location.origin}/auth/wachtwoord-reset`;
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      data.email.toLowerCase().trim(),
+      { redirectTo }
+    );
 
     if (error) {
-      const message =
-        error.message === 'Invalid login credentials'
-          ? 'E-mailadres of wachtwoord onjuist'
-          : 'Er is een fout opgetreden. Probeer het opnieuw.';
-      setError('root', { message });
+      const isNetworkError = error.message?.toLowerCase().includes('fetch');
+      setError('root', {
+        message: isNetworkError
+          ? 'Geen verbinding — controleer je internetverbinding en probeer opnieuw.'
+          : 'Er is een fout opgetreden. Probeer het opnieuw.',
+      });
       return;
     }
 
-    router.push('/dashboard');
+    setSuccess(true);
+  }
+
+  if (success) {
+    return (
+      <main style={s.main}>
+        <div style={s.card}>
+          <h1 style={s.title}>SC Muiden</h1>
+          <h2 style={s.sectionTitle}>Controleer je e-mail</h2>
+          <p style={s.body}>
+            Als je e-mailadres bekend is, ontvang je een herstelkoppeling.
+          </p>
+          <a href="/login" style={s.backLink}>Terug naar inloggen</a>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -42,6 +59,10 @@ export default function LoginPage() {
       <div style={s.card}>
         <h1 style={s.title}>SC Muiden</h1>
         <p style={s.subtitle}>Beheeromgeving</p>
+        <h2 style={s.sectionTitle}>Wachtwoord vergeten</h2>
+        <p style={s.description}>
+          Voer je e-mailadres in. We sturen je een koppeling om je wachtwoord te herstellen.
+        </p>
 
         <form onSubmit={handleSubmit(onSubmit)} style={s.form} noValidate>
           {errors.root && (
@@ -62,26 +83,12 @@ export default function LoginPage() {
             {errors.email && <span style={s.error}>{errors.email.message}</span>}
           </div>
 
-          <div style={s.field}>
-            <label style={s.label} htmlFor="password">Wachtwoord</label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              style={{ ...s.input, ...(errors.password ? s.inputError : {}) }}
-              {...register('password')}
-            />
-            {errors.password && <span style={s.error}>{errors.password.message}</span>}
-          </div>
-
           <button type="submit" disabled={isSubmitting} style={s.button}>
-            {isSubmitting ? 'Bezig...' : 'Inloggen'}
+            {isSubmitting ? 'Bezig...' : 'Herstelkoppeling sturen'}
           </button>
-
-          <a href="/wachtwoord-vergeten" style={s.forgotLink}>
-            Wachtwoord vergeten?
-          </a>
         </form>
+
+        <a href="/login" style={s.backLink}>Terug naar inloggen</a>
       </div>
     </main>
   );
@@ -114,13 +121,30 @@ const s: Record<string, React.CSSProperties> = {
   },
   subtitle: {
     color: 'var(--color-text-2)',
-    marginBottom: 'var(--space-6)',
+    marginBottom: 'var(--space-4)',
     fontSize: 'var(--text-base)',
+  },
+  sectionTitle: {
+    fontSize: 'var(--text-lg)',
+    fontWeight: 600,
+    color: 'var(--color-navy)',
+    marginBottom: 'var(--space-2)',
+  },
+  description: {
+    color: 'var(--color-text-2)',
+    fontSize: 'var(--text-sm)',
+    marginBottom: 'var(--space-6)',
+  },
+  body: {
+    color: 'var(--color-text-2)',
+    fontSize: 'var(--text-base)',
+    marginBottom: 'var(--space-6)',
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
     gap: 'var(--space-4)',
+    marginBottom: 'var(--space-4)',
   },
   errorBanner: {
     background: 'var(--color-error-bg)',
@@ -149,7 +173,6 @@ const s: Record<string, React.CSSProperties> = {
     fontFamily: 'var(--font-body)',
     color: 'var(--color-text)',
     outline: 'none',
-    transition: 'border-color var(--transition-fast)',
   },
   inputError: {
     borderColor: 'var(--color-error)',
@@ -169,13 +192,10 @@ const s: Record<string, React.CSSProperties> = {
     fontFamily: 'var(--font-body)',
     cursor: 'pointer',
     minHeight: 44,
-    marginTop: 'var(--space-2)',
-    opacity: 1,
-    transition: 'opacity var(--transition-fast)',
   },
-  forgotLink: {
+  backLink: {
     display: 'block',
-    marginTop: 'var(--space-3)',
+    marginTop: 'var(--space-4)',
     textAlign: 'center' as const,
     color: 'var(--color-blue)',
     fontSize: 'var(--text-sm)',

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loginSchema, registerSchema, forgotPasswordSchema } from '../schemas/auth.schema';
+import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '../schemas/auth.schema';
 
 describe('loginSchema', () => {
   it('accepts valid credentials', () => {
@@ -72,5 +72,51 @@ describe('forgotPasswordSchema', () => {
     const result = forgotPasswordSchema.safeParse({ email: 'geen-email' });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0].message).toBe('Ongeldig e-mailadres');
+  });
+});
+
+describe('resetPasswordSchema', () => {
+  const valid = {
+    password: 'NieuwWachtwoord1',
+    passwordBevestiging: 'NieuwWachtwoord1',
+  };
+
+  it('accepts valid password meeting all requirements', () => {
+    expect(resetPasswordSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it('rejects password shorter than 8 characters', () => {
+    const result = resetPasswordSchema.safeParse({ ...valid, password: 'Kort1', passwordBevestiging: 'Kort1' });
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues.find((i) => i.path.includes('password'));
+    expect(issue?.message).toBe('Wachtwoord minimaal 8 tekens');
+  });
+
+  it('rejects password without uppercase letter', () => {
+    const result = resetPasswordSchema.safeParse({ ...valid, password: 'geenhoofdletter1', passwordBevestiging: 'geenhoofdletter1' });
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues.find((i) => i.path.includes('password'));
+    expect(issue?.message).toBe('Wachtwoord moet minimaal één hoofdletter bevatten');
+  });
+
+  it('rejects password without digit', () => {
+    const result = resetPasswordSchema.safeParse({ ...valid, password: 'GeenCijferHier', passwordBevestiging: 'GeenCijferHier' });
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues.find((i) => i.path.includes('password'));
+    expect(issue?.message).toBe('Wachtwoord moet minimaal één cijfer bevatten');
+  });
+
+  it('rejects mismatching passwords', () => {
+    const result = resetPasswordSchema.safeParse({ ...valid, passwordBevestiging: 'AndersWachtwoord1' });
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues.find((i) => i.path.includes('passwordBevestiging'));
+    expect(issue?.message).toBe('Wachtwoorden komen niet overeen');
+  });
+
+  it('rejects empty confirmation field', () => {
+    const result = resetPasswordSchema.safeParse({ ...valid, passwordBevestiging: '' });
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues.find((i) => i.path.includes('passwordBevestiging'));
+    expect(issue).toBeDefined();
   });
 });

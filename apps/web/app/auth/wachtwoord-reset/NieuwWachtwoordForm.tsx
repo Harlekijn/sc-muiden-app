@@ -1,47 +1,68 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
-import { loginSchema, type LoginInput } from '@sc-muiden/shared';
+import { resetPasswordSchema, type ResetPasswordInput } from '@sc-muiden/shared';
 import { createSupabaseBrowserClient } from '../../../lib/supabase-client';
 
-export default function LoginPage() {
-  const router = useRouter();
+export function NieuwWachtwoordForm() {
+  const [success, setSuccess] = useState(false);
 
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<ResetPasswordInput>({
+    resolver: zodResolver(resetPasswordSchema),
   });
 
-  async function onSubmit(data: LoginInput) {
+  async function onSubmit(data: ResetPasswordInput) {
     const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email.toLowerCase().trim(),
+    const { data: { user }, error: updateError } = await supabase.auth.updateUser({
       password: data.password,
     });
 
-    if (error) {
-      const message =
-        error.message === 'Invalid login credentials'
-          ? 'E-mailadres of wachtwoord onjuist'
-          : 'Er is een fout opgetreden. Probeer het opnieuw.';
-      setError('root', { message });
+    if (updateError) {
+      const isNetworkError = updateError.message?.toLowerCase().includes('fetch');
+      setError('root', {
+        message: isNetworkError
+          ? 'Geen verbinding — controleer je internetverbinding en probeer opnieuw.'
+          : 'Er is een fout opgetreden. Probeer het opnieuw.',
+      });
       return;
     }
 
-    router.push('/dashboard');
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({ password_changed_at: new Date().toISOString() })
+        .eq('id', user.id);
+    }
+
+    setSuccess(true);
+  }
+
+  if (success) {
+    return (
+      <main style={s.main}>
+        <div style={s.card}>
+          <h1 style={s.title}>SC Muiden</h1>
+          <h2 style={s.sectionTitle}>Wachtwoord gewijzigd</h2>
+          <p style={s.body}>
+            Je wachtwoord is gewijzigd. Je kunt nu inloggen in de app of het CMS.
+          </p>
+        </div>
+      </main>
+    );
   }
 
   return (
     <main style={s.main}>
       <div style={s.card}>
         <h1 style={s.title}>SC Muiden</h1>
-        <p style={s.subtitle}>Beheeromgeving</p>
+        <h2 style={s.sectionTitle}>Nieuw wachtwoord instellen</h2>
 
         <form onSubmit={handleSubmit(onSubmit)} style={s.form} noValidate>
           {errors.root && (
@@ -51,36 +72,37 @@ export default function LoginPage() {
           )}
 
           <div style={s.field}>
-            <label style={s.label} htmlFor="email">E-mailadres</label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              style={{ ...s.input, ...(errors.email ? s.inputError : {}) }}
-              {...register('email')}
-            />
-            {errors.email && <span style={s.error}>{errors.email.message}</span>}
-          </div>
-
-          <div style={s.field}>
-            <label style={s.label} htmlFor="password">Wachtwoord</label>
+            <label style={s.label} htmlFor="password">Nieuw wachtwoord</label>
             <input
               id="password"
               type="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               style={{ ...s.input, ...(errors.password ? s.inputError : {}) }}
               {...register('password')}
             />
-            {errors.password && <span style={s.error}>{errors.password.message}</span>}
+            {errors.password
+              ? <span style={s.error}>{errors.password.message}</span>
+              : <span style={s.hint}>Minimaal 8 tekens, 1 hoofdletter, 1 cijfer</span>
+            }
+          </div>
+
+          <div style={s.field}>
+            <label style={s.label} htmlFor="passwordBevestiging">Wachtwoord bevestigen</label>
+            <input
+              id="passwordBevestiging"
+              type="password"
+              autoComplete="new-password"
+              style={{ ...s.input, ...(errors.passwordBevestiging ? s.inputError : {}) }}
+              {...register('passwordBevestiging')}
+            />
+            {errors.passwordBevestiging && (
+              <span style={s.error}>{errors.passwordBevestiging.message}</span>
+            )}
           </div>
 
           <button type="submit" disabled={isSubmitting} style={s.button}>
-            {isSubmitting ? 'Bezig...' : 'Inloggen'}
+            {isSubmitting ? 'Bezig...' : 'Wachtwoord opslaan'}
           </button>
-
-          <a href="/wachtwoord-vergeten" style={s.forgotLink}>
-            Wachtwoord vergeten?
-          </a>
         </form>
       </div>
     </main>
@@ -112,9 +134,14 @@ const s: Record<string, React.CSSProperties> = {
     marginBottom: 'var(--space-1)',
     letterSpacing: '0.02em',
   },
-  subtitle: {
-    color: 'var(--color-text-2)',
+  sectionTitle: {
+    fontSize: 'var(--text-lg)',
+    fontWeight: 600,
+    color: 'var(--color-navy)',
     marginBottom: 'var(--space-6)',
+  },
+  body: {
+    color: 'var(--color-text-2)',
     fontSize: 'var(--text-base)',
   },
   form: {
@@ -149,10 +176,13 @@ const s: Record<string, React.CSSProperties> = {
     fontFamily: 'var(--font-body)',
     color: 'var(--color-text)',
     outline: 'none',
-    transition: 'border-color var(--transition-fast)',
   },
   inputError: {
     borderColor: 'var(--color-error)',
+  },
+  hint: {
+    fontSize: 'var(--text-xs)',
+    color: 'var(--color-text-2)',
   },
   error: {
     fontSize: 'var(--text-xs)',
@@ -169,16 +199,5 @@ const s: Record<string, React.CSSProperties> = {
     fontFamily: 'var(--font-body)',
     cursor: 'pointer',
     minHeight: 44,
-    marginTop: 'var(--space-2)',
-    opacity: 1,
-    transition: 'opacity var(--transition-fast)',
-  },
-  forgotLink: {
-    display: 'block',
-    marginTop: 'var(--space-3)',
-    textAlign: 'center' as const,
-    color: 'var(--color-blue)',
-    fontSize: 'var(--text-sm)',
-    textDecoration: 'none',
   },
 };
