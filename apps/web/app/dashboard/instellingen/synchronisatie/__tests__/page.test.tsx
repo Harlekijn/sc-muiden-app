@@ -34,6 +34,7 @@ describe('SynchronisatiePage', () => {
     expect(neverSyncedTexts.length).toBe(2);
   });
 
+  // S11-C — Handmatige sync via CMS — API onbereikbaar
   it('toont foutbanner bij mislukte sync', async () => {
     (fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
@@ -49,6 +50,7 @@ describe('SynchronisatiePage', () => {
     });
   });
 
+  // S11-B — Handmatige sync via CMS — succesvol
   it('toont geen foutbanner bij succesvolle sync', async () => {
     (fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,

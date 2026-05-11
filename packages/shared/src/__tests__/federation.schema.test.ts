@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { KnvbMatchSchema, KnhbMatchSchema, KnvbMatchListSchema } from '../schemas/federation.schema';
 
+// S11-A — Cron sync verwerkt wedstrijden (mock): schema-validatie is de eerste verwerkingsstap
 describe('KnvbMatchSchema', () => {
   const valid = {
     id: 'knvb-001',
