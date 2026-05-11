@@ -29,7 +29,12 @@ export default function WachtwoordVergetenScreen() {
     );
 
     if (error) {
-      setError('root', { message: 'Er is een fout opgetreden. Probeer het opnieuw.' });
+      const isNetworkError = error.message?.toLowerCase().includes('fetch');
+      setError('root', {
+        message: isNetworkError
+          ? 'Geen verbinding — controleer je internetverbinding en probeer opnieuw.'
+          : 'Er is een fout opgetreden. Probeer het opnieuw.',
+      });
       return;
     }
 

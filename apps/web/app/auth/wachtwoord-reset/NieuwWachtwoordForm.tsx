@@ -25,7 +25,12 @@ export function NieuwWachtwoordForm() {
     });
 
     if (updateError) {
-      setError('root', { message: 'Er is een fout opgetreden. Probeer het opnieuw.' });
+      const isNetworkError = updateError.message?.toLowerCase().includes('fetch');
+      setError('root', {
+        message: isNetworkError
+          ? 'Geen verbinding — controleer je internetverbinding en probeer opnieuw.'
+          : 'Er is een fout opgetreden. Probeer het opnieuw.',
+      });
       return;
     }
 

@@ -529,3 +529,37 @@ Covers de admin-gestuurde wachtwoord-reset vanuit het CMS-dashboard.
 
 - De `registerSchema` hanteert alleen `min(8)` voor het wachtwoord — geen uppercase/cijfer-eis. Overweeg deze schema in dezelfde PR te verstrengen voor consistentie.
 - Productie-URL voor `EXPO_PUBLIC_RESET_REDIRECT_URL` is nog niet vastgesteld (CMS-domein onbekend). Configureer dit zodra het CMS wordt uitgerold.
+
+---
+
+## SRE Notes
+
+**Datum:** 11-05-2026
+
+### Logging
+- Geen edge functions of server-side API routes geïntroduceerd — geen logging-vereisten van toepassing.
+- Geen PII (e-mailadressen, namen, member IDs) in enig log-statement aangetroffen.
+
+### Monitoring
+- Geen nieuwe tabellen geïntroduceerd — alleen kolom `password_changed_at` toegevoegd aan bestaande `profiles` tabel.
+- Geen index nodig: kolom wordt enkel geschreven, niet gefilterd in queries of RLS-policies.
+- Geen nieuwe React Query hooks of edge functions.
+
+### Foutafhandeling
+- Netwerkfout-detectie toegevoegd aan alle 4 client-side formulieren: `apps/mobile/app/(auth)/wachtwoord-vergeten.tsx`, `apps/web/app/(auth)/wachtwoord-vergeten/page.tsx`, `apps/web/app/auth/wachtwoord-reset/NieuwWachtwoordForm.tsx`, `apps/web/app/dashboard/leden/page.tsx`.
+- Bij fetch-fout wordt nu getoond: "Geen verbinding — controleer je internetverbinding en probeer opnieuw."
+- Alle overige foutmeldingen zijn in het Nederlands, bevatten geen ruwe Supabase-tekst, en geven een actie aan.
+- Verzendknoppen uitgeschakeld tijdens in-flight requests (`disabled={isSubmitting}` / `loading={isSubmitting}`).
+
+### Beveiliging
+- Geen nieuwe RLS-policies geïntroduceerd; bestaande `users_update_own_profile` policy dekt de schrijftoegang tot `password_changed_at`.
+- Alle formulierinvoer gevalideerd via Zod (`forgotPasswordSchema`, `resetPasswordSchema`) vóór elke Supabase-aanroep.
+- `EXPO_PUBLIC_RESET_REDIRECT_URL` is een URL, geen secret — geen beveiligingsrisico.
+- `SUPABASE_SECRET_KEY` niet aangeraakt in deze feature.
+- Geen bestandsuploads.
+
+### Bundle
+- Geen nieuwe packages toegevoegd aan `apps/mobile/package.json` of root `package.json`.
+
+### Openstaande punten
+- Productie-URL voor `EXPO_PUBLIC_RESET_REDIRECT_URL` moet worden ingesteld bij uitrol van het CMS (CMS-domein nog onbekend).

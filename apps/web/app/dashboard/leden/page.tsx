@@ -46,7 +46,12 @@ export default function LedenPage() {
     );
 
     if (error) {
-      setError('root', { message: 'Er is een fout opgetreden. Controleer het e-mailadres en probeer opnieuw.' });
+      const isNetworkError = error.message?.toLowerCase().includes('fetch');
+      setError('root', {
+        message: isNetworkError
+          ? 'Geen verbinding — controleer je internetverbinding en probeer opnieuw.'
+          : 'Er is een fout opgetreden. Controleer het e-mailadres en probeer opnieuw.',
+      });
       return;
     }
 
