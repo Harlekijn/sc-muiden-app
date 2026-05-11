@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { KoppelingNietGeldig } from '../page';
+import { KoppelingNietGeldig } from '../_components/KoppelingNietGeldig';
 import { NieuwWachtwoordForm } from '../NieuwWachtwoordForm';
 
 jest.mock('../../../../lib/supabase-client', () => ({
