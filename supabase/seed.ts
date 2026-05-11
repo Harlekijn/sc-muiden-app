@@ -87,6 +87,7 @@ interface AdminClient {
         single(): Promise<{ data: Row | null; error: { message: string } | null }>;
       };
     };
+    upsert(rows: Row | Row[], opts?: { onConflict?: string }): Promise<{ error: { message: string } | null }>;
   };
   auth: {
     admin: {
@@ -173,6 +174,16 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
     .select('id');
 
   const link = must(linkRows, linkErr, 'seed family link');
+
+  // 4b. Create default notification preferences for the lid (all types on).
+  const { error: prefErr } = await admin
+    .from('notification_preferences')
+    .upsert(
+      { profile_id: profile.id, wedstrijd: true, bardienst: true, training: true },
+      { onConflict: 'profile_id' }
+    );
+
+  if (prefErr) throw new Error(`seed notification_preferences: ${prefErr.message}`);
 
   // ── Phase 2 ───────────────────────────────────────────────────────────────
 

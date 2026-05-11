@@ -36,6 +36,11 @@ type RawActivity = {
   }>;
 };
 
+export interface UpcomingActivitiesBySection {
+  vandaag: ActivityWithDetails[];
+  binnenkort: ActivityWithDetails[];
+}
+
 function toActivityWithDetails(raw: RawActivity): ActivityWithDetails {
   return {
     id: raw.id,
@@ -81,9 +86,17 @@ function toActivityWithDetails(raw: RawActivity): ActivityWithDetails {
   };
 }
 
-async function fetchUpcomingActivities(): Promise<ActivityWithDetails[]> {
-  const now = new Date().toISOString();
-  const cutoff = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+}
+
+async function fetchUpcomingActivities(): Promise<UpcomingActivitiesBySection> {
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  const cutoff = new Date(todayStart);
+  cutoff.setDate(cutoff.getDate() + 8);
 
   const { data, error } = await supabase
     .from('activities')
@@ -94,15 +107,20 @@ async function fetchUpcomingActivities(): Promise<ActivityWithDetails[]> {
        matches(id, home_team, away_team, score_home, score_away, status),
        bar_assignments(id, activity_id, member_id, confirmed_at, created_at, members(id, first_name, last_name))`,
     )
-    .gte('starts_at', now)
-    .lte('starts_at', cutoff)
+    .gte('starts_at', todayStart.toISOString())
+    .lt('starts_at', cutoff.toISOString())
     .is('deleted_at', null)
-    .order('starts_at', { ascending: true })
-    .limit(10);
+    .order('starts_at', { ascending: true });
 
   if (error) throw error;
 
-  return (data ?? []).map((row) => toActivityWithDetails(row as unknown as RawActivity));
+  const all = (data ?? []).map((row) => toActivityWithDetails(row as unknown as RawActivity));
+  const tomorrowISO = tomorrowStart.toISOString();
+
+  return {
+    vandaag: all.filter((a) => a.starts_at < tomorrowISO),
+    binnenkort: all.filter((a) => a.starts_at >= tomorrowISO),
+  };
 }
 
 export function useUpcomingActivities() {

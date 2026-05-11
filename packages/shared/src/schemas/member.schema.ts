@@ -20,9 +20,9 @@ export const profileSchema = z.object({
   role: userRoleSchema,
   sport: z.array(sportSchema),
   member_id: z.string().uuid().nullable(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
-  deleted_at: z.string().datetime().nullable(),
+  created_at: z.string().datetime({ offset: true }),
+  updated_at: z.string().datetime({ offset: true }),
+  deleted_at: z.string().datetime({ offset: true }).nullable(),
 });
 
 export const memberSchema = z.object({
@@ -35,9 +35,9 @@ export const memberSchema = z.object({
   sport: z.array(sportSchema),
   role: userRoleSchema,
   clubbase_id: z.string().nullable(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
-  deleted_at: z.string().datetime().nullable(),
+  created_at: z.string().datetime({ offset: true }),
+  updated_at: z.string().datetime({ offset: true }),
+  deleted_at: z.string().datetime({ offset: true }).nullable(),
 });
 
 export const familyLinkRequestSchema = z.object({
@@ -50,8 +50,8 @@ export const familyLinkRequestSchema = z.object({
   status: z.enum(['pending', 'approved', 'rejected']),
   admin_notes: z.string().nullable(),
   reviewed_by: z.string().uuid().nullable(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+  created_at: z.string().datetime({ offset: true }),
+  updated_at: z.string().datetime({ offset: true }),
 });
 
 export const createFamilyLinkRequestSchema = z.object({

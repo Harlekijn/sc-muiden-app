@@ -20,6 +20,7 @@ import { queryClient } from '../lib/queryClient';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
 import { LoadingScreen } from '../components/ui/LoadingScreen';
+import { usePushTokenRegistration } from '../hooks/usePushTokenRegistration';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -43,6 +44,8 @@ export default function RootLayout() {
 
   const { session, initialized, setSession, setProfile, setMember, setInitialized, reset } =
     useAuthStore();
+
+  usePushTokenRegistration();
   const segments = useSegments();
   const router = useRouter();
   const hasInitialized = useRef(false);

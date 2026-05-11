@@ -25,19 +25,18 @@ export default function RegisterScreen() {
   async function onSubmit(data: RegisterInput) {
     const email = data.email.toLowerCase().trim();
 
-    // Gate: verify the email exists in the members table before creating an account
-    const { data: memberMatch, error: lookupError } = await supabase
-      .from('members')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
+    // Gate: verify the email exists in the members table before creating an account.
+    // Uses an RPC function (security definer) so the anon role can check membership
+    // without exposing member data through RLS.
+    const { data: memberExists, error: lookupError } = await supabase
+      .rpc('member_email_exists', { p_email: email });
 
     if (lookupError) {
       setError('root', { message: 'Er is een fout opgetreden. Probeer het opnieuw.' });
       return;
     }
 
-    if (!memberMatch) {
+    if (!memberExists) {
       setError('root', {
         message:
           'Je e-mailadres is niet gevonden in de ledenadministratie. Neem contact op met de beheerder.',
