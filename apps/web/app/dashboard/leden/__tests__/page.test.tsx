@@ -1,50 +1,71 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import LedenPage from '../page';
+import { render, screen, fireEvent } from '@testing-library/react';
+import type { Member } from '@sc-muiden/shared';
+import { LedenClient } from '../_components/LedenClient';
 
-jest.mock('../../../../lib/supabase-client', () => ({
-  createSupabaseBrowserClient: jest.fn(),
-}));
+const mockMembers: Member[] = [
+  {
+    id: 'mem-1',
+    first_name: 'Jan',
+    last_name: 'Bakker',
+    birth_date: '2000-01-01',
+    email: 'jan@example.com',
+    phone: null,
+    sport: ['voetbal'],
+    role: 'lid',
+    clubbase_id: null,
+    created_at: '2026-01-01T00:00:00',
+    updated_at: '2026-01-01T00:00:00',
+    deleted_at: null,
+  },
+  {
+    id: 'mem-2',
+    first_name: 'Sophie',
+    last_name: 'de Vries',
+    birth_date: '1998-06-15',
+    email: 'sophie@example.com',
+    phone: null,
+    sport: ['hockey'],
+    role: 'trainer',
+    clubbase_id: null,
+    created_at: '2026-01-01T00:00:00',
+    updated_at: '2026-01-01T00:00:00',
+    deleted_at: null,
+  },
+];
 
-const { createSupabaseBrowserClient } = jest.requireMock('../../../../lib/supabase-client');
-
-function makeMock(role: string | null) {
-  return {
-    auth: {
-      getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'u1' } } }),
-      resetPasswordForEmail: jest.fn().mockResolvedValue({ error: null }),
-    },
-    from: jest.fn().mockReturnValue({
-      select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ data: role ? { role } : null }),
-        }),
-      }),
-      update: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null }),
-      }),
-    }),
-  };
-}
-
-// S08-B — Commissielid heeft geen toegang tot de reset-sectie
-describe('LedenPage rolbeveiliging', () => {
-  it('S08-B: toont de reset-sectie NIET voor een commissielid', async () => {
-    (createSupabaseBrowserClient as jest.Mock).mockReturnValue(makeMock('commissielid'));
-    render(<LedenPage />);
-
-    await waitFor(() => {
-      expect(screen.queryByText('Wachtwoord-resetmail sturen')).not.toBeInTheDocument();
-    });
+// S12-C — Leden lijst tonen
+describe('LedenClient', () => {
+  it('S12-C: toont alle leden standaard', () => {
+    render(<LedenClient members={mockMembers} />);
+    expect(screen.getByText('Jan Bakker')).toBeInTheDocument();
+    expect(screen.getByText('Sophie de Vries')).toBeInTheDocument();
   });
 
-  // S08-A — Beheerder stuurt resetmail voor een lid
-  it('S08-A: toont de reset-sectie WEL voor een beheerder', async () => {
-    (createSupabaseBrowserClient as jest.Mock).mockReturnValue(makeMock('beheerder'));
-    render(<LedenPage />);
+  it('S12-C: zoeken filtert op naam', () => {
+    render(<LedenClient members={mockMembers} />);
+    const searchInput = screen.getByPlaceholderText(/Zoek op naam/i);
+    fireEvent.change(searchInput, { target: { value: 'sophie' } });
+    expect(screen.queryByText('Jan Bakker')).not.toBeInTheDocument();
+    expect(screen.getByText('Sophie de Vries')).toBeInTheDocument();
+  });
 
-    await waitFor(() => {
-      expect(screen.getByText('Wachtwoord-resetmail sturen')).toBeInTheDocument();
-    });
+  it('S12-C: sportfilter voetbal toont alleen voetballers', () => {
+    render(<LedenClient members={mockMembers} />);
+    const voetbalBtn = screen.getByText('Voetbal');
+    fireEvent.click(voetbalBtn);
+    expect(screen.getByText('Jan Bakker')).toBeInTheDocument();
+    expect(screen.queryByText('Sophie de Vries')).not.toBeInTheDocument();
+  });
+
+  it('toont rolbadge', () => {
+    render(<LedenClient members={mockMembers} />);
+    expect(screen.getByText('Trainer')).toBeInTheDocument();
+  });
+
+  it('toont link naar detail-pagina per lid', () => {
+    render(<LedenClient members={mockMembers} />);
+    const link = screen.getByRole('link', { name: /Jan Bakker/i });
+    expect(link).toHaveAttribute('href', '/dashboard/leden/mem-1');
   });
 });
