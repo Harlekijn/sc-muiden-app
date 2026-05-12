@@ -4,12 +4,13 @@ import { chromium } from '@playwright/test';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env.test.local'), override: false });
 
-import { adminClient, E2E_BEHEERDER_EMAIL, E2E_LID_EMAIL, E2E_PASSWORD } from './helpers/admin-client';
+import { adminClient, E2E_BEHEERDER_EMAIL, E2E_LID_EMAIL, E2E_COMMISSIELID_EMAIL, E2E_PASSWORD } from './helpers/admin-client';
 import { seed } from '../../../supabase/seed';
 
 const BASE_URL = 'http://localhost:3000';
 export const BEHEERDER_STATE = path.resolve(__dirname, '.auth/beheerder.json');
 export const LID_STATE = path.resolve(__dirname, '.auth/lid.json');
+export const COMMISSIELID_STATE = path.resolve(__dirname, '.auth/commissielid.json');
 
 async function saveStorageState(email: string, outPath: string) {
   const browser = await chromium.launch();
@@ -38,6 +39,9 @@ export default async function globalSetup() {
 
   console.log('[e2e] Saving storageState for lid...');
   await saveStorageState(E2E_LID_EMAIL, LID_STATE);
+
+  console.log('[e2e] Saving storageState for commissielid...');
+  await saveStorageState(E2E_COMMISSIELID_EMAIL, COMMISSIELID_STATE);
 
   console.log('[e2e] Setup complete.\n');
 }

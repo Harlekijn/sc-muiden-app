@@ -72,6 +72,18 @@ describe('NotificatieInstellingenScreen', () => {
     });
   });
 
+  // S13-G — Aankondigingspush uitschakelen
+  it('roept mutate aan met aankondiging: false bij toggle', () => {
+    render(<NotificatieInstellingenScreen />);
+    const switches = screen.getAllByRole('switch');
+    // Vierde switch = aankondiging
+    fireEvent(switches[3], 'valueChange', false);
+    expect(mockMutate).toHaveBeenCalledWith(
+      { aankondiging: false },
+      expect.objectContaining({ onError: expect.any(Function) })
+    );
+  });
+
   it('toont skeletons tijdens laden', () => {
     mockIsLoading = true;
     render(<NotificatieInstellingenScreen />);

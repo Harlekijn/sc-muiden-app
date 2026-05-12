@@ -2,12 +2,14 @@
 // S13-B — Aankondiging publiceren (push-notificaties verstuurd)
 // S13-C — Nieuws-tab sport-filtering (DB-verificatie)
 // S13-D — Ongelezen-indicator verdwijnt na openen (DB-verificatie)
+// S13-F — Commissielid kan aankondiging aanmaken
 
 import * as path from 'path';
 import { test, expect } from '@playwright/test';
 import { adminClient } from './helpers/admin-client';
 
 const BEHEERDER_STATE = path.resolve(__dirname, '.auth/beheerder.json');
+const COMMISSIELID_STATE = path.resolve(__dirname, '.auth/commissielid.json');
 
 const CONCEPT_TITLE = 'E2E Trainingstijden gewijzigd';
 
@@ -160,6 +162,48 @@ test.describe('S13-D — Cleanup aankondiging', () => {
       .from('announcements')
       .update({ deleted_at: new Date().toISOString() })
       .eq('title', CONCEPT_TITLE);
+
+    expect(error).toBeNull();
+  });
+});
+
+const COMMISSIELID_TITLE = 'E2E Hockeynieuws commissielid';
+
+test.describe('S13-F — Commissielid kan aankondiging aanmaken', () => {
+  test.use({ storageState: COMMISSIELID_STATE });
+
+  test('commissielid maakt en publiceert een hockey-aankondiging', async ({ page }) => {
+    await page.goto('/dashboard/aankondigingen/nieuw');
+
+    await page.fill('input[placeholder="Geef de aankondiging een titel"]', COMMISSIELID_TITLE);
+    await page.click('.ProseMirror');
+    await page.keyboard.type('Nieuwe hockeytrainingen starten volgende week.');
+    await page.click('input[type="radio"][value="hockey"]');
+    await page.click('button:has-text("Nu publiceren")');
+
+    await page.waitForURL(/\/dashboard\/aankondigingen$/, { timeout: 10_000 });
+    await expect(page.getByText(COMMISSIELID_TITLE)).toBeVisible();
+    await expect(page.getByText('GEPUBLICEERD')).toBeVisible();
+  });
+
+  test('DB: commissielid-aankondiging heeft published_at en juiste sport', async () => {
+    const { data } = await adminClient
+      .from('announcements')
+      .select('published_at, sport')
+      .eq('title', COMMISSIELID_TITLE)
+      .is('deleted_at', null)
+      .single();
+
+    expect(data).not.toBeNull();
+    expect(data?.published_at).not.toBeNull();
+    expect(data?.sport).toContain('hockey');
+  });
+
+  test('cleanup: verwijder commissielid-aankondiging', async () => {
+    const { error } = await adminClient
+      .from('announcements')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('title', COMMISSIELID_TITLE);
 
     expect(error).toBeNull();
   });
