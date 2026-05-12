@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       { headers: { 'Content-Type': 'application/json' } },
     );
   } catch (err) {
-    console.error(JSON.stringify({ event: 'announcement-push-error', message: (err as Error).message }));
+    console.error(JSON.stringify({ event: 'announcement-push-error', outcome: 'failure' }));
     return new Response(
       JSON.stringify({ ok: false, message: 'Er is een fout opgetreden.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } },

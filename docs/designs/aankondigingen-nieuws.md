@@ -599,3 +599,39 @@ Hoogste bestaand scenario: 12. Nieuwe scenario's starten bij S13.
 - `react-native-render-html` is ~50KB gzipped (boven de 50KB SRE-drempel) — zie SRE Check 5.
 - GIN index op `notifications.data` voor dedup-query — toegevoegd aan migratie 1.
 - TipTap afbeelding-upload: de ImageExtension in TipTap vereist een custom upload handler. Dit wordt geïmplementeerd in `TipTapEditor.tsx` via een `addNodeView` override die upload-on-drop/paste afhandelt naar de afbeelding-API-route.
+
+---
+
+## SRE Notes
+
+**Datum:** 12-05-2026
+
+### Logging
+- `announcement-push/index.ts`: outer catch loggede `(err as Error).message` (potentieel interne details). Opgelost: vervangen door `outcome: 'failure'`.
+- Alle overige log-statements bevatten enkel event-type, timestamp, announcement_id (UUID, geen PII), en outcome. ✓
+
+### Monitoring
+- `announcements.author_id` FK-column had geen index. Opgelost: toegevoegd in migratie `20260512113007_add_aankondigingen_indexes.sql`.
+- `notification_preferences.profile_id` index bestaat ✓ (migratie 20260508124158).
+- GIN-index op `notifications.data WHERE type = 'aankondiging'` toegevoegd in migratie 20260512113005 ✓.
+- React Query `staleTime`: `useAnnouncements` = 5 min ✓, `useAnnouncement` = 10 min ✓, `useNotifications` = 0 (gewenst) ✓.
+- Edge function logt start + einde met timestamp ✓. `notifications`-rijen zijn het audit-record (sync_log is voor federatiesync, niet push).
+
+### Foutafhandeling
+- Bug gerepareerd: `AankondigingenForm.tsx` stuurde `published_at` mee in de initiële POST bij aanmaken+publiceren. De `/publiceren`-call gaf daardoor 409 en push-notificaties werden niet getriggerd. Opgelost: `published_at` verwijderd uit create-payload; de `/publiceren`-route stelt dit in én triggert de push. Publiceer-response wordt nu ook gecheckt (`if (!pubRes.ok) throw`).
+- Alle gebruikersgerichte foutmeldingen zijn in het Nederlands ✓.
+- Geen ruwe Supabase-fouttekst of HTTP-statuscodes zichtbaar voor gebruikers ✓.
+- Submit-knoppen disabled tijdens `isPending` (geen dubbel-submit) ✓.
+
+### Beveiliging
+- RLS `authenticated_select_published_announcements` bevat geen `auth.uid()`-check — intentioneel (alle geauthenticeerde leden mogen gepubliceerde berichten zien). Anonieme API-aanroepen met de anon-key vallen hier ook onder; acceptabel omdat de app auth vereist.
+- Storage bucket `announcement-images`: MIME-type-validatie én bestandsgrootte (5 MB) gehandhaafd op zowel API-niveau als bucketbeleid ✓.
+- Alle inputs gevalideerd met Zod vóór DB-schrijfacties ✓.
+- `SUPABASE_SECRET_KEY` alleen in server-side code ✓.
+
+### Bundle
+- `react-native-render-html` (~40–50 KB gzipped) toegevoegd aan `apps/mobile`. Zit op de drempel van 50 KB. Functioneel noodzakelijk voor HTML-rendering; geen lichter alternatief beschikbaar voor React Native.
+- `@tiptap/*` en `isomorphic-dompurify` zijn web-only packages — geen impact op mobile bundle.
+
+### Openstaande punten
+- Aankondigingen zijn zichtbaar voor alle geauthenticeerde leden via RLS, ook zonder sportfilter op DB-niveau. Sportfiltering vindt plaats in de app-laag. Dit is conform het design; een toekomstige feature kan dit strenger maken via RLS-sport-policies.

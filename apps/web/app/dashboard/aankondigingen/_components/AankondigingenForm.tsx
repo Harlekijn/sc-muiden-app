@@ -54,7 +54,6 @@ export function AankondigingenForm({ announcement }: AankondigingenFormProps) {
     setIsPending(true);
 
     const sportValue = sport === 'alle' ? null : [sport];
-    const publishedAt = action === 'publiceren' ? new Date().toISOString() : null;
 
     try {
       if (isEdit && announcement) {
@@ -82,20 +81,18 @@ export function AankondigingenForm({ announcement }: AankondigingenFormProps) {
           showToast('Wijzigingen opgeslagen');
         }
       } else {
-        const payload: Record<string, unknown> = { title, body, sport: sportValue };
-        if (publishedAt) payload.published_at = publishedAt;
-
         const res = await fetch('/api/cms/announcements', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ title, body, sport: sportValue }),
         });
         if (!res.ok) throw new Error('Opslaan mislukt');
 
         const created = await res.json() as { id: string };
 
         if (action === 'publiceren') {
-          await fetch(`/api/cms/announcements/${created.id}/publiceren`, { method: 'POST' });
+          const pubRes = await fetch(`/api/cms/announcements/${created.id}/publiceren`, { method: 'POST' });
+          if (!pubRes.ok) throw new Error('Publiceren mislukt');
           showToast('Aankondiging gepubliceerd');
         } else {
           showToast('Aankondiging opgeslagen als concept');
