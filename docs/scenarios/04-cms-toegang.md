@@ -133,6 +133,8 @@ Covers authentication and role-based access control on the web CMS dashboard.
 
 **Goal:** Confirm that placeholder pages load without error and show the correct Dutch placeholder text.
 
+**Note:** After Phase 5 is implemented, pages Leden, Teams, Activiteiten en Rollen tonen geen placeholder meer maar echte content. Aankondigingen (fase 6) en Instellingen behouden hun placeholder.
+
 **Prerequisites:** Logged in as beheerder.
 
 **Steps:**
@@ -148,14 +150,35 @@ Covers authentication and role-based access control on the web CMS dashboard.
 
 **Expected result per page:**
 
-| Page | Expected placeholder text |
+| Page | Na fase 5 verwacht |
 |---|---|
-| Dashboard | "Overzicht volgt in fase 5" |
-| Leden | "Ledenbeheer volgt in fase 5" |
-| Teams | "Teamsbeheer volgt in fase 5" |
-| Activiteiten | "Activiteitenbeheer volgt in fase 5" |
+| Dashboard | Telkaarten + aankomende activiteiten |
+| Leden | Ledenlijst met zoeken + filter |
+| Teams | Teamslijst met "Nieuw team"-knop |
+| Activiteiten | Activiteitenlijst met filters |
 | Aankondigingen | "Aankondigingenbeheer volgt in fase 6" |
-| Rollen | "Rollenbeheer volgt in fase 5" |
-| Instellingen | "Instellingen volgt in fase 5" |
+| Rollen | Rollenlijst (beheerder) of GeenToegang (commissielid) |
+| Instellingen | Synchronisatiepagina (fase 4) |
 
 No page should return a 404 or throw an unhandled error.
+
+---
+
+## S04-H — Commissielid heeft geen toegang tot rolbeheer
+
+**Goal:** Een commissielid ziet de `<GeenToegang />`-component op `/dashboard/rollen`, terwijl andere dashboardpagina's wel toegankelijk zijn.
+
+**Prerequisites:** Ingelogd als commissielid (`e2e-commissielid@e2e.scmuiden.test`).
+
+**Steps:**
+
+1. Navigeer naar `/dashboard/leden`.
+2. Controleer dat de ledenlijst zichtbaar is.
+3. Navigeer naar `/dashboard/rollen`.
+
+**Expected result:**
+
+- Stap 2: ledenlijst laadt correct (commissielid heeft toegang tot leden).
+- Stap 3: pagina toont "Geen toegang"-component met Nederlandse tekst.
+- Sidebar is nog steeds zichtbaar.
+- Geen data uit de DB wordt getoond.

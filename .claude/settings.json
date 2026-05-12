@@ -8,7 +8,19 @@
       "Bash(git -C /Users/gielitho/Development/sc-muiden-app add 'apps/mobile/app/\\(tabs\\)/index.tsx' 'apps/mobile/app/\\(tabs\\)/profiel.tsx' apps/mobile/app/_layout.tsx apps/mobile/app/notificatie-instellingen.tsx 'apps/mobile/app/\\(tabs\\)/__tests__/index.test.tsx' apps/mobile/app/__tests__/ apps/mobile/hooks/useUpcomingActivities.ts apps/mobile/hooks/useNotificationPreferences.ts apps/mobile/hooks/useUpdateNotificationPreferences.ts apps/mobile/hooks/usePushTokenRegistration.ts packages/shared/src/index.ts packages/shared/src/types/app.types.ts packages/shared/src/types/db.types.ts packages/shared/src/schemas/notificationPreferences.schema.ts packages/shared/src/__tests__/notificationPreferences.schema.test.ts supabase/config.toml supabase/functions/ supabase/migrations/20260508124158_notification_preferences.sql supabase/migrations/20260508124159_notifications_add_activity_type.sql)",
       "Bash(git -C /Users/gielitho/Development/sc-muiden-app diff main...HEAD --name-only)",
       "Bash(git -C /Users/gielitho/Development/sc-muiden-app diff main...HEAD -- apps/mobile/package.json)",
-      "Bash(git -C /Users/gielitho/Development/sc-muiden-app add docs/designs/home-feed-en-notificaties.md supabase/functions/push-trigger/index.ts supabase/functions/reminder-scheduler/index.ts apps/mobile/app/notificatie-instellingen.tsx 'apps/mobile/app/\\(tabs\\)/__tests__/index.test.tsx')"
+      "Bash(git -C /Users/gielitho/Development/sc-muiden-app add docs/designs/home-feed-en-notificaties.md supabase/functions/push-trigger/index.ts supabase/functions/reminder-scheduler/index.ts apps/mobile/app/notificatie-instellingen.tsx 'apps/mobile/app/\\(tabs\\)/__tests__/index.test.tsx')",
+      "Bash(mkdir -p /Users/gielitho/Development/sc-muiden-app/apps/web/app/dashboard/leden/\\\\[id\\\\] 2>/dev/null; ls /Users/gielitho/Development/sc-muiden-app/apps/web/app/dashboard/leden/)",
+      "Bash(mkdir -p \"/Users/gielitho/Development/sc-muiden-app/apps/web/app/dashboard/teams/nieuw\" && mkdir -p \"/Users/gielitho/Development/sc-muiden-app/apps/web/app/dashboard/teams/[id]/_components\" && echo \"done\")",
+      "Bash(mkdir -p \"/Users/gielitho/Development/sc-muiden-app/apps/web/app/dashboard/activiteiten/[id]/bewerken\" && echo \"done\")",
+      "Bash(sed -n '1,30p' apps/web/app/dashboard/activiteiten/_components/ActiviteitenClient.tsx)",
+      "Bash(sed -n '1,20p' apps/web/app/dashboard/activiteiten/page.tsx)",
+      "Bash(sed -n '10,15p' \"./app/dashboard/activiteiten/[id]/bewerken/page.tsx\")",
+      "Bash(sed -n '118,122p' \"./app/dashboard/activiteiten/[id]/bewerken/page.tsx\")"
+    ],
+    "additionalDirectories": [
+      "/Users/gielitho/Development/sc-muiden-app/apps/web/app/dashboard/leden",
+      "/Users/gielitho/Development/sc-muiden-app/apps/web/app/dashboard/teams/[id]",
+      "/Users/gielitho/Development/sc-muiden-app/apps/web/app/dashboard/activiteiten/[id]"
     ]
   }
 }

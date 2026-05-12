@@ -241,3 +241,39 @@ export interface ActivityWithDetails extends Activity {
   match: Pick<Match, 'id' | 'home_team' | 'away_team' | 'score_home' | 'score_away' | 'status'> | null;
   bar_assignments: BarAssignmentWithMember[];
 }
+
+export interface TeamWithMemberCount extends Team {
+  member_count: number;
+}
+
+export interface TeamMemberWithMember extends TeamMember {
+  member: Pick<Member, 'id' | 'first_name' | 'last_name' | 'sport'>;
+}
+
+export interface ActivityWithTeam extends Activity {
+  team: Pick<Team, 'id' | 'name' | 'sport'> | null;
+}
+
+export type CsvImportRowStatus = 'new' | 'conflict' | 'invalid';
+
+export interface CsvImportRow {
+  index: number;
+  data: Partial<Member>;
+  status: CsvImportRowStatus;
+  conflictMemberId?: string;
+  conflictReason?: string;
+  errors?: string[];
+}
+
+export interface CsvImportResult {
+  inserted: number;
+  updated: number;
+  failed: CsvImportRow[];
+}
+
+export interface DashboardStats {
+  totalMembers: number;
+  totalTeams: number;
+  upcomingActivities: number;
+  pendingFamilyRequests: number;
+}
