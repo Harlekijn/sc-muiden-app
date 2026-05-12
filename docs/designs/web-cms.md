@@ -773,3 +773,39 @@ Hoogste bestaand scenario-nummer: 11. Nieuwe scenario's starten op 12.
 3. **Terugkerende trainingen bewerken:** "Alle toekomstige sessies" past de recurring_rule aan en regenereert activiteiten ná vandaag. Verleden activiteiten worden niet aangeraakt. Akkoord?
 
 4. **CSV-export voor DSAR:** Toegevoegd als GDPR-actie. Eenvoudige CSV-download van alle ledengegevens op de ledenlijstpagina — akkoord met scope?
+
+---
+
+## SRE Notes
+
+**Datum:** 12-05-2026
+
+### Logging
+- `generate-recurring/route.ts` — geen log statements; acceptabel (korte sync-operatie, Supabase audit log is leidend)
+- `analyse/route.ts` — geen log statements; acceptabel
+- `import/route.ts` — 3 console.error statements; bevatten alleen `row_index` (integer) en `outcome` string; geen PII
+
+### Monitoring
+- `profiles_member_id_idx` toegevoegd (migration 20260512090000): gebruikt door rollen-pagina JOIN
+- `members_name_birthdate_idx` toegevoegd (migration 20260512090000): gebruikt door CSV import duplicate detectie
+- `bar_assignments_member_id_idx` toegevoegd (migration 20260512090000): gebruikt door RLS policies
+- `activities_starts_at_idx` (migration 20260511122139): bestond al; `IF NOT EXISTS` voorkomt fout
+
+### Foutafhandeling
+- Alle foutberichten in het Nederlands en voorzien van actie-instructie ("Probeer het opnieuw") ✓
+- Alle submit-knoppen disabled tijdens isSubmitting ✓
+- `CsvImportWizard.handleAnalyse`: double-submit beveiliging toegevoegd (`analysing` state)
+
+### Beveiliging
+- `admins_manage_recurring_rules` en `admins_update_profiles` policies gebruiken `is_admin()` security-definer ✓
+- Admin client (`supabase-admin`) uitsluitend in API routes; nooit in dashboard client components ✓
+- CSV import `analyse/route.ts`: Zod-validatie op elke rij vóór database-query ✓
+- CSV import `import/route.ts`: Zod-validatie (`csvImportRowDataSchema`) toegevoegd vóór insert/update ✓
+- Bestandsvalidatie: `.csv` extensie + 5 MB limiet client-side ✓
+- Geen secret keys in NEXT_PUBLIC_ of EXPO_PUBLIC_ variabelen ✓
+
+### Bundle
+- Geen nieuwe packages toegevoegd aan apps/mobile of root package.json
+
+### Openstaande punten
+- CSV-export voor DSAR nog niet geïmplementeerd — buiten scope V1 tenzij goedgekeurd

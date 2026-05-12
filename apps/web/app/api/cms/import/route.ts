@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '../../../../lib/supabase-admin';
 import { createSupabaseServerClient } from '../../../../lib/supabase-server';
+import { csvImportRowDataSchema } from '@sc-muiden/shared';
 import type { CsvImportRow, CsvImportResult } from '@sc-muiden/shared';
 
 export async function POST(req: NextRequest) {
@@ -34,16 +35,24 @@ export async function POST(req: NextRequest) {
 
   for (const row of body.rows) {
     try {
+      const validated = csvImportRowDataSchema.safeParse(row.data);
+      if (!validated.success) {
+        console.error(`[cms-import] row_index=${row.index} outcome=validation_failed`);
+        failed.push(row);
+        continue;
+      }
+      const safeData = validated.data;
+
       if (row.status === 'new') {
         const { error } = await admin.from('members').insert({
-          first_name: row.data.first_name!,
-          last_name: row.data.last_name!,
-          birth_date: row.data.birth_date ?? null,
-          email: row.data.email ?? null,
-          phone: row.data.phone ?? null,
-          sport: row.data.sport ?? [],
-          role: row.data.role ?? 'lid',
-          clubbase_id: row.data.clubbase_id ?? null,
+          first_name: safeData.first_name,
+          last_name: safeData.last_name,
+          birth_date: safeData.birth_date ?? null,
+          email: safeData.email ?? null,
+          phone: safeData.phone ?? null,
+          sport: safeData.sport ?? [],
+          role: safeData.role ?? 'lid',
+          clubbase_id: safeData.clubbase_id ?? null,
         });
         if (error) {
           // Log only non-PII outcome
@@ -56,14 +65,14 @@ export async function POST(req: NextRequest) {
         const { error } = await admin
           .from('members')
           .update({
-            first_name: row.data.first_name!,
-            last_name: row.data.last_name!,
-            birth_date: row.data.birth_date ?? null,
-            email: row.data.email ?? null,
-            phone: row.data.phone ?? null,
-            sport: row.data.sport ?? [],
-            role: row.data.role ?? 'lid',
-            clubbase_id: row.data.clubbase_id ?? null,
+            first_name: safeData.first_name,
+            last_name: safeData.last_name,
+            birth_date: safeData.birth_date ?? null,
+            email: safeData.email ?? null,
+            phone: safeData.phone ?? null,
+            sport: safeData.sport ?? [],
+            role: safeData.role ?? 'lid',
+            clubbase_id: safeData.clubbase_id ?? null,
           })
           .eq('id', row.conflictMemberId);
         if (error) {

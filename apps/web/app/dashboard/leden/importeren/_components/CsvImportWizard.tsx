@@ -57,6 +57,7 @@ export function CsvImportWizard() {
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [previewRows, setPreviewRows] = useState<CsvImportRow[]>([]);
   const [selectedConflicts, setSelectedConflicts] = useState<Set<number>>(new Set());
+  const [analysing, setAnalysing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<CsvImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -103,6 +104,8 @@ export function CsvImportWizard() {
   }
 
   async function handleAnalyse() {
+    if (analysing) return;
+    setAnalysing(true);
     const rowObjects = csvRows.map((row) => {
       const obj: Record<string, string> = {};
       csvHeaders.forEach((header, i) => {
@@ -120,12 +123,14 @@ export function CsvImportWizard() {
 
     if (!res.ok) {
       setFileError('Analyse mislukt. Probeer het opnieuw.');
+      setAnalysing(false);
       return;
     }
 
     const data: CsvImportRow[] = await res.json();
     setPreviewRows(data);
     setSelectedConflicts(new Set());
+    setAnalysing(false);
     setStep('preview');
   }
 
@@ -234,7 +239,7 @@ export function CsvImportWizard() {
             ))}
           </div>
           <div style={s.actions}>
-            <button onClick={handleAnalyse} style={s.primaryBtn}>Analyseren</button>
+            <button onClick={handleAnalyse} disabled={analysing} style={s.primaryBtn}>{analysing ? 'Analyseren...' : 'Analyseren'}</button>
             <button onClick={() => setStep('upload')} style={s.secondaryBtn}>Terug</button>
           </div>
         </div>
