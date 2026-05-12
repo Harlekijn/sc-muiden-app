@@ -7,6 +7,7 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('@sc-muiden/shared', () => ({
+  ...jest.requireActual('@sc-muiden/shared'),
   formatDutchDateTime: (s: string) => s,
 }));
 
@@ -17,6 +18,8 @@ jest.mock('../../../../lib/supabase-client', () => ({
 const { createSupabaseBrowserClient } = jest.requireMock('../../../../lib/supabase-client');
 
 import { ActiviteitenClient } from '../_components/ActiviteitenClient';
+import { TrainingForm } from '../nieuw/_components/TrainingForm';
+import { BardienstForm } from '../nieuw/_components/BardienstForm';
 
 const mockActivities = [
   {
@@ -114,8 +117,8 @@ describe('ActiviteitenClient', () => {
     expect(wedstrijdEditLinks).toHaveLength(0);
   });
 
-  // S12-F — Activiteit annuleren via window.confirm
-  it('S12-F: annuleer-bevestiging via window.confirm verbergt activiteit', async () => {
+  // S12-J — Activiteit annuleren via window.confirm
+  it('S12-J: annuleer-bevestiging via window.confirm verbergt activiteit', async () => {
     render(
       <ActiviteitenClient
         activities={mockActivities}
@@ -131,6 +134,77 @@ describe('ActiviteitenClient', () => {
     await waitFor(() => {
       expect(window.confirm).toHaveBeenCalled();
       expect(screen.queryByText('Training JO15-1')).not.toBeInTheDocument();
+    });
+  });
+});
+
+const mockTeams = [
+  { id: 'team-1', name: 'JO15-1', sport: 'voetbal' },
+];
+
+// S12-F — Training aanmaken (terugkerend)
+describe('TrainingForm', () => {
+  it('S12-F: toont formulier met teams dropdown', () => {
+    render(<TrainingForm teams={mockTeams} />);
+    expect(screen.getByText('JO15-1')).toBeInTheDocument();
+    expect(screen.getByText('Wekelijks herhalen')).toBeInTheDocument();
+  });
+
+  it('S12-F: recurring toggle toont geldig-van en geldig-tot velden', () => {
+    render(<TrainingForm teams={mockTeams} />);
+    expect(screen.queryByText(/geldig van/i)).not.toBeInTheDocument();
+    const checkbox = screen.getByRole('checkbox');
+    fireEvent.click(checkbox);
+    expect(screen.getByText(/geldig van \*/i)).toBeInTheDocument();
+    expect(screen.getByText(/geldig tot \*/i)).toBeInTheDocument();
+  });
+
+  it('S12-F: opslaan zonder begintijd toont Begintijd is verplicht', async () => {
+    render(<TrainingForm teams={mockTeams} />);
+    fireEvent.click(screen.getByText('Opslaan'));
+    await waitFor(() => {
+      expect(screen.getByText('Begintijd is verplicht')).toBeInTheDocument();
+    });
+  });
+});
+
+// S12-G — Bardienst aanmaken en leden toewijzen
+describe('BardienstForm', () => {
+  beforeEach(() => {
+    createSupabaseBrowserClient.mockReturnValue({
+      from: jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          is: jest.fn().mockReturnValue({
+            or: jest.fn().mockReturnValue({
+              limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          }),
+        }),
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: { id: 'act-1' }, error: null }),
+          }),
+        }),
+      }),
+    });
+  });
+
+  it('S12-G: toont formulier met zoekveldinput voor leden', () => {
+    render(<BardienstForm />);
+    expect(screen.getByPlaceholderText(/zoek en voeg lid toe/i)).toBeInTheDocument();
+  });
+
+  it('S12-G: toont sport-selectie opties', () => {
+    render(<BardienstForm />);
+    expect(screen.getByText('Voetbal')).toBeInTheDocument();
+    expect(screen.getByText('Hockey')).toBeInTheDocument();
+  });
+
+  it('S12-G: opslaan zonder begintijd toont Begintijd is verplicht', async () => {
+    render(<BardienstForm />);
+    fireEvent.click(screen.getByText('Opslaan'));
+    await waitFor(() => {
+      expect(screen.getByText('Begintijd is verplicht')).toBeInTheDocument();
     });
   });
 });

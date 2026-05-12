@@ -1,13 +1,24 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn() }),
+  redirect: jest.fn(),
+}));
+
 jest.mock('../../../../lib/supabase-client', () => ({
   createSupabaseBrowserClient: jest.fn(),
 }));
 
+jest.mock('../../../../lib/supabase-server', () => ({
+  createSupabaseServerClient: jest.fn(),
+}));
+
 const { createSupabaseBrowserClient } = jest.requireMock('../../../../lib/supabase-client');
+const { createSupabaseServerClient } = jest.requireMock('../../../../lib/supabase-server');
 
 import { RollenClient } from '../_components/RollenClient';
+import RollenPage from '../page';
 
 const mockProfiles = [
   {
@@ -97,5 +108,38 @@ describe('RollenClient', () => {
     await waitFor(() => {
       expect(mockUpdate).toHaveBeenCalledWith({ role: 'trainer' });
     });
+  });
+});
+
+// S12-H — Commissielid heeft geen toegang tot rolbeheer
+describe('RollenPage — toegangsbewaking', () => {
+  it('S12-H: commissielid ziet GeenToegang component', async () => {
+    createSupabaseServerClient.mockReturnValue({
+      auth: {
+        getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'u1' } } }),
+      },
+      from: jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: { role: 'commissielid' }, error: null }),
+          }),
+        }),
+      }),
+    });
+    const jsx = await RollenPage();
+    render(jsx);
+    expect(screen.getByRole('heading', { name: /geen toegang/i })).toBeInTheDocument();
+  });
+
+  it('S12-H: niet-ingelogde gebruiker ziet GeenToegang component', async () => {
+    createSupabaseServerClient.mockReturnValue({
+      auth: {
+        getUser: jest.fn().mockResolvedValue({ data: { user: null } }),
+      },
+      from: jest.fn(),
+    });
+    const jsx = await RollenPage();
+    render(jsx);
+    expect(screen.getByRole('heading', { name: /geen toegang/i })).toBeInTheDocument();
   });
 });

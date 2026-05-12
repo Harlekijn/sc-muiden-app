@@ -28,3 +28,17 @@ describe('GeenToegang', () => {
     expect(screen.getByRole('button', { name: 'Uitloggen' })).toBeInTheDocument();
   });
 });
+
+// S12-K — Gewone gebruiker kan CMS niet benaderen
+describe('GeenToegang — S12-K CMS toegangsblokkering', () => {
+  it('S12-K: niet-CMS gebruiker ziet Geen toegang heading', () => {
+    render(<GeenToegang />);
+    expect(screen.getByRole('heading', { name: 'Geen toegang' })).toBeInTheDocument();
+    expect(screen.getByText(/geen beheerdersrechten/i)).toBeInTheDocument();
+  });
+
+  it('S12-K: Uitloggen knop aanwezig zodat gebruiker kan uitloggen', () => {
+    render(<GeenToegang />);
+    expect(screen.getByRole('button', { name: 'Uitloggen' })).toBeInTheDocument();
+  });
+});
