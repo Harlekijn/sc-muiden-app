@@ -197,6 +197,7 @@ export interface NotificationPreferences {
   wedstrijd: boolean;
   bardienst: boolean;
   training: boolean;
+  aankondiging: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -270,6 +271,12 @@ export interface CsvImportResult {
   updated: number;
   failed: CsvImportRow[];
 }
+
+export interface AnnouncementWithAuthor extends Announcement {
+  author: Pick<Profile, 'display_name'> | null;
+}
+
+export type NotificationWithContext = NotificationWithMeta;
 
 export interface DashboardStats {
   totalMembers: number;

@@ -10,6 +10,7 @@ jest.mock('lucide-react-native', () => ({
   ChevronLeft: () => null,
   Clock: () => null,
   Dumbbell: () => null,
+  Newspaper: () => null,
 }));
 
 const mockMutate = jest.fn();
@@ -18,7 +19,7 @@ jest.mock('../../hooks/useUpdateNotificationPreferences', () => ({
   useUpdateNotificationPreferences: () => ({ mutate: mockMutate }),
 }));
 
-let mockPrefs: { wedstrijd: boolean; bardienst: boolean; training: boolean } | null = null;
+let mockPrefs: { wedstrijd: boolean; bardienst: boolean; training: boolean; aankondiging: boolean } | null = null;
 let mockIsLoading = false;
 
 jest.mock('../../hooks/useNotificationPreferences', () => ({
@@ -32,16 +33,17 @@ import NotificatieInstellingenScreen from '../notificatie-instellingen';
 // S09-C — Nieuw account heeft standaard alle notificaties aan
 describe('NotificatieInstellingenScreen', () => {
   beforeEach(() => {
-    mockPrefs = { wedstrijd: true, bardienst: true, training: true };
+    mockPrefs = { wedstrijd: true, bardienst: true, training: true, aankondiging: true };
     mockIsLoading = false;
     mockMutate.mockClear();
   });
 
-  it('toont de drie toggles met labels', () => {
+  it('toont de vier toggles met labels', () => {
     render(<NotificatieInstellingenScreen />);
     expect(screen.getByText('Wedstrijdherinneringen')).toBeTruthy();
     expect(screen.getByText('Bardienst-herinneringen')).toBeTruthy();
     expect(screen.getByText('Trainingsherinneringen')).toBeTruthy();
+    expect(screen.getByText('Aankondigingen')).toBeTruthy();
   });
 
   it('toont de caption over herinneringstijden', () => {

@@ -360,6 +360,7 @@ export type Database = {
       }
       notification_preferences: {
         Row: {
+          aankondiging: boolean
           bardienst: boolean
           created_at: string
           id: string
@@ -369,6 +370,7 @@ export type Database = {
           wedstrijd: boolean
         }
         Insert: {
+          aankondiging?: boolean
           bardienst?: boolean
           created_at?: string
           id?: string
@@ -378,6 +380,7 @@ export type Database = {
           wedstrijd?: boolean
         }
         Update: {
+          aankondiging?: boolean
           bardienst?: boolean
           created_at?: string
           id?: string

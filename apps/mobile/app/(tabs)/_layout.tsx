@@ -1,9 +1,10 @@
 import { View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Calendar, Home, Store, User } from 'lucide-react-native';
+import { Calendar, Home, Newspaper, Store, User } from 'lucide-react-native';
 import { colors } from '@sc-muiden/shared';
 import type { ComponentType } from 'react';
+import { useUnreadAnnouncementCount } from '../../hooks/useUnreadCount';
 
 interface LucideIconProps {
   size: number;
@@ -31,6 +32,8 @@ function makeTabIcon(Icon: ComponentType<LucideIconProps>) {
 }
 
 export default function TabLayout() {
+  const unreadAnnouncements = useUnreadAnnouncementCount();
+
   return (
     <>
     <StatusBar style="light" backgroundColor={colors.navy} />
@@ -67,6 +70,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="nieuws"
+        options={{
+          title: 'Nieuws',
+          tabBarIcon: makeTabIcon(Newspaper),
+          tabBarBadge: unreadAnnouncements > 0 ? unreadAnnouncements : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.error, fontSize: 10 },
+        }}
+      />
+      <Tabs.Screen
         name="club"
         options={{
           title: 'Club',
@@ -81,7 +93,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen name="teams" options={{ href: null }} />
-      <Tabs.Screen name="nieuws" options={{ href: null }} />
     </Tabs>
     </>
   );

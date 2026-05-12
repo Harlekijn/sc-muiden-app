@@ -26,11 +26,20 @@
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-export const E2E_BEHEERDER_EMAIL = 'e2e-beheerder@e2e.scmuiden.test';
-export const E2E_LID_EMAIL       = 'e2e-lid@e2e.scmuiden.test';
-export const E2E_PASSWORD        = 'E2eTestWachtwoord123!';
+export const E2E_BEHEERDER_EMAIL    = 'e2e-beheerder@e2e.scmuiden.test';
+export const E2E_LID_EMAIL          = 'e2e-lid@e2e.scmuiden.test';
+export const E2E_COMMISSIELID_EMAIL = 'e2e-commissielid@e2e.scmuiden.test';
+export const E2E_VOETBAL_EMAIL      = 'e2e-voetbal@e2e.scmuiden.test';
+export const E2E_HOCKEY_EMAIL       = 'e2e-hockey@e2e.scmuiden.test';
+export const E2E_PASSWORD           = 'E2eTestWachtwoord123!';
 
-const ALL_E2E_EMAILS = [E2E_BEHEERDER_EMAIL, E2E_LID_EMAIL] as const;
+const ALL_E2E_EMAILS = [
+  E2E_BEHEERDER_EMAIL,
+  E2E_LID_EMAIL,
+  E2E_COMMISSIELID_EMAIL,
+  E2E_VOETBAL_EMAIL,
+  E2E_HOCKEY_EMAIL,
+] as const;
 
 // Stable identifier for the child member (no email — looked up by this field).
 export const E2E_CHILD_CLUBBASE_ID = 'e2e-child-001';
@@ -142,8 +151,11 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
   const { data: members, error: membersErr } = await admin
     .from('members')
     .insert([
-      { first_name: 'Test', last_name: 'Beheerder', email: E2E_BEHEERDER_EMAIL, role: 'beheerder', sport: [] },
-      { first_name: 'Test', last_name: 'Lid',       email: E2E_LID_EMAIL,       role: 'lid', sport: ['voetbal'] },
+      { first_name: 'Test', last_name: 'Beheerder',    email: E2E_BEHEERDER_EMAIL,    role: 'beheerder',    sport: [] },
+      { first_name: 'Test', last_name: 'Lid',          email: E2E_LID_EMAIL,          role: 'lid',          sport: ['voetbal'] },
+      { first_name: 'Test', last_name: 'Commissielid', email: E2E_COMMISSIELID_EMAIL, role: 'commissielid', sport: [] },
+      { first_name: 'Test', last_name: 'Voetballid',   email: E2E_VOETBAL_EMAIL,      role: 'lid',          sport: ['voetbal'] },
+      { first_name: 'Test', last_name: 'Hockeylid',    email: E2E_HOCKEY_EMAIL,       role: 'lid',          sport: ['hockey'] },
       // Child member: no app account — represented by a clubbase_id for stable lookup.
       { first_name: 'Test', last_name: 'Kindlid', email: null, role: 'lid', sport: ['voetbal'], clubbase_id: CHILD_CLUBBASE_ID },
     ])
@@ -157,6 +169,9 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
   // 2. Create auth users — handle_new_user trigger auto-creates profiles and links member_id.
   await createAuthUser(admin, E2E_BEHEERDER_EMAIL);
   await createAuthUser(admin, E2E_LID_EMAIL);
+  await createAuthUser(admin, E2E_COMMISSIELID_EMAIL);
+  await createAuthUser(admin, E2E_VOETBAL_EMAIL);
+  await createAuthUser(admin, E2E_HOCKEY_EMAIL);
 
   // 3. Fetch the lid profile (created by the trigger).
   const { data: lidProfile, error: profileErr } = await admin
@@ -179,11 +194,28 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
   const { error: prefErr } = await admin
     .from('notification_preferences')
     .upsert(
-      { profile_id: profile.id, wedstrijd: true, bardienst: true, training: true },
+      { profile_id: profile.id, wedstrijd: true, bardienst: true, training: true, aankondiging: true },
       { onConflict: 'profile_id' }
     );
 
   if (prefErr) throw new Error(`seed notification_preferences: ${prefErr.message}`);
+
+  // 4c. Set up notification preferences for voetbal- and hockeylid.
+  for (const email of [E2E_VOETBAL_EMAIL, E2E_HOCKEY_EMAIL]) {
+    const { data: sportProfile } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .single();
+    if (sportProfile) {
+      await admin
+        .from('notification_preferences')
+        .upsert(
+          { profile_id: sportProfile.id, wedstrijd: true, bardienst: true, training: true, aankondiging: true },
+          { onConflict: 'profile_id' }
+        );
+    }
+  }
 
   // ── Phase 2 ───────────────────────────────────────────────────────────────
 

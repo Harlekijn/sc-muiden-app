@@ -15,4 +15,12 @@ export const adminClient = createClient(SUPABASE_URL, SECRET_KEY, {
 });
 
 // Constants are defined in supabase/seed.ts — re-exported here for convenience.
-export { E2E_BEHEERDER_EMAIL, E2E_LID_EMAIL, E2E_PASSWORD, E2E_CHILD_CLUBBASE_ID } from '../../../../supabase/seed';
+export {
+  E2E_BEHEERDER_EMAIL,
+  E2E_LID_EMAIL,
+  E2E_COMMISSIELID_EMAIL,
+  E2E_VOETBAL_EMAIL,
+  E2E_HOCKEY_EMAIL,
+  E2E_PASSWORD,
+  E2E_CHILD_CLUBBASE_ID,
+} from '../../../../supabase/seed';

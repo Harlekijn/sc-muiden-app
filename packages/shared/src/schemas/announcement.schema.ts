@@ -16,12 +16,15 @@ export const announcementSchema = z.object({
 });
 
 export const createAnnouncementSchema = z.object({
-  title: z.string().min(1, 'Titel is verplicht'),
+  title: z.string().min(1, 'Titel is verplicht').max(200, 'Titel mag maximaal 200 tekens bevatten'),
   body: z.string().min(1, 'Bericht is verplicht'),
   sport: z.array(sportSchema).nullable().optional(),
   teams: z.array(z.string().uuid()).nullable().optional(),
   published_at: z.string().datetime().nullable().optional(),
 });
 
+export const updateAnnouncementSchema = createAnnouncementSchema.partial();
+
 export type AnnouncementInput = z.infer<typeof announcementSchema>;
 export type CreateAnnouncementInput = z.infer<typeof createAnnouncementSchema>;
+export type UpdateAnnouncementInput = z.infer<typeof updateAnnouncementSchema>;
