@@ -284,3 +284,18 @@ export interface DashboardStats {
   upcomingActivities: number;
   pendingFamilyRequests: number;
 }
+
+export type AccountRequestStatus = 'pending' | 'approved' | 'rejected';
+
+export interface AccountRequest {
+  id: string;
+  display_name: string;
+  email: string;
+  birth_date: string | null;
+  status: AccountRequestStatus;
+  admin_notes: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}

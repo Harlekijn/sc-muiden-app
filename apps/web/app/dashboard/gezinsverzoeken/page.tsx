@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '../../../lib/supabase-server';
 import { RequestRow, type FamilyRequest } from './_components/RequestRow';
+import { GezinsverzoekActions } from './_components/GezinsverzoekActions';
 
 const TABLE_HEADERS = ['Verzocht door', 'Gezinslid', 'Geboortedatum', 'Ingediend op', 'Status'];
 
@@ -39,15 +40,37 @@ export default async function GezinsverzoekPage() {
     <div>
       <h1 style={s.heading}>Gezinsverzoeken</h1>
       <p style={s.description}>
-        Leden kunnen via de app verzoeken indienen om gezinsleden te koppelen. Koppel het juiste
-        lid via Supabase Studio en zet de status op <em>approved</em>.
+        Leden kunnen via de app verzoeken indienen om gezinsleden te koppelen. Zoek het bijbehorende
+        lid en keur het verzoek goed of af.
       </p>
 
       <h2 style={s.subheading}>In behandeling ({pending.length})</h2>
       {pending.length === 0 ? (
         <p style={s.empty}>Geen openstaande verzoeken.</p>
       ) : (
-        <RequestTable items={pending} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {pending.map((req) => {
+            const requester = req.profiles?.[0];
+            return (
+              <div key={req.id} style={s.pendingCard}>
+                <div style={s.pendingCardMeta}>
+                  <div>
+                    <strong>{req.first_name} {req.last_name}</strong>
+                    {req.birth_date && (
+                      <span style={{ color: 'var(--color-text-2)', fontSize: 'var(--text-xs)', marginLeft: 8 }}>
+                        {new Date(req.birth_date).toLocaleDateString('nl-NL')}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ color: 'var(--color-text-2)', fontSize: 'var(--text-sm)' }}>
+                    Verzocht door: {requester?.display_name ?? '–'} ({requester?.email ?? '–'})
+                  </div>
+                </div>
+                <GezinsverzoekActions requestId={req.id} />
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {rest.length > 0 && (
@@ -103,5 +126,14 @@ const s: Record<string, React.CSSProperties> = {
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
     gap: 'var(--space-4)',
+  },
+  pendingCard: {
+    border: '1px solid rgba(1, 29, 80, 0.12)',
+    borderRadius: 'var(--radius-md)',
+    padding: 'var(--space-4)',
+    background: 'var(--color-white)',
+  },
+  pendingCardMeta: {
+    marginBottom: 8,
   },
 };
