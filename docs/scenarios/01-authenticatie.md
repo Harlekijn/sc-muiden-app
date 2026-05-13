@@ -62,80 +62,67 @@ Covers login, registration, password recovery, and logout on the mobile app.
 
 ---
 
-## S01-D — Register with an email that exists in the members table
+## S01-D — Account aanvragen (mobiel) — happy path
 
-**Goal:** A club member whose email is in the `members` table can create an account.
+**Doel:** Een nieuwe gebruiker dient een account aanvraag in via het registratiescherm.
 
-**Setup:** The seed has a `members` row for `e2e-beheerder@e2e.scmuiden.test` but no auth user after `pnpm teardown && pnpm seed` only creates auth users for both accounts. To test fresh registration, insert a new member row via Supabase Studio first:
+> Zie ook het volledige scenario in `14-account-aanvragen.md` (S14-A t/m S14-G).
 
-1. Open Supabase Studio at http://127.0.0.1:54323
-2. Navigate to Table Editor → `members`
-3. Insert a new row:
-   - `first_name`: Nieuw
-   - `last_name`: Testlid
-   - `email`: nieuw-testlid@e2e.scmuiden.test
-   - `role`: lid
-   - `sport`: `{voetbal}`
-4. Save the row.
+**Stappen:**
 
-**Steps:**
+1. Open de app op het loginscherm "Welkom terug".
+2. Tik op "Account aanvragen".
+3. Het scherm "Account aanvragen" opent.
+4. Vul in:
+   - Naam: `Nieuw Testlid`
+   - E-mailadres: `nieuw-testlid@e2e.scmuiden.test`
+   - Geboortedatum: `15-04-1990`
+5. Tik op "Aanvraag indienen".
 
-5. Open the app. On the login screen, tap "Registreren" (the register link at the bottom).
-6. Fill in the form:
-   - Naam: Nieuw Testlid
-   - E-mail: `nieuw-testlid@e2e.scmuiden.test`
-   - Wachtwoord: `NieuwWachtwoord123!`
-   - Wachtwoord bevestigen: `NieuwWachtwoord123!`
-7. Tap the submit button.
+**Verwacht resultaat:**
 
-**Expected result:**
-
-- A success screen is shown explaining that the account has been created.
-- Open Supabase Studio → Authentication → Users: the new user appears.
-- Open Studio → Table Editor → `profiles`: a row exists with the new user's email and `member_id` linked to the `members` row created in step 3.
+- Het bevestigingsscherm "Aanvraag ingediend" verschijnt.
+- Studio → `account_requests`: een rij bestaat met `status = pending`.
 
 ---
 
-## S01-E — Register with an email not in the members table
+## S01-E — Dubbele aanvraag voor een actief e-mailadres
 
-**Goal:** Someone who is not a club member cannot create an account.
+**Doel:** Een tweede aanvraag met hetzelfde pending e-mailadres wordt geblokkeerd.
 
-**Steps:**
+**Vereisten:** S01-D doorlopen.
 
-1. From the login screen, tap "Registreren".
-2. Fill in the form:
-   - Naam: Onbekende Persoon
-   - E-mail: `iemand-willekeurig@extern.nl`
-   - Wachtwoord: `WachtwoordABC123!`
-   - Wachtwoord bevestigen: `WachtwoordABC123!`
-3. Tap the submit button.
+**Stappen:**
 
-**Expected result:**
+1. Open het registratiescherm opnieuw.
+2. Vul in:
+   - Naam: `Ander Testlid`
+   - E-mailadres: `nieuw-testlid@e2e.scmuiden.test`
+3. Tik op "Aanvraag indienen".
 
-- The app does not create an account.
-- An error is shown explaining that the email is not found in the club administration.
-- Supabase Studio → Authentication → Users: no new user was created.
+**Verwacht resultaat:**
+
+- De aanvraag wordt niet ingediend.
+- De foutmelding "Er bestaat al een aanvraag voor dit e-mailadres." is zichtbaar.
+- Studio → `account_requests`: geen tweede rij aangemaakt.
 
 ---
 
-## S01-F — Register with mismatched passwords
+## S01-F — Verplicht veld leeg laten
 
-**Goal:** The form prevents submission when the two password fields do not match.
+**Doel:** Het formulier voorkomt indiening als een verplicht veld leeg is.
 
-**Steps:**
+**Stappen:**
 
-1. From the login screen, tap "Registreren".
-2. Fill in the form:
-   - Naam: Test Persoon
-   - E-mail: `e2e-lid@e2e.scmuiden.test`
-   - Wachtwoord: `WachtwoordA123!`
-   - Wachtwoord bevestigen: `WachtwoordB456!`
-3. Tap the submit button.
+1. Open het registratiescherm.
+2. Laat het veld "Naam" leeg.
+3. Vul in: E-mailadres `test@example.nl`.
+4. Tik op "Aanvraag indienen".
 
-**Expected result:**
+**Verwacht resultaat:**
 
-- The form does not submit.
-- A validation error appears on the password confirmation field in Dutch (e.g. "Wachtwoorden komen niet overeen").
+- Het formulier wordt niet ingediend.
+- Een Nederlandstalige validatiefout verschijnt onder het veld "Naam".
 
 ---
 

@@ -115,29 +115,23 @@ Open Supabase Studio → `family_link_requests`. A new row exists with:
 
 ---
 
-## S03-E — Admin links and approves the request (via Supabase Studio)
+## S03-E — Admin links and approves the request (CMS)
 
-**Goal:** The admin links the pending request to the correct member record and approves it.
-
-> The CMS currently shows requests but does not yet have an approve button in the UI. Approval is done directly in Supabase Studio until phase 5 implements the admin action.
+**Goal:** The admin links the pending request to the correct member record and approves it via the CMS UI.
 
 **Steps:**
 
-1. Open Supabase Studio at http://127.0.0.1:54323.
-2. Navigate to Table Editor → `family_link_requests`.
-3. Find the row for "Tweede Kindlid" (status: pending, profile is Test Lid).
-4. Edit the row:
-   - `member_id`: paste the UUID of the "Tweede Kindlid" member row (created in the setup above)
-   - `status`: `approved`
-5. Save the row.
-6. Now navigate to Table Editor → `user_family_members`.
-7. Insert a new row:
-   - `profile_id`: the UUID of the Test Lid profile (find it in `profiles` by email)
-   - `member_id`: the UUID of the "Tweede Kindlid" member row
-8. Save the row.
+1. Open the web CMS at http://localhost:3000.
+2. Log in with beheerder credentials.
+3. In the left sidebar, click "Gezinsverzoeken".
+4. Find the pending request for "Tweede Kindlid" in the "In behandeling" section.
+5. Type "Tweede" in the "Zoek lid op naam of e-mail..." search field.
+6. Select "Tweede Kindlid" from the dropdown.
+7. Click "Goedkeuren".
 
 **Expected result:**
 
+- The request disappears from "In behandeling" and appears in "Afgehandeld" with status "Goedgekeurd".
 - `family_link_requests` row: `status = approved`, `member_id` is populated.
 - `user_family_members`: a new row exists linking Test Lid's profile to the Tweede Kindlid member.
 
