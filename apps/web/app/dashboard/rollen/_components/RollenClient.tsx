@@ -62,7 +62,7 @@ export function RollenClient({ profiles, currentUserId }: Props) {
               Rol van <strong>{confirm.name}</strong> wijzigen naar <strong>{ROLE_LABELS[confirm.newRole]}</strong>?
             </p>
             <div style={s.dialogActions}>
-              <button onClick={applyChange} style={s.confirmBtn}>Bevestigen</button>
+              <button onClick={applyChange} disabled={!!pending} style={s.confirmBtn}>{pending ? 'Bezig...' : 'Bevestigen'}</button>
               <button onClick={() => setConfirm(null)} style={s.cancelBtn}>Annuleren</button>
             </div>
           </div>

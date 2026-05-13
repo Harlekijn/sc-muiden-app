@@ -427,3 +427,39 @@ Alle wijzigingen zijn server component → client component patroon, conform bes
 ## Open vragen
 
 Geen.
+
+---
+
+## SRE Notes
+
+**Datum:** 13-05-2026
+
+### Logging
+- Alle console-statements in gewijzigde API routes loggen alleen event type en outcome — geen PII.
+- Geen nieuwe edge functions geïntroduceerd.
+
+### Monitoring
+- Index `members_lid_type_idx` toegevoegd voor filterqueries op lid_type.
+- Partial index `members_is_barcommissie_idx` (where is_barcommissie = true) voor bardienst-indeling.
+- Partial index `members_is_vrijwilliger_idx` (where is_vrijwilliger = true).
+- `is_admin()` queryt profiles via PK-index (auth.uid() = id) — geen full table scan.
+- `sync_log` RLS-policy gebruikt `is_admin()` — alle policies filteren via auth.uid().
+
+### Foutafhandeling
+- LidEditForm: foutberichten in Dutch, geen Supabase-stacktraces, submit-knop disabled via isSubmitting.
+- LedenClient: inline rollback bij mislukte save; dropdown disabled tijdens opslaan (savingId).
+- RollenClient: Bevestigen-knop nu disabled tijdens in-flight mutatie (was ontbrekend) — opgelost.
+
+### Beveiliging
+- Geen nieuwe RLS-policies — bestaande `members_admin_all` via `is_admin()` dekt de nieuwe kolommen.
+- `is_admin()` herschreven naar `role = 'beheerder'` only; alle CMS-routes en sync-route geüpdated.
+- Browser-components gebruiken `createSupabaseBrowserClient` — admin client niet blootgesteld.
+- `SUPABASE_SECRET_KEY` alleen in server-side API routes; nooit in NEXT_PUBLIC_ of mobile.
+- LidEditForm-mutaties gevalideerd via `updateMemberSchema` (Zod + zodResolver).
+- Geen bestandsuploads in deze feature.
+
+### Bundle
+- Geen nieuwe packages toegevoegd aan apps/mobile of root.
+
+### Openstaande punten
+- Geen.
