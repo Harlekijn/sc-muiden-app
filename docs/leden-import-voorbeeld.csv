@@ -1,0 +1,13 @@
+first_name,last_name,birth_date,email,phone,sport,role,clubbase_id
+Jan,de Vries,1985-03-14,jan.devries@example.com,0612345678,voetbal,lid,CB-1001
+Marieke,Bakker,1988-07-22,marieke.bakker@example.com,0623456789,voetbal,ouder,CB-1002
+Thomas,van den Berg,1990-11-05,thomas.vandenberg@example.com,0634567890,hockey,lid,CB-1003
+Sophie,Jansen,,sophie.jansen@example.com,,hockey,lid,CB-1004
+Pieter,Smit,1978-04-30,pieter.smit@example.com,0645678901,voetbal,trainer,CB-1005
+Annelies,Hoekstra,1982-09-18,annelies.hoekstra@example.com,0656789012,hockey,coach,CB-1006
+Bas,Visser,1975-12-03,bas.visser@example.com,0667890123,voetbal,teammanager,CB-1007
+Inge,Mulder,1993-06-27,,0678901234,voetbal,lid,CB-1008
+Daan,Peters,2008-02-11,,0689012345,voetbal,lid,CB-1009
+Fleur,de Boer,2010-08-19,,0690123456,hockey,lid,CB-1010
+Lars,Hendriks,1980-01-07,lars.hendriks@example.com,0601234567,voetbal,commissielid,CB-1011
+Nora,van Dijk,2005-05-23,,0612340000,hockey,lid,CB-1012
