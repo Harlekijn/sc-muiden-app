@@ -70,7 +70,7 @@ export async function POST(
     .eq('id', params.id);
 
   if (updateError) {
-    console.error('[account-requests/reject] update_failed', updateError.message);
+    console.error('[account-requests/reject] outcome=update_failed');
     return NextResponse.json({ error: 'Status bijwerken mislukt.' }, { status: 500 });
   }
 

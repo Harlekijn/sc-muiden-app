@@ -70,7 +70,7 @@ export async function POST(
     .eq('id', params.id);
 
   if (updateError) {
-    console.error('[gezinsverzoeken/approve] update_failed', updateError.message);
+    console.error('[gezinsverzoeken/approve] outcome=update_failed');
     return NextResponse.json({ error: 'Status bijwerken mislukt.' }, { status: 500 });
   }
 
@@ -83,7 +83,7 @@ export async function POST(
     });
 
   if (familyError) {
-    console.error('[gezinsverzoeken/approve] family_insert_failed', familyError.message);
+    console.error('[gezinsverzoeken/approve] outcome=family_insert_failed');
     return NextResponse.json({ error: 'Gezinslid koppelen mislukt.' }, { status: 500 });
   }
 

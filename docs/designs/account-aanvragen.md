@@ -767,3 +767,40 @@ Stel dit in via Studio: zet de rij uit S14-A op `status = rejected`.
 ## Open vragen
 
 _Geen open vragen. Alle beslissingen vastgesteld in de planningssessie._
+
+---
+
+## SRE Notes
+
+**Datum:** 13-05-2026
+
+### Logging
+- 8 `console.error` aanroepen herschreven: `error.message` verwijderd (kon e-mailadres bevatten via Supabase Auth foutmelding). Logs bevatten nu uitsluitend event-type en outcome-string (`outcome=invite_failed`, etc.).
+- Geen console.log of logger.info toegevoegd — Supabase audit log is de primaire data-access log.
+
+### Monitoring
+- `account_requests_active_email_unique` — partial unique index op `lower(email)` WHERE pending/approved aanwezig ✓
+- `account_requests_status_created_idx` — samengestelde index op `(status, created_at desc)` voor admin-query aanwezig ✓
+- `account_requests_reviewed_by_idx` — FK index op `reviewed_by` aanwezig ✓
+- Geen nieuwe React Query queries (alleen mutatie) — geen `staleTime` vereist.
+- Geen nieuwe edge functions — geen sync_log vereist.
+
+### Foutafhandeling
+- Alle foutmeldingen in het Nederlands geverifieerd (mobiel en CMS).
+- Geen raw Supabase-fouttext zichtbaar voor de gebruiker.
+- Submit-knoppen uitgeschakeld tijdens in-flight mutaties (`disabled={loading !== null}`).
+- Success-feedback alleen na serverbevestiging.
+- Duplicaat e-mail gedetecteerd via Postgres foutcode `23505` → Nederlandse melding getoond.
+
+### Beveiliging
+- **Fix:** `account_requests_insert_anon` policy verscherpt van `with check (true)` naar `with check (status = 'pending' AND reviewed_by IS NULL AND reviewed_at IS NULL)`. Vorige policy stond anonieme gebruikers toe `status = 'approved'` in te voegen. Migratie: `20260513161540_account_requests_sre.sql`.
+- Alle API-input gevalideerd met Zod vóór elke DB-schrijfoperatie ✓
+- `SUPABASE_SECRET_KEY` uitsluitend in CMS API routes, niet in mobile ✓
+- Geen file uploads in deze feature ✓
+- `account_requests_admin_all` dekt SELECT/UPDATE/DELETE voor admins via `is_admin()` ✓
+
+### Bundle
+- Geen nieuwe packages toegevoegd aan `apps/mobile/package.json`.
+
+### Openstaande punten
+- Geen.

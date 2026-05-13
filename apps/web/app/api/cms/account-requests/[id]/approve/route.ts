@@ -69,7 +69,7 @@ export async function POST(
   );
 
   if (inviteError || !inviteData?.user) {
-    console.error('[account-requests/approve] invite_failed', inviteError?.message);
+    console.error('[account-requests/approve] outcome=invite_failed');
     return NextResponse.json({ error: 'Uitnodiging versturen mislukt. Probeer het opnieuw.' }, { status: 500 });
   }
 
@@ -84,7 +84,7 @@ export async function POST(
     .eq('id', newUserId);
 
   if (profileError) {
-    console.error('[account-requests/approve] profile_update_failed', profileError.message);
+    console.error('[account-requests/approve] outcome=profile_update_failed');
     return NextResponse.json({ error: 'Profielkoppeling mislukt.' }, { status: 500 });
   }
 
@@ -100,7 +100,7 @@ export async function POST(
       .insert(familyRows);
 
     if (familyError) {
-      console.error('[account-requests/approve] family_insert_failed', familyError.message);
+      console.error('[account-requests/approve] outcome=family_insert_failed');
       return NextResponse.json({ error: 'Gezinsleden koppelen mislukt.' }, { status: 500 });
     }
   }
@@ -116,7 +116,7 @@ export async function POST(
     .eq('id', params.id);
 
   if (updateError) {
-    console.error('[account-requests/approve] status_update_failed', updateError.message);
+    console.error('[account-requests/approve] outcome=status_update_failed');
     return NextResponse.json({ error: 'Status bijwerken mislukt.' }, { status: 500 });
   }
 
