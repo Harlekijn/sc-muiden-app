@@ -1,18 +1,17 @@
-export default function AankondigingenPage() {
-  return (
-    <div>
-      <h1
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 'var(--text-3xl)',
-          fontWeight: 700,
-          color: 'var(--color-navy)',
-          marginBottom: 'var(--space-2)',
-        }}
-      >
-        Aankondigingen
-      </h1>
-      <p style={{ color: 'var(--color-text-2)' }}>Aankondigingenbeheer volgt in fase 6.</p>
-    </div>
-  );
+import { createSupabaseServerClient } from '../../../lib/supabase-server';
+import { AankondigingenClient } from './_components/AankondigingenClient';
+import type { AnnouncementWithAuthor } from '@sc-muiden/shared';
+
+export default async function AankondigingenPage() {
+  const supabase = createSupabaseServerClient();
+
+  const { data } = await supabase
+    .from('announcements')
+    .select('*, author:profiles!author_id(display_name)')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false });
+
+  const announcements = (data ?? []) as unknown as AnnouncementWithAuthor[];
+
+  return <AankondigingenClient announcements={announcements} />;
 }
