@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   errorBanner: {
-    backgroundColor: '#fde8e8',
+    backgroundColor: colors.errorBg,
     borderRadius: 6,
     padding: spacing[3],
     marginBottom: spacing[4],

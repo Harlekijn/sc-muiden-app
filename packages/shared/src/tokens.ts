@@ -9,6 +9,7 @@ export const colors = {
   text2: '#5a6e8a',
   success: '#1a8c5c',
   error: '#d63c3c',
+  errorBg: '#fde8e8',
   warning: '#e07b12',
   info: '#046bba',
   navy90: 'rgba(1, 29, 80, 0.90)',
