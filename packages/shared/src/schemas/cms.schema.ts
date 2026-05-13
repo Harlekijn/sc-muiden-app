@@ -1,14 +1,13 @@
 import { z } from 'zod';
 
 const sportSchema = z.enum(['voetbal', 'hockey']);
-const userRoleSchema = z.enum([
-  'lid',
-  'ouder',
-  'trainer',
-  'coach',
-  'teammanager',
-  'commissielid',
-  'beheerder',
+const userRoleSchema = z.enum(['lid', 'beheerder']);
+const lidTypeSchema = z.enum([
+  'jeugdlid',
+  'niet-spelend-lid',
+  'trainingslid',
+  'spelend-lid',
+  'relatie',
 ]);
 
 // ── Teams ─────────────────────────────────────────────────────────────────────
@@ -113,6 +112,9 @@ export const updateMemberSchema = z.object({
   email: z.string().email('Ongeldig e-mailadres').nullable().optional(),
   phone: z.string().nullable().optional(),
   sport: z.array(sportSchema).default([]),
+  lid_type: lidTypeSchema.nullable().optional(),
+  is_vrijwilliger: z.boolean().optional(),
+  is_barcommissie: z.boolean().optional(),
 });
 
 // ── Roles ─────────────────────────────────────────────────────────────────────
@@ -142,7 +144,6 @@ export const csvImportRowDataSchema = z.object({
   email: z.string().email('Ongeldig e-mailadres').nullable().optional(),
   phone: z.string().nullable().optional(),
   sport: z.array(sportSchema).default([]),
-  role: userRoleSchema.default('lid'),
   clubbase_id: z.string().nullable().optional(),
 });
 

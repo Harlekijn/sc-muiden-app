@@ -43,7 +43,7 @@ beforeEach(() => {
   });
 });
 
-// S12-K — Rol toewijzen
+// S15-E / S12-H — Rolbeheer vereenvoudigd
 describe('RollenClient', () => {
   it('S12-K: toont alle profielen', () => {
     render(<RollenClient profiles={mockProfiles} currentUserId="user-2" />);
@@ -51,7 +51,18 @@ describe('RollenClient', () => {
     expect(screen.getByText('Piet Smit')).toBeInTheDocument();
   });
 
-  it('S12-K: eigen rij heeft uitgeschakelde dropdown', () => {
+  it('S15-E: dropdown toont alleen Lid en Beheerder opties', () => {
+    render(<RollenClient profiles={mockProfiles} currentUserId="user-2" />);
+    const selects = screen.getAllByRole('combobox');
+    const janSelect = selects.find((s) => s.closest('tr')?.textContent?.includes('Jan Bakker'))!;
+    const options = Array.from((janSelect as HTMLSelectElement).options).map((o) => o.value);
+    expect(options).toEqual(['lid', 'beheerder']);
+    expect(options).not.toContain('commissielid');
+    expect(options).not.toContain('trainer');
+    expect(options).not.toContain('ouder');
+  });
+
+  it('S15-F: eigen rij heeft uitgeschakelde dropdown', () => {
     render(<RollenClient profiles={mockProfiles} currentUserId="user-2" />);
     const selects = screen.getAllByRole('combobox');
     const ownSelect = selects.find((s) => s.closest('tr')?.textContent?.includes('Piet Smit'));
@@ -65,13 +76,11 @@ describe('RollenClient', () => {
     expect(otherSelect).not.toBeDisabled();
   });
 
-  it('S12-K: toont bevestigingsdialoog bij rolwijziging', async () => {
+  it('S15-D: toont bevestigingsdialoog bij rolwijziging naar beheerder', async () => {
     render(<RollenClient profiles={mockProfiles} currentUserId="user-2" />);
     const selects = screen.getAllByRole('combobox');
     const janSelect = selects.find((s) => s.closest('tr')?.textContent?.includes('Jan Bakker'));
-
-    fireEvent.change(janSelect!, { target: { value: 'trainer' } });
-
+    fireEvent.change(janSelect!, { target: { value: 'beheerder' } });
     await waitFor(() => {
       expect(screen.getByText(/wijzigen naar/i)).toBeInTheDocument();
     });
@@ -81,15 +90,13 @@ describe('RollenClient', () => {
     render(<RollenClient profiles={mockProfiles} currentUserId="user-2" />);
     const selects = screen.getAllByRole('combobox');
     const janSelect = selects.find((s) => s.closest('tr')?.textContent?.includes('Jan Bakker'));
-
-    fireEvent.change(janSelect!, { target: { value: 'trainer' } });
+    fireEvent.change(janSelect!, { target: { value: 'beheerder' } });
     await waitFor(() => screen.getByText(/wijzigen naar/i));
-
     fireEvent.click(screen.getByText('Annuleren'));
     expect(screen.queryByText(/wijzigen naar/i)).not.toBeInTheDocument();
   });
 
-  it('S12-K: bevestigen roept Supabase update aan', async () => {
+  it('S15-D: bevestigen roept Supabase update aan met nieuwe rol', async () => {
     const mockEq = jest.fn().mockResolvedValue({ error: null });
     const mockUpdate = jest.fn().mockReturnValue({ eq: mockEq });
     createSupabaseBrowserClient.mockReturnValue({
@@ -99,21 +106,18 @@ describe('RollenClient', () => {
     render(<RollenClient profiles={mockProfiles} currentUserId="user-2" />);
     const selects = screen.getAllByRole('combobox');
     const janSelect = selects.find((s) => s.closest('tr')?.textContent?.includes('Jan Bakker'));
-
-    fireEvent.change(janSelect!, { target: { value: 'trainer' } });
+    fireEvent.change(janSelect!, { target: { value: 'beheerder' } });
     await waitFor(() => screen.getByText(/wijzigen naar/i));
-
     fireEvent.click(screen.getByText('Bevestigen'));
-
     await waitFor(() => {
-      expect(mockUpdate).toHaveBeenCalledWith({ role: 'trainer' });
+      expect(mockUpdate).toHaveBeenCalledWith({ role: 'beheerder' });
     });
   });
 });
 
-// S12-H — Commissielid heeft geen toegang tot rolbeheer
+// S15-G / S04-H — Rolbeheer toegangsbewaking
 describe('RollenPage — toegangsbewaking', () => {
-  it('S12-H: commissielid ziet GeenToegang component', async () => {
+  it('S15-G: lid ziet GeenToegang component', async () => {
     createSupabaseServerClient.mockReturnValue({
       auth: {
         getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'u1' } } }),
@@ -121,7 +125,7 @@ describe('RollenPage — toegangsbewaking', () => {
       from: jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({ data: { role: 'commissielid' }, error: null }),
+            single: jest.fn().mockResolvedValue({ data: { role: 'lid' }, error: null }),
           }),
         }),
       }),
@@ -131,7 +135,7 @@ describe('RollenPage — toegangsbewaking', () => {
     expect(screen.getByRole('heading', { name: /geen toegang/i })).toBeInTheDocument();
   });
 
-  it('S12-H: niet-ingelogde gebruiker ziet GeenToegang component', async () => {
+  it('S04-H: niet-ingelogde gebruiker ziet GeenToegang component', async () => {
     createSupabaseServerClient.mockReturnValue({
       auth: {
         getUser: jest.fn().mockResolvedValue({ data: { user: null } }),

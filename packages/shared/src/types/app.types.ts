@@ -1,13 +1,13 @@
 export type Sport = 'voetbal' | 'hockey';
 
-export type UserRole =
-  | 'lid'
-  | 'ouder'
-  | 'trainer'
-  | 'coach'
-  | 'teammanager'
-  | 'commissielid'
-  | 'beheerder';
+export type UserRole = 'lid' | 'beheerder';
+
+export type LidType =
+  | 'jeugdlid'
+  | 'niet-spelend-lid'
+  | 'trainingslid'
+  | 'spelend-lid'
+  | 'relatie';
 
 export type ActivityType = 'training' | 'wedstrijd' | 'bardienst' | 'clubactiviteit';
 
@@ -43,7 +43,9 @@ export interface Member {
   email: string | null;
   phone: string | null;
   sport: Sport[];
-  role: UserRole;
+  lid_type: LidType | null;
+  is_vrijwilliger: boolean;
+  is_barcommissie: boolean;
   clubbase_id: string | null;
   created_at: string;
   updated_at: string;

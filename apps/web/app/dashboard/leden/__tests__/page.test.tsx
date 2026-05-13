@@ -1,7 +1,13 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { Member } from '@sc-muiden/shared';
 import { LedenClient } from '../_components/LedenClient';
+
+jest.mock('../../../../lib/supabase-client', () => ({
+  createSupabaseBrowserClient: jest.fn(),
+}));
+
+const { createSupabaseBrowserClient } = jest.requireMock('../../../../lib/supabase-client');
 
 const mockMembers: Member[] = [
   {
@@ -12,7 +18,9 @@ const mockMembers: Member[] = [
     email: 'jan@example.com',
     phone: null,
     sport: ['voetbal'],
-    role: 'lid',
+    lid_type: 'spelend-lid',
+    is_vrijwilliger: false,
+    is_barcommissie: false,
     clubbase_id: null,
     created_at: '2026-01-01T00:00:00',
     updated_at: '2026-01-01T00:00:00',
@@ -26,7 +34,9 @@ const mockMembers: Member[] = [
     email: 'sophie@example.com',
     phone: null,
     sport: ['hockey'],
-    role: 'trainer',
+    lid_type: null,
+    is_vrijwilliger: true,
+    is_barcommissie: false,
     clubbase_id: null,
     created_at: '2026-01-01T00:00:00',
     updated_at: '2026-01-01T00:00:00',
@@ -34,7 +44,17 @@ const mockMembers: Member[] = [
   },
 ];
 
-// S12-C — Leden lijst tonen
+beforeEach(() => {
+  createSupabaseBrowserClient.mockReturnValue({
+    from: jest.fn().mockReturnValue({
+      update: jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({ error: null }),
+      }),
+    }),
+  });
+});
+
+// S12-C / S15-H — Ledenlijst
 describe('LedenClient', () => {
   it('S12-C: toont alle leden standaard', () => {
     render(<LedenClient members={mockMembers} />);
@@ -58,14 +78,37 @@ describe('LedenClient', () => {
     expect(screen.queryByText('Sophie de Vries')).not.toBeInTheDocument();
   });
 
-  it('toont rolbadge', () => {
+  it('S15-H: toont kolom Ledentype in plaats van Rol', () => {
     render(<LedenClient members={mockMembers} />);
-    expect(screen.getByText('Trainer')).toBeInTheDocument();
+    expect(screen.getByText('Ledentype')).toBeInTheDocument();
+    expect(screen.queryByText('Rol')).not.toBeInTheDocument();
+  });
+
+  it('S15-H: toont lid_type in inline dropdown', () => {
+    render(<LedenClient members={mockMembers} />);
+    const dropdown = screen.getByLabelText(/Ledentype van Jan Bakker/i) as HTMLSelectElement;
+    expect(dropdown.value).toBe('spelend-lid');
+  });
+
+  it('S15-H: lid zonder ledentype toont lege dropdown', () => {
+    render(<LedenClient members={mockMembers} />);
+    const dropdown = screen.getByLabelText(/Ledentype van Sophie de Vries/i) as HTMLSelectElement;
+    expect(dropdown.value).toBe('');
+  });
+
+  it('S15-C: inline wijziging roept supabase.update aan', async () => {
+    render(<LedenClient members={mockMembers} />);
+    const dropdown = screen.getByLabelText(/Ledentype van Sophie de Vries/i);
+    fireEvent.change(dropdown, { target: { value: 'jeugdlid' } });
+    await waitFor(() => {
+      expect(createSupabaseBrowserClient).toHaveBeenCalled();
+    });
   });
 
   it('toont link naar detail-pagina per lid', () => {
     render(<LedenClient members={mockMembers} />);
-    const link = screen.getByRole('link', { name: /Jan Bakker/i });
-    expect(link).toHaveAttribute('href', '/dashboard/leden/mem-1');
+    const links = screen.getAllByRole('link');
+    const janLinks = links.filter((l) => l.getAttribute('href') === '/dashboard/leden/mem-1');
+    expect(janLinks.length).toBeGreaterThan(0);
   });
 });

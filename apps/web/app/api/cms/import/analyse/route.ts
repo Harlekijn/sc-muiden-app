@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     .eq('id', user.id)
     .single();
 
-  if (!profile || !['beheerder', 'commissielid'].includes(profile.role)) {
+  if (!profile || profile.role !== 'beheerder') {
     return NextResponse.json({ error: 'Geen toegang.' }, { status: 403 });
   }
 
@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
       sport: rawRow.sport
         ? rawRow.sport.split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean)
         : [],
-      role: rawRow.role || 'lid',
       clubbase_id: rawRow.clubbase_id || null,
     });
 
@@ -100,7 +99,6 @@ export async function POST(req: NextRequest) {
         email: data.email ?? null,
         phone: data.phone ?? null,
         sport: data.sport,
-        role: data.role,
         clubbase_id: data.clubbase_id ?? null,
       },
       status: conflictId ? 'conflict' : 'new',

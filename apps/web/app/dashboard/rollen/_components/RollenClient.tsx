@@ -7,15 +7,10 @@ import { createSupabaseBrowserClient } from '../../../../lib/supabase-client';
 
 const ROLE_LABELS: Record<UserRole, string> = {
   lid: 'Lid',
-  ouder: 'Ouder',
-  trainer: 'Trainer',
-  coach: 'Coach',
-  teammanager: 'Teammanager',
-  commissielid: 'Commissielid',
   beheerder: 'Beheerder',
 };
 
-const ROLE_OPTIONS: UserRole[] = ['lid', 'ouder', 'trainer', 'coach', 'teammanager', 'commissielid', 'beheerder'];
+const ROLE_OPTIONS: UserRole[] = ['lid', 'beheerder'];
 
 interface Props {
   profiles: ProfileRow[];
@@ -91,19 +86,20 @@ export function RollenClient({ profiles, currentUserId }: Props) {
                 : row.id;
               const isOwnRow = row.id === currentUserId;
               const isBusy = pending === row.id;
+              const currentRole = (row.role === 'beheerder' ? 'beheerder' : 'lid') as UserRole;
 
               return (
                 <tr key={row.id} style={s.tr}>
                   <td style={s.td}>{name}</td>
                   <td style={{ ...s.td, color: 'var(--color-text-2)' }}>{row.member?.email ?? '—'}</td>
                   <td style={s.td}>
-                    <span style={{ ...s.badge, ...(row.role === 'beheerder' ? s.badgeBeheerder : row.role === 'commissielid' ? s.badgeCommissie : {}) }}>
-                      {ROLE_LABELS[row.role as UserRole] ?? row.role}
+                    <span style={{ ...s.badge, ...(currentRole === 'beheerder' ? s.badgeBeheerder : s.badgeLid) }}>
+                      {ROLE_LABELS[currentRole]}
                     </span>
                   </td>
                   <td style={s.td}>
                     <select
-                      value={row.role}
+                      value={currentRole}
                       disabled={isOwnRow || isBusy}
                       onChange={(e) => requestChange(row.id, name, e.target.value as UserRole)}
                       style={{ ...s.select, opacity: isOwnRow ? 0.4 : 1 }}
@@ -131,9 +127,9 @@ const s: Record<string, React.CSSProperties> = {
   th: { textAlign: 'left', padding: 'var(--space-2) var(--space-3)', borderBottom: '2px solid var(--color-mid)', fontWeight: 600, color: 'var(--color-text-2)', whiteSpace: 'nowrap' },
   tr: { borderBottom: '1px solid var(--color-light)' },
   td: { padding: 'var(--space-3)', color: 'var(--color-text)', verticalAlign: 'middle' },
-  badge: { display: 'inline-block', padding: '2px var(--space-2)', borderRadius: 'var(--radius-pill)', background: 'var(--color-light)', fontSize: 'var(--text-xs)', fontWeight: 600 },
+  badge: { display: 'inline-block', padding: '2px var(--space-2)', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-xs)', fontWeight: 600 },
   badgeBeheerder: { background: 'rgba(1,29,80,0.1)', color: 'var(--color-navy)' },
-  badgeCommissie: { background: 'rgba(4,107,186,0.1)', color: 'var(--color-blue)' },
+  badgeLid: { background: 'var(--color-light)', color: 'var(--color-text)' },
   select: { padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--color-mid)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-body)', color: 'var(--color-text)', background: 'var(--color-white)', cursor: 'pointer' },
   overlay: { position: 'fixed', inset: 0, background: 'rgba(1,29,80,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 },
   dialog: { background: 'var(--color-white)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-6)', maxWidth: 400, width: '90%', boxShadow: '0 8px 32px rgba(1,29,80,0.18)' },

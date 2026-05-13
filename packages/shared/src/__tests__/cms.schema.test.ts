@@ -163,7 +163,7 @@ describe('updateRoleSchema', () => {
   it('geldige rol slaagt', () => {
     const result = updateRoleSchema.safeParse({
       profile_id: '123e4567-e89b-12d3-a456-426614174000',
-      new_role: 'commissielid',
+      new_role: 'beheerder',
     });
     expect(result.success).toBe(true);
   });

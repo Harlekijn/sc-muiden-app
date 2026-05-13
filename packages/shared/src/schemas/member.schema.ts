@@ -1,14 +1,13 @@
 import { z } from 'zod';
 
 const sportSchema = z.enum(['voetbal', 'hockey']);
-const userRoleSchema = z.enum([
-  'lid',
-  'ouder',
-  'trainer',
-  'coach',
-  'teammanager',
-  'commissielid',
-  'beheerder',
+const userRoleSchema = z.enum(['lid', 'beheerder']);
+const lidTypeSchema = z.enum([
+  'jeugdlid',
+  'niet-spelend-lid',
+  'trainingslid',
+  'spelend-lid',
+  'relatie',
 ]);
 
 export const profileSchema = z.object({
@@ -33,7 +32,9 @@ export const memberSchema = z.object({
   email: z.string().email().nullable(),
   phone: z.string().nullable(),
   sport: z.array(sportSchema),
-  role: userRoleSchema,
+  lid_type: lidTypeSchema.nullable(),
+  is_vrijwilliger: z.boolean(),
+  is_barcommissie: z.boolean(),
   clubbase_id: z.string().nullable(),
   created_at: z.string().datetime({ offset: true }),
   updated_at: z.string().datetime({ offset: true }),
