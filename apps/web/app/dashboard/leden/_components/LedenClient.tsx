@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { Search } from 'lucide-react';
 import type { Member, LidType } from '@sc-muiden/shared';
 import { createSupabaseBrowserClient } from '../../../../lib/supabase-client';
 
@@ -82,7 +83,7 @@ export function LedenClient({ members }: Props) {
     <div>
       <div style={s.toolbar}>
         <div style={s.searchWrap}>
-          <span style={s.searchIcon}>&#128269;</span>
+          <Search size={16} style={s.searchIcon} />
           <input
             type="search"
             placeholder="Zoek op naam of e-mail"
