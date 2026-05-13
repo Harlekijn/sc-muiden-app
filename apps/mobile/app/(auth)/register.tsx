@@ -1,86 +1,39 @@
 import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { colors, spacing, registerSchema, type RegisterInput } from '@sc-muiden/shared';
+import { colors, spacing, createAccountRequestSchema, type CreateAccountRequestInput } from '@sc-muiden/shared';
 import { Text } from '../../components/ui/Text';
 import { TextInput } from '../../components/ui/TextInput';
 import { FormField } from '../../components/ui/FormField';
 import { Button } from '../../components/ui/Button';
-import { supabase } from '../../lib/supabase';
-import { useState } from 'react';
+import { useSubmitAccountRequest } from '../../hooks/useAccountRequest';
 
 export default function RegisterScreen() {
-  const [success, setSuccess] = useState(false);
+  const submitRequest = useSubmitAccountRequest();
 
   const {
     control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterInput>({
-    resolver: zodResolver(registerSchema),
+  } = useForm<CreateAccountRequestInput>({
+    resolver: zodResolver(createAccountRequestSchema),
+    defaultValues: {
+      display_name: '',
+      email: '',
+      birth_date: null,
+    },
   });
 
-  async function onSubmit(data: RegisterInput) {
-    const email = data.email.toLowerCase().trim();
-
-    // Gate: verify the email exists in the members table before creating an account.
-    // Uses an RPC function (security definer) so the anon role can check membership
-    // without exposing member data through RLS.
-    const { data: memberExists, error: lookupError } = await supabase
-      .rpc('member_email_exists', { p_email: email });
-
-    if (lookupError) {
-      setError('root', { message: 'Er is een fout opgetreden. Probeer het opnieuw.' });
-      return;
-    }
-
-    if (!memberExists) {
-      setError('root', {
-        message:
-          'Je e-mailadres is niet gevonden in de ledenadministratie. Neem contact op met de beheerder.',
-      });
-      return;
-    }
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password: data.password,
-      options: {
-        data: { display_name: data.naam },
-      },
-    });
-
-    if (error) {
-      const message =
-        error.message.includes('already registered')
-          ? 'Er bestaat al een account met dit e-mailadres.'
-          : 'Er is een fout opgetreden. Probeer het opnieuw.';
+  async function onSubmit(data: CreateAccountRequestInput) {
+    try {
+      await submitRequest.mutateAsync(data);
+      router.replace('/(auth)/register-bevestigd');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Er is een fout opgetreden. Probeer het opnieuw.';
       setError('root', { message });
-      return;
     }
-
-    setSuccess(true);
-  }
-
-  if (success) {
-    return (
-      <View style={styles.successContainer}>
-        <View style={styles.header}>
-          <Text variant="h1" style={styles.headerTitle}>SC Muiden</Text>
-        </View>
-        <View style={styles.successCard}>
-          <Text variant="h3" style={styles.successTitle}>Controleer je e-mail</Text>
-          <Text variant="body" style={styles.successBody}>
-            We hebben een bevestigingslink gestuurd naar je e-mailadres. Klik op de link om je account te activeren.
-          </Text>
-          <Link href="/(auth)/login" style={styles.backLink}>
-            <Text variant="label" style={styles.backLinkText}>Terug naar inloggen</Text>
-          </Link>
-        </View>
-      </View>
-    );
   }
 
   return (
@@ -90,7 +43,7 @@ export default function RegisterScreen() {
     >
       <View style={styles.header}>
         <Text variant="h1" style={styles.headerTitle}>SC Muiden</Text>
-        <Text variant="body" style={styles.headerSub}>Account aanmaken</Text>
+        <Text variant="body" style={styles.headerSub}>Account aanvragen</Text>
       </View>
 
       <ScrollView
@@ -99,7 +52,10 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.card}>
-          <Text variant="h3" style={styles.cardTitle}>Registreren</Text>
+          <Text variant="h3" style={styles.cardTitle}>Account aanvragen</Text>
+          <Text variant="body" style={styles.cardIntro}>
+            Vul je gegevens in. Een beheerder koppelt je aanvraag aan je lidmaatschap en stuurt je een activatiemail.
+          </Text>
 
           {errors.root ? (
             <View style={styles.errorBanner}>
@@ -108,10 +64,10 @@ export default function RegisterScreen() {
           ) : null}
 
           <View style={styles.fields}>
-            <FormField label="Naam" error={errors.naam?.message}>
+            <FormField label="Naam" error={errors.display_name?.message}>
               <Controller
                 control={control}
-                name="naam"
+                name="display_name"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
                     value={value}
@@ -144,35 +100,17 @@ export default function RegisterScreen() {
               />
             </FormField>
 
-            <FormField label="Wachtwoord" error={errors.password?.message}>
+            <FormField label="Geboortedatum (optioneel)" error={errors.birth_date?.message}>
               <Controller
                 control={control}
-                name="password"
+                name="birth_date"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    value={value}
-                    onChangeText={onChange}
+                    value={value ?? ''}
+                    onChangeText={(text) => onChange(text || null)}
                     onBlur={onBlur}
-                    placeholder="Minimaal 8 tekens"
-                    secureTextEntry
-                    textContentType="newPassword"
-                  />
-                )}
-              />
-            </FormField>
-
-            <FormField label="Wachtwoord bevestigen" error={errors.passwordBevestiging?.message}>
-              <Controller
-                control={control}
-                name="passwordBevestiging"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    placeholder="Herhaal wachtwoord"
-                    secureTextEntry
-                    textContentType="newPassword"
+                    placeholder="DD-MM-JJJJ"
+                    keyboardType="numbers-and-punctuation"
                   />
                 )}
               />
@@ -184,7 +122,7 @@ export default function RegisterScreen() {
             loading={isSubmitting}
             style={styles.submitButton}
           >
-            Account aanmaken
+            Aanvraag indienen
           </Button>
         </View>
 
@@ -229,7 +167,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 10,
     padding: spacing[6],
-    shadowColor: '#011d50',
+    shadowColor: colors.navy,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -237,7 +175,12 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     color: colors.navy,
+    marginBottom: spacing[2],
+  },
+  cardIntro: {
+    color: colors.text2,
     marginBottom: spacing[4],
+    lineHeight: 22,
   },
   errorBanner: {
     backgroundColor: '#fde8e8',
@@ -266,35 +209,5 @@ const styles = StyleSheet.create({
   footerLink: {
     color: colors.blue,
     fontFamily: 'Barlow_600SemiBold',
-  },
-  successContainer: {
-    flex: 1,
-    backgroundColor: colors.light,
-  },
-  successCard: {
-    margin: spacing[4],
-    backgroundColor: colors.white,
-    borderRadius: 10,
-    padding: spacing[6],
-    shadowColor: '#011d50',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  successTitle: {
-    color: colors.navy,
-    marginBottom: spacing[3],
-  },
-  successBody: {
-    color: colors.text2,
-    lineHeight: 22,
-    marginBottom: spacing[6],
-  },
-  backLink: {
-    alignSelf: 'flex-start',
-  },
-  backLinkText: {
-    color: colors.blue,
   },
 });

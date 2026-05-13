@@ -34,6 +34,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_requests: {
+        Row: {
+          admin_notes: string | null
+          birth_date: string | null
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          birth_date?: string | null
+          created_at?: string
+          display_name: string
+          email: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          birth_date?: string | null
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activities: {
         Row: {
           created_at: string
@@ -750,7 +797,6 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
-      member_email_exists: { Args: { p_email: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

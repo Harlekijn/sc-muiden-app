@@ -35,7 +35,23 @@ export const resetPasswordSchema = z
     path: ['passwordBevestiging'],
   });
 
+export const createAccountRequestSchema = z.object({
+  display_name: z.string().min(2, 'Naam moet minimaal 2 tekens bevatten'),
+  email: z.string().email('Ongeldig e-mailadres'),
+  birth_date: z
+    .string()
+    .regex(/^\d{2}-\d{2}-\d{4}$/, 'Gebruik het formaat DD-MM-JJJJ')
+    .optional()
+    .transform((val) => {
+      if (!val) return null;
+      const [day, month, year] = val.split('-');
+      return `${year}-${month}-${day}`;
+    })
+    .nullable(),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type CreateAccountRequestInput = z.infer<typeof createAccountRequestSchema>;

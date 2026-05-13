@@ -7,6 +7,7 @@ import styles from './layout.module.css';
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Leden', href: '/dashboard/leden' },
+  { label: 'Account aanvragen', href: '/dashboard/account-aanvragen' },
   { label: 'Teams', href: '/dashboard/teams' },
   { label: 'Activiteiten', href: '/dashboard/activiteiten' },
   { label: 'Aankondigingen', href: '/dashboard/aankondigingen' },

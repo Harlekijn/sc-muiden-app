@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '../schemas/auth.schema';
+import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema, createAccountRequestSchema } from '../schemas/auth.schema';
 
 describe('loginSchema', () => {
   it('accepts valid credentials', () => {
@@ -118,5 +118,55 @@ describe('resetPasswordSchema', () => {
     expect(result.success).toBe(false);
     const issue = result.error?.issues.find((i) => i.path.includes('passwordBevestiging'));
     expect(issue).toBeDefined();
+  });
+});
+
+describe('createAccountRequestSchema', () => {
+  const valid = {
+    display_name: 'Jan de Vries',
+    email: 'jan@scmuiden.nl',
+    birth_date: null,
+  };
+
+  it('accepts valid data without birth date', () => {
+    expect(createAccountRequestSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it('accepts valid data with birth date in DD-MM-JJJJ format', () => {
+    const result = createAccountRequestSchema.safeParse({ ...valid, birth_date: '15-03-2010' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.birth_date).toBe('2010-03-15');
+    }
+  });
+
+  it('accepts missing birth_date (optional)', () => {
+    const { birth_date: _, ...withoutBirth } = valid;
+    const result = createAccountRequestSchema.safeParse(withoutBirth);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.birth_date).toBeNull();
+    }
+  });
+
+  it('rejects birth date in wrong format', () => {
+    const result = createAccountRequestSchema.safeParse({ ...valid, birth_date: '2010-03-15' });
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues.find((i) => i.path.includes('birth_date'));
+    expect(issue?.message).toBe('Gebruik het formaat DD-MM-JJJJ');
+  });
+
+  it('rejects display_name shorter than 2 characters', () => {
+    const result = createAccountRequestSchema.safeParse({ ...valid, display_name: 'X' });
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues.find((i) => i.path.includes('display_name'));
+    expect(issue?.message).toBe('Naam moet minimaal 2 tekens bevatten');
+  });
+
+  it('rejects invalid email', () => {
+    const result = createAccountRequestSchema.safeParse({ ...valid, email: 'geen-email' });
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues.find((i) => i.path.includes('email'));
+    expect(issue?.message).toBe('Ongeldig e-mailadres');
   });
 });
