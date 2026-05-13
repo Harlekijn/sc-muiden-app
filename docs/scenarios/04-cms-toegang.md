@@ -164,21 +164,29 @@ No page should return a 404 or throw an unhandled error.
 
 ---
 
-## S04-H — Commissielid heeft geen toegang tot rolbeheer
+## S04-H — Gebruiker met rol 'lid' heeft geen toegang tot het CMS
 
-**Goal:** Een commissielid ziet de `<GeenToegang />`-component op `/dashboard/rollen`, terwijl andere dashboardpagina's wel toegankelijk zijn.
+**Goal:** Een gebruiker met `role = 'lid'` bereikt `/dashboard` maar ziet de "Geen toegang"-component — niet het dashboard.
 
-**Prerequisites:** Ingelogd als commissielid (`e2e-commissielid@e2e.scmuiden.test`).
+**Note:** De rol 'commissielid' bestaat niet meer na de vereenvoudiging van het rolsysteem (zie design `leden-rollen`). Het systeem kent nu twee rollen: `lid` (alleen app) en `beheerder` (app + CMS).
+
+**Prerequisites:** Ingelogd als lid (`e2e-lid@e2e.scmuiden.test` / `E2eTestWachtwoord123!`).
 
 **Steps:**
 
-1. Navigeer naar `/dashboard/leden`.
-2. Controleer dat de ledenlijst zichtbaar is.
-3. Navigeer naar `/dashboard/rollen`.
+1. Navigeer naar `/login` en log in als lid.
+2. Navigeer naar `/dashboard`.
 
 **Expected result:**
 
-- Stap 2: ledenlijst laadt correct (commissielid heeft toegang tot leden).
-- Stap 3: pagina toont "Geen toegang"-component met Nederlandse tekst.
-- Sidebar is nog steeds zichtbaar.
+- De "Geen toegang"-component is zichtbaar.
+- Er is geen sidebar of dashboardnavigatie zichtbaar.
+- Een uitlogknop is aanwezig.
 - Geen data uit de DB wordt getoond.
+
+**Verificatie via Supabase Studio:**
+
+```sql
+SELECT role FROM profiles WHERE email = 'e2e-lid@e2e.scmuiden.test';
+```
+→ Verwacht: `lid`
