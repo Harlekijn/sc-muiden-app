@@ -12,7 +12,7 @@ export default async function LidDetailPage({ params }: PageProps) {
 
   const { data: member, error } = await supabase
     .from('members')
-    .select('id, first_name, last_name, birth_date, email, phone, sport, role, clubbase_id, created_at, updated_at, deleted_at')
+    .select('id, first_name, last_name, birth_date, email, phone, sport, lid_type, is_vrijwilliger, is_barcommissie, clubbase_id, created_at, updated_at, deleted_at')
     .eq('id', params.id)
     .is('deleted_at', null)
     .single();

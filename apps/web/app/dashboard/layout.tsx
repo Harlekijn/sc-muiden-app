@@ -16,7 +16,7 @@ const NAV_ITEMS = [
   { label: 'Instellingen', href: '/dashboard/instellingen' },
 ];
 
-const ALLOWED_ROLES = ['beheerder', 'commissielid'];
+const ALLOWED_ROLES = ['beheerder'];
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const supabase = createSupabaseServerClient();

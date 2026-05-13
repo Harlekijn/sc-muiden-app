@@ -369,9 +369,11 @@ export type Database = {
           email: string | null
           first_name: string
           id: string
+          is_barcommissie: boolean
+          is_vrijwilliger: boolean
           last_name: string
+          lid_type: string | null
           phone: string | null
-          role: string
           sport: string[]
           updated_at: string
         }
@@ -383,9 +385,11 @@ export type Database = {
           email?: string | null
           first_name: string
           id?: string
+          is_barcommissie?: boolean
+          is_vrijwilliger?: boolean
           last_name: string
+          lid_type?: string | null
           phone?: string | null
-          role?: string
           sport?: string[]
           updated_at?: string
         }
@@ -397,9 +401,11 @@ export type Database = {
           email?: string | null
           first_name?: string
           id?: string
+          is_barcommissie?: boolean
+          is_vrijwilliger?: boolean
           last_name?: string
+          lid_type?: string | null
           phone?: string | null
-          role?: string
           sport?: string[]
           updated_at?: string
         }

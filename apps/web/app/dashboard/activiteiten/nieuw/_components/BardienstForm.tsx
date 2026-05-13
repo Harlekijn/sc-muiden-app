@@ -30,7 +30,7 @@ export function BardienstForm() {
     const supabase = createSupabaseBrowserClient();
     const { data } = await supabase
       .from('members')
-      .select('id, first_name, last_name, sport, role, email, phone, birth_date, clubbase_id, created_at, updated_at, deleted_at')
+      .select('id, first_name, last_name, sport, lid_type, is_vrijwilliger, is_barcommissie, email, phone, birth_date, clubbase_id, created_at, updated_at, deleted_at')
       .is('deleted_at', null)
       .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`)
       .limit(5);

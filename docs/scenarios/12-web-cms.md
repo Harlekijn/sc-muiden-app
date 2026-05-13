@@ -8,8 +8,8 @@ End-to-end flows voor het volledige CMS: dashboard, ledenbeheer, CSV-import, tea
 - Seed bevat: 10 leden (waarvan 2 met app-account), 2 teams (1 voetbal, 1 hockey), 3 activiteiten
 - CMS open in browser
 - Beheerder-account: `e2e-beheerder@e2e.scmuiden.test` / `E2eTestWachtwoord123!`
-- Commissielid-account: `e2e-commissielid@e2e.scmuiden.test` / `E2eTestWachtwoord123!`
 - Test-lid-account (rol: lid): `e2e-lid@e2e.scmuiden.test` / `E2eTestWachtwoord123!`
+- **Note:** De rol 'commissielid' bestaat niet meer. Het systeem kent alleen `lid` en `beheerder`. Het voormalige commissielid-account is gemigreerd naar `beheerder`.
 
 ---
 
@@ -227,41 +227,45 @@ LIMIT 2;
 
 ---
 
-## S12-H — Commissielid heeft geen toegang tot rolbeheer
+## S12-H — Rolbeheer: alleen Lid en Beheerder beschikbaar
 
-**Goal:** Commissielid ziet `<GeenToegang />` op de rollen-pagina.
+**Goal:** De dropdown in rolbeheer toont na de rolesvereenvoudiging precies twee opties.
+
+**Note:** De rol 'commissielid' bestaat niet meer. Het systeem kent alleen `lid` en `beheerder` (zie design `leden-rollen`).
+
+**Prerequisites:** Ingelogd als beheerder.
 
 **Steps:**
 
-1. Log uit als beheerder en log in als commissielid (`e2e-commissielid@e2e.scmuiden.test`).
-2. Navigeer naar `/dashboard/rollen`.
+1. Navigeer naar `/dashboard/rollen`.
+2. Open de dropdown van een willekeurig profiel (niet de eigen rij).
 
 **Expected result:**
 
-- Pagina toont "Geen toegang" component (Nederlandse tekst).
-- Geen ledenlijst of rol-dropdowns zichtbaar.
-- Navigatiemenu is nog steeds zichtbaar (commissielid heeft toegang tot rest van dashboard).
+- De dropdown toont exact twee opties: "Lid" en "Beheerder".
+- Opties "Ouder", "Trainer", "Coach", "Teammanager", "Commissielid" zijn afwezig.
+- Eigen rij heeft disabled dropdown.
 
 ---
 
-## S12-I — Rolbeheer: rol toewijzen aan lid
+## S12-I — Rolbeheer: rol toewijzen van lid naar beheerder
 
-**Goal:** Beheerder wijzigt de rol van een lid naar "trainer".
+**Goal:** Beheerder verhoogt de toegangsrol van een gebruiker naar `beheerder`.
 
-**Prerequisites:** Er bestaat een profiel met rol "lid" in de seed data.
+**Prerequisites:** Er bestaat een profiel met `role = 'lid'` in de seed data.
 
 **Steps:**
 
 1. Log in als beheerder.
 2. Navigeer naar `/dashboard/rollen`.
 3. Zoek het test-lid-profiel.
-4. Open de rol-dropdown en selecteer "trainer".
+4. Open de rol-dropdown en selecteer "Beheerder".
 5. Bevestig in de dialoog.
 
 **Expected result:**
 
-- Toast: "Rol bijgewerkt".
-- Dropdown toont nu "trainer".
+- Badge naast de gebruiker toont "Beheerder".
+- Dropdown toont "Beheerder" geselecteerd.
 - Eigen rij van de beheerder heeft een disabled dropdown.
 
 **Verificatie via Supabase Studio:**
@@ -269,11 +273,11 @@ LIMIT 2;
 ```sql
 SELECT role FROM profiles WHERE email = 'e2e-lid@e2e.scmuiden.test';
 ```
-→ Verwacht: `role = 'trainer'`.
+→ Verwacht: `role = 'beheerder'`.
 
 **Cleanup:**
 
-6. Zet de rol terug naar "lid".
+6. Zet de rol terug naar "Lid".
 
 ---
 

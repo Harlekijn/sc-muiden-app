@@ -7,7 +7,7 @@ export default async function LedenPage() {
 
   const { data, error } = await supabase
     .from('members')
-    .select('id, first_name, last_name, birth_date, email, phone, sport, role, clubbase_id, created_at, updated_at, deleted_at')
+    .select('id, first_name, last_name, birth_date, email, phone, sport, lid_type, is_vrijwilliger, is_barcommissie, clubbase_id, created_at, updated_at, deleted_at')
     .is('deleted_at', null)
     .order('last_name', { ascending: true })
     .order('first_name', { ascending: true });

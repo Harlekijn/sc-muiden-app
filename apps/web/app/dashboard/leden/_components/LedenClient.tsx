@@ -1,26 +1,16 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { Member, UserRole } from '@sc-muiden/shared';
+import { Search } from 'lucide-react';
+import type { Member, LidType } from '@sc-muiden/shared';
+import { createSupabaseBrowserClient } from '../../../../lib/supabase-client';
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  lid: 'Lid',
-  ouder: 'Ouder',
-  trainer: 'Trainer',
-  coach: 'Coach',
-  teammanager: 'Teammanager',
-  commissielid: 'Commissielid',
-  beheerder: 'Beheerder',
-};
-
-const ROLE_BADGE_STYLES: Partial<Record<UserRole, React.CSSProperties>> = {
-  beheerder: { background: 'var(--color-navy)', color: 'var(--color-white)' },
-  commissielid: { background: 'var(--color-blue)', color: 'var(--color-white)' },
-  trainer: { background: 'rgba(4,107,186,0.1)', color: 'var(--color-blue)' },
-  coach: { background: 'rgba(4,107,186,0.1)', color: 'var(--color-blue)' },
-  teammanager: { background: 'rgba(4,107,186,0.1)', color: 'var(--color-blue)' },
-  lid: { background: 'var(--color-light)', color: 'var(--color-text)' },
-  ouder: { background: 'var(--color-light)', color: 'var(--color-text)' },
+export const LID_TYPE_LABELS: Record<LidType, string> = {
+  'jeugdlid': 'Jeugdlid',
+  'niet-spelend-lid': 'Niet-spelend lid',
+  'trainingslid': 'Trainingslid',
+  'spelend-lid': 'Spelend lid',
+  'relatie': 'Relatie',
 };
 
 const PAGE_SIZE = 50;
@@ -35,6 +25,9 @@ export function LedenClient({ members }: Props) {
   const [search, setSearch] = useState('');
   const [sportFilter, setSportFilter] = useState<SportFilter>('alle');
   const [page, setPage] = useState(0);
+  const [inlineTypes, setInlineTypes] = useState<Record<string, LidType | null>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [errorId, setErrorId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -63,11 +56,34 @@ export function LedenClient({ members }: Props) {
     setPage(0);
   }
 
+  async function handleLidTypeChange(memberId: string, prevType: LidType | null, newValue: string) {
+    const newType = newValue === '' ? null : (newValue as LidType);
+    setInlineTypes((prev) => ({ ...prev, [memberId]: newType }));
+    setSavingId(memberId);
+    setErrorId(null);
+
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase
+      .from('members')
+      .update({ lid_type: newType })
+      .eq('id', memberId);
+
+    setSavingId(null);
+    if (error) {
+      setInlineTypes((prev) => ({ ...prev, [memberId]: prevType }));
+      setErrorId(memberId);
+    }
+  }
+
+  function getCurrentType(m: Member): LidType | null {
+    return m.id in inlineTypes ? inlineTypes[m.id] : m.lid_type;
+  }
+
   return (
     <div>
       <div style={s.toolbar}>
         <div style={s.searchWrap}>
-          <span style={s.searchIcon}>&#128269;</span>
+          <Search size={16} style={s.searchIcon} />
           <input
             type="search"
             placeholder="Zoek op naam of e-mail"
@@ -104,7 +120,7 @@ export function LedenClient({ members }: Props) {
         <div style={{ ...s.tableRow, ...s.tableHeader }}>
           <span>Naam</span>
           <span>Sport</span>
-          <span>Rol</span>
+          <span>Ledentype</span>
           <span>E-mail</span>
           <span />
         </div>
@@ -112,19 +128,40 @@ export function LedenClient({ members }: Props) {
         {paged.length === 0 ? (
           <p style={s.empty}>Geen leden gevonden voor deze zoekopdracht.</p>
         ) : (
-          paged.map((m) => (
-            <a key={m.id} href={`/dashboard/leden/${m.id}`} style={s.tableLink}>
-              <span style={s.nameCell}>{m.first_name} {m.last_name}</span>
-              <span style={s.sportCell}>{m.sport.join(', ') || '—'}</span>
-              <span>
-                <span style={{ ...s.roleBadge, ...(ROLE_BADGE_STYLES[m.role as UserRole] ?? {}) }}>
-                  {ROLE_LABELS[m.role as UserRole] ?? m.role}
+          paged.map((m) => {
+            const currentType = getCurrentType(m);
+            const isSaving = savingId === m.id;
+            const hasError = errorId === m.id;
+            return (
+              <div key={m.id} style={s.tableRow}>
+                <a href={`/dashboard/leden/${m.id}`} style={s.nameLink}>
+                  <span style={s.nameCell}>{m.first_name} {m.last_name}</span>
+                </a>
+                <span style={s.sportCell}>{m.sport.join(', ') || '—'}</span>
+                <span style={s.typeCell}>
+                  <select
+                    value={currentType ?? ''}
+                    onChange={(e) => handleLidTypeChange(m.id, currentType, e.target.value)}
+                    disabled={isSaving}
+                    style={{
+                      ...s.inlineSelect,
+                      ...(isSaving ? s.inlineSelectSaving : {}),
+                      ...(hasError ? s.inlineSelectError : {}),
+                    }}
+                    aria-label={`Ledentype van ${m.first_name} ${m.last_name}`}
+                  >
+                    <option value="">—</option>
+                    {(Object.entries(LID_TYPE_LABELS) as [LidType, string][]).map(([v, l]) => (
+                      <option key={v} value={v}>{l}</option>
+                    ))}
+                  </select>
+                  {hasError && <span style={s.inlineError}>Niet opgeslagen</span>}
                 </span>
-              </span>
-              <span style={s.emailCell}>{m.email ?? '—'}</span>
-              <span style={s.chevron}>›</span>
-            </a>
-          ))
+                <a href={`/dashboard/leden/${m.id}`} style={s.emailCell}>{m.email ?? '—'}</a>
+                <a href={`/dashboard/leden/${m.id}`} style={s.chevron}>›</a>
+              </div>
+            );
+          })
         )}
       </div>
 
@@ -234,19 +271,13 @@ const s: Record<string, React.CSSProperties> = {
   },
   tableRow: {
     display: 'grid',
-    gridTemplateColumns: '2fr 1fr 1.2fr 2fr 32px',
+    gridTemplateColumns: '2fr 1fr 1.4fr 2fr 32px',
     gap: 'var(--space-4)',
     padding: 'var(--space-3) var(--space-4)',
     borderBottom: '1px solid var(--color-mid)',
     alignItems: 'center',
   },
-  tableLink: {
-    display: 'grid',
-    gridTemplateColumns: '2fr 1fr 1.2fr 2fr 32px',
-    gap: 'var(--space-4)',
-    padding: 'var(--space-3) var(--space-4)',
-    borderBottom: '1px solid var(--color-mid)',
-    alignItems: 'center',
+  nameLink: {
     textDecoration: 'none',
     color: 'inherit',
   },
@@ -260,13 +291,33 @@ const s: Record<string, React.CSSProperties> = {
     color: 'var(--color-text-2)',
     textTransform: 'capitalize',
   },
-  roleBadge: {
-    display: 'inline-block',
-    padding: '2px var(--space-2)',
-    borderRadius: 'var(--radius-pill)',
+  typeCell: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-2)',
+  },
+  inlineSelect: {
+    padding: 'var(--space-1) var(--space-2)',
+    borderRadius: 'var(--radius-md)',
+    border: '1.5px solid var(--color-mid)',
     fontSize: 'var(--text-xs)',
-    fontWeight: 600,
     fontFamily: 'var(--font-body)',
+    color: 'var(--color-text)',
+    background: 'var(--color-white)',
+    cursor: 'pointer',
+    maxWidth: 140,
+  },
+  inlineSelectSaving: {
+    opacity: 0.6,
+    cursor: 'default',
+  },
+  inlineSelectError: {
+    borderColor: 'var(--color-error)',
+  },
+  inlineError: {
+    fontSize: 'var(--text-xs)',
+    color: 'var(--color-error)',
+    whiteSpace: 'nowrap',
   },
   emailCell: {
     fontSize: 'var(--text-sm)',
@@ -274,11 +325,13 @@ const s: Record<string, React.CSSProperties> = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
+    textDecoration: 'none',
   },
   chevron: {
     color: 'var(--color-text-2)',
     textAlign: 'center',
     fontSize: 18,
+    textDecoration: 'none',
   },
   empty: {
     padding: 'var(--space-8) var(--space-4)',

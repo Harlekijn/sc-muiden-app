@@ -5,7 +5,7 @@ import { createSupabaseAdminClient } from '../../../../lib/supabase-admin';
 const ALLOWED_SPORTS = ['voetbal', 'hockey'] as const;
 type Sport = (typeof ALLOWED_SPORTS)[number];
 
-const ALLOWED_ROLES = ['beheerder', 'commissielid'];
+const ALLOWED_ROLES = ['beheerder'];
 
 export async function POST(
   _req: NextRequest,

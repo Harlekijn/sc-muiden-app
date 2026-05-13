@@ -13,7 +13,7 @@ async function isAdmin() {
     .eq('id', user.id)
     .single();
 
-  return !!profile && ['beheerder', 'commissielid'].includes(profile.role);
+  return !!profile && profile.role === 'beheerder';
 }
 
 export async function GET(req: NextRequest) {

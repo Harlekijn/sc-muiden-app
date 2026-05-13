@@ -18,7 +18,7 @@ async function getAdminUser() {
     .eq('id', user.id)
     .single();
 
-  if (!profile || !['beheerder', 'commissielid'].includes(profile.role)) return null;
+  if (!profile || profile.role !== 'beheerder') return null;
   return { user, profile };
 }
 

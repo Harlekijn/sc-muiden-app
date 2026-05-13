@@ -12,7 +12,6 @@ const APP_FIELDS = [
   { value: 'email', label: 'E-mailadres' },
   { value: 'phone', label: 'Telefoon' },
   { value: 'sport', label: 'Sport' },
-  { value: 'role', label: 'Rol' },
   { value: 'clubbase_id', label: 'ClubBase-ID' },
   { value: '', label: '(overslaan)' },
 ] as const;
@@ -33,8 +32,6 @@ const AUTO_MAP: Record<string, string> = {
   phone: 'phone',
   mobiel: 'phone',
   sport: 'sport',
-  rol: 'role',
-  role: 'role',
   clubbaseid: 'clubbase_id',
   'clubbase id': 'clubbase_id',
 };

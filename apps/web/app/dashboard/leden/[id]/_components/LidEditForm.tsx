@@ -3,8 +3,16 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { updateMemberSchema, type UpdateMemberInput, type Member, type Sport } from '@sc-muiden/shared';
+import { updateMemberSchema, type UpdateMemberInput, type Member, type Sport, type LidType } from '@sc-muiden/shared';
 import { createSupabaseBrowserClient } from '../../../../../lib/supabase-client';
+
+const LID_TYPE_LABELS: Record<LidType, string> = {
+  'jeugdlid': 'Jeugdlid',
+  'niet-spelend-lid': 'Niet-spelend lid',
+  'trainingslid': 'Trainingslid',
+  'spelend-lid': 'Spelend lid',
+  'relatie': 'Relatie',
+};
 
 interface Props {
   member: Member;
@@ -12,7 +20,9 @@ interface Props {
 
 export function LidEditForm({ member }: Props) {
   const [editing, setEditing] = useState(false);
+  const [editingLidmaatschap, setEditingLidmaatschap] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [successLidmaatschap, setSuccessLidmaatschap] = useState<string | null>(null);
 
   const {
     register,
@@ -31,10 +41,15 @@ export function LidEditForm({ member }: Props) {
       email: member.email ?? undefined,
       phone: member.phone ?? undefined,
       sport: member.sport as Sport[],
+      lid_type: member.lid_type,
+      is_vrijwilliger: member.is_vrijwilliger,
+      is_barcommissie: member.is_barcommissie,
     },
   });
 
   const selectedSport = watch('sport') ?? [];
+  const selectedVrijwilliger = watch('is_vrijwilliger');
+  const selectedBarcommissie = watch('is_barcommissie');
 
   function toggleSport(sport: Sport) {
     if (selectedSport.includes(sport)) {
@@ -44,7 +59,7 @@ export function LidEditForm({ member }: Props) {
     }
   }
 
-  async function onSubmit(data: UpdateMemberInput) {
+  async function onSubmitPersoonsgegevens(data: UpdateMemberInput) {
     const supabase = createSupabaseBrowserClient();
     const { error } = await supabase
       .from('members')
@@ -68,13 +83,40 @@ export function LidEditForm({ member }: Props) {
     setTimeout(() => setSuccessMsg(null), 3000);
   }
 
+  async function onSubmitLidmaatschap(data: UpdateMemberInput) {
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase
+      .from('members')
+      .update({
+        lid_type: data.lid_type ?? null,
+        is_vrijwilliger: data.is_vrijwilliger ?? false,
+        is_barcommissie: data.is_barcommissie ?? false,
+      })
+      .eq('id', member.id);
+
+    if (error) {
+      setError('root', { message: 'Opslaan mislukt. Probeer het opnieuw.' });
+      return;
+    }
+
+    setSuccessLidmaatschap('Wijzigingen opgeslagen');
+    setEditingLidmaatschap(false);
+    setTimeout(() => setSuccessLidmaatschap(null), 3000);
+  }
+
   function handleCancel() {
     reset();
     setEditing(false);
   }
 
+  function handleCancelLidmaatschap() {
+    reset();
+    setEditingLidmaatschap(false);
+  }
+
   return (
     <div>
+      {/* Persoonsgegevens sectie */}
       {successMsg && <p style={s.successBanner}>{successMsg}</p>}
 
       <div style={s.sectionHeader}>
@@ -87,7 +129,7 @@ export function LidEditForm({ member }: Props) {
       </div>
 
       {editing ? (
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <form onSubmit={handleSubmit(onSubmitPersoonsgegevens)} noValidate>
           {errors.root && <p style={s.errorBanner}>{errors.root.message}</p>}
 
           <div style={s.formGrid}>
@@ -144,10 +186,84 @@ export function LidEditForm({ member }: Props) {
           <DataRow label="E-mailadres" value={member.email ?? '—'} />
           <DataRow label="Telefoon" value={member.phone ?? '—'} />
           <DataRow label="Sport" value={member.sport.join(', ') || '—'} />
-          <DataRow label="Rol" value={member.role} />
           {member.clubbase_id && (
             <DataRow label="ClubBase-ID" value={member.clubbase_id} muted />
           )}
+        </dl>
+      )}
+
+      {/* Lidmaatschap sectie */}
+      <div style={s.sectionDivider} />
+
+      {successLidmaatschap && <p style={s.successBanner}>{successLidmaatschap}</p>}
+
+      <div style={s.sectionHeader}>
+        <h2 style={s.sectionTitle}>Lidmaatschap</h2>
+        {!editingLidmaatschap && (
+          <button onClick={() => setEditingLidmaatschap(true)} style={s.editBtn}>
+            Bewerken
+          </button>
+        )}
+      </div>
+
+      {editingLidmaatschap ? (
+        <form onSubmit={handleSubmit(onSubmitLidmaatschap)} noValidate>
+          {errors.root && <p style={s.errorBanner}>{errors.root.message}</p>}
+
+          <div style={{ ...s.formGrid, maxWidth: 400 }}>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <Field label="Ledentype" error={errors.lid_type?.message}>
+                <select
+                  {...register('lid_type')}
+                  style={s.input}
+                >
+                  <option value="">— Niet ingesteld —</option>
+                  {(Object.entries(LID_TYPE_LABELS) as [LidType, string][]).map(([v, l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          </div>
+
+          <div style={s.checkboxGroup}>
+            <label style={s.checkboxLabel}>
+              <input type="checkbox" {...register('is_vrijwilliger')} style={s.checkbox} />
+              Vrijwilliger
+            </label>
+            <label style={s.checkboxLabel}>
+              <input type="checkbox" {...register('is_barcommissie')} style={s.checkbox} />
+              Lid barcommissie
+            </label>
+          </div>
+
+          <div style={s.formActions}>
+            <button type="submit" disabled={isSubmitting} style={s.saveBtn}>
+              {isSubmitting ? 'Opslaan...' : 'Opslaan'}
+            </button>
+            <button type="button" onClick={handleCancelLidmaatschap} style={s.cancelBtn}>
+              Annuleren
+            </button>
+          </div>
+        </form>
+      ) : (
+        <dl style={s.dl}>
+          <DataRow
+            label="Ledentype"
+            value={member.lid_type ? LID_TYPE_LABELS[member.lid_type] : '—'}
+          />
+          <DataRow
+            label="Vrijwilliger"
+            value={selectedVrijwilliger !== undefined
+              ? (selectedVrijwilliger ? 'Ja' : 'Nee')
+              : (member.is_vrijwilliger ? 'Ja' : 'Nee')}
+          />
+          <DataRow
+            label="Lid barcommissie"
+            value={selectedBarcommissie !== undefined
+              ? (selectedBarcommissie ? 'Ja' : 'Nee')
+              : (member.is_barcommissie ? 'Ja' : 'Nee')}
+          />
         </dl>
       )}
     </div>
@@ -193,6 +309,11 @@ const s: Record<string, React.CSSProperties> = {
     color: 'var(--color-navy)',
     margin: 0,
   },
+  sectionDivider: {
+    height: 1,
+    background: 'var(--color-mid)',
+    margin: 'var(--space-6) 0',
+  },
   editBtn: {
     padding: 'var(--space-2) var(--space-4)',
     borderRadius: 'var(--radius-md)',
@@ -221,6 +342,7 @@ const s: Record<string, React.CSSProperties> = {
     outline: 'none',
     width: '100%',
     boxSizing: 'border-box',
+    background: 'var(--color-white)',
   },
   inputError: {
     borderColor: 'var(--color-error)',
@@ -254,6 +376,26 @@ const s: Record<string, React.CSSProperties> = {
     background: 'var(--color-navy)',
     color: 'var(--color-white)',
     borderColor: 'var(--color-navy)',
+  },
+  checkboxGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'var(--space-3)',
+    marginBottom: 'var(--space-4)',
+  },
+  checkboxLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-2)',
+    fontSize: 'var(--text-sm)',
+    fontFamily: 'var(--font-body)',
+    color: 'var(--color-text)',
+    cursor: 'pointer',
+  },
+  checkbox: {
+    width: 16,
+    height: 16,
+    cursor: 'pointer',
   },
   formActions: {
     display: 'flex',
