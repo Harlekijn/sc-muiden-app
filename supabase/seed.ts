@@ -161,7 +161,7 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
       { first_name: 'Test', last_name: 'Voetballid',   email: E2E_VOETBAL_EMAIL,      lid_type: 'spelend-lid',      is_vrijwilliger: false, is_barcommissie: false, sport: ['voetbal'] },
       { first_name: 'Test', last_name: 'Hockeylid',    email: E2E_HOCKEY_EMAIL,       lid_type: 'spelend-lid',      is_vrijwilliger: false, is_barcommissie: false, sport: ['hockey'] },
       // Child member: no app account — represented by a clubbase_id for stable lookup.
-      { first_name: 'Test', last_name: 'Kindlid', email: null, lid_type: 'jeugdlid', is_vrijwilliger: false, is_barcommissie: false, sport: ['voetbal'], clubbase_id: CHILD_CLUBBASE_ID },
+      { first_name: 'Test', last_name: 'Kindlid', email: null, lid_type: 'niet-spelend-lid', is_vrijwilliger: false, is_barcommissie: false, sport: ['voetbal'], clubbase_id: CHILD_CLUBBASE_ID },
     ])
     .select('id, email, clubbase_id');
 

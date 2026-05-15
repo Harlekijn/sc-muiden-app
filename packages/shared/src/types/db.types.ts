@@ -422,6 +422,8 @@ export type Database = {
           is_vrijwilliger: boolean
           last_name: string
           lid_type: string | null
+          ouder_email_1: string | null
+          ouder_email_2: string | null
           phone: string | null
           sport: string[]
           updated_at: string
@@ -438,6 +440,8 @@ export type Database = {
           is_vrijwilliger?: boolean
           last_name: string
           lid_type?: string | null
+          ouder_email_1?: string | null
+          ouder_email_2?: string | null
           phone?: string | null
           sport?: string[]
           updated_at?: string
@@ -454,6 +458,8 @@ export type Database = {
           is_vrijwilliger?: boolean
           last_name?: string
           lid_type?: string | null
+          ouder_email_1?: string | null
+          ouder_email_2?: string | null
           phone?: string | null
           sport?: string[]
           updated_at?: string

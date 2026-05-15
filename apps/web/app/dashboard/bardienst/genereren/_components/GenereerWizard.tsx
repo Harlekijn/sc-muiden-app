@@ -20,7 +20,8 @@ interface Props {
 type Step = 1 | 2 | 3;
 
 function formatDutchDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('nl-NL', {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('nl-NL', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
 }

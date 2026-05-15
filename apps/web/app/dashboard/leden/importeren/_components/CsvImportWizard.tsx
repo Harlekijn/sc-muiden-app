@@ -12,7 +12,10 @@ const APP_FIELDS = [
   { value: 'email', label: 'E-mailadres' },
   { value: 'phone', label: 'Telefoon' },
   { value: 'sport', label: 'Sport' },
+  { value: 'lid_type', label: 'Lidtype' },
   { value: 'clubbase_id', label: 'ClubBase-ID' },
+  { value: 'ouder_email_1', label: 'Ouder e-mail 1' },
+  { value: 'ouder_email_2', label: 'Ouder e-mail 2' },
   { value: '', label: '(overslaan)' },
 ] as const;
 
@@ -34,6 +37,14 @@ const AUTO_MAP: Record<string, string> = {
   sport: 'sport',
   clubbaseid: 'clubbase_id',
   'clubbase id': 'clubbase_id',
+  lidtype: 'lid_type',
+  lid_type: 'lid_type',
+  'ouder email 1': 'ouder_email_1',
+  'ouder e-mail 1': 'ouder_email_1',
+  ouder_email_1: 'ouder_email_1',
+  'ouder email 2': 'ouder_email_2',
+  'ouder e-mail 2': 'ouder_email_2',
+  ouder_email_2: 'ouder_email_2',
 };
 
 function parseCsv(text: string): { headers: string[]; rows: string[][] } {
@@ -322,11 +333,35 @@ export function CsvImportWizard() {
           <p style={s.doneText}>
             {importResult.inserted} nieuwe leden toegevoegd. {importResult.updated} leden bijgewerkt.
           </p>
+
           {importResult.failed.length > 0 && (
-            <p style={s.errorText}>
-              {importResult.failed.length} rijen mislukt.
-            </p>
+            <div style={s.failedBox}>
+              <p style={s.failedTitle}>
+                {importResult.failed.length} {importResult.failed.length === 1 ? 'rij' : 'rijen'} niet geïmporteerd
+              </p>
+              <div style={s.failedTable}>
+                <div style={{ ...s.failedRow, ...s.failedHeader }}>
+                  <span>CSV-rij</span>
+                  <span>Naam</span>
+                  <span>Reden</span>
+                </div>
+                {importResult.failed.map((row) => (
+                  <div key={row.index} style={s.failedRow}>
+                    <span style={s.failedRowNum}>#{row.index + 2}</span>
+                    <span style={s.failedName}>
+                      {[row.data.first_name, row.data.last_name].filter(Boolean).join(' ') || '—'}
+                    </span>
+                    <span style={s.failedReason}>
+                      {row.errors && row.errors.length > 0
+                        ? row.errors.join(' · ')
+                        : 'Onbekende fout'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
+
           <a href="/dashboard/leden" style={s.backLink}>Terug naar ledenlijst</a>
         </div>
       )}
@@ -521,5 +556,56 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 'var(--text-sm)',
     fontWeight: 600,
     textDecoration: 'none',
+  },
+  failedBox: {
+    marginBottom: 'var(--space-5)',
+    border: '1px solid rgba(214,60,60,0.3)',
+    borderRadius: 'var(--radius-md)',
+    overflow: 'hidden',
+  },
+  failedTitle: {
+    fontSize: 'var(--text-sm)',
+    fontWeight: 600,
+    color: 'var(--color-error)',
+    padding: 'var(--space-3) var(--space-4)',
+    background: 'rgba(214,60,60,0.06)',
+    margin: 0,
+    borderBottom: '1px solid rgba(214,60,60,0.2)',
+  },
+  failedTable: {
+    maxHeight: '280px',
+    overflowY: 'auto' as const,
+  },
+  failedRow: {
+    display: 'grid',
+    gridTemplateColumns: '60px 1fr 2fr',
+    gap: 'var(--space-3)',
+    padding: 'var(--space-2) var(--space-4)',
+    borderBottom: '1px solid var(--color-mid)',
+    alignItems: 'start',
+  },
+  failedHeader: {
+    background: 'var(--color-light)',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 600,
+    color: 'var(--color-text-2)',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+  },
+  failedRowNum: {
+    fontSize: 'var(--text-xs)',
+    color: 'var(--color-text-2)',
+    fontVariantNumeric: 'tabular-nums',
+    paddingTop: '2px',
+  },
+  failedName: {
+    fontSize: 'var(--text-sm)',
+    color: 'var(--color-text)',
+    fontWeight: 500,
+  },
+  failedReason: {
+    fontSize: 'var(--text-xs)',
+    color: 'var(--color-error)',
+    lineHeight: '1.5',
   },
 };

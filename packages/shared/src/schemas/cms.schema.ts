@@ -3,9 +3,8 @@ import { z } from 'zod';
 const sportSchema = z.enum(['voetbal', 'hockey']);
 const userRoleSchema = z.enum(['lid', 'beheerder']);
 const lidTypeSchema = z.enum([
-  'jeugdlid',
   'niet-spelend-lid',
-  'trainingslid',
+
   'spelend-lid',
   'relatie',
 ]);
@@ -115,6 +114,8 @@ export const updateMemberSchema = z.object({
   lid_type: lidTypeSchema.nullable().optional(),
   is_vrijwilliger: z.boolean().optional(),
   is_barcommissie: z.boolean().optional(),
+  ouder_email_1: z.string().email('Ongeldig e-mailadres ouder 1').nullable().optional(),
+  ouder_email_2: z.string().email('Ongeldig e-mailadres ouder 2').nullable().optional(),
 });
 
 // ── Roles ─────────────────────────────────────────────────────────────────────
@@ -135,6 +136,8 @@ export const csvColumnMappingSchema = z.object({
   sport: z.string().optional(),
   rol: z.string().optional(),
   clubbase_id: z.string().optional(),
+  ouder_email_1: z.string().optional(),
+  ouder_email_2: z.string().optional(),
 });
 
 export const csvImportRowDataSchema = z.object({
@@ -145,6 +148,9 @@ export const csvImportRowDataSchema = z.object({
   phone: z.string().nullable().optional(),
   sport: z.array(sportSchema).default([]),
   clubbase_id: z.string().nullable().optional(),
+  ouder_email_1: z.string().email('Ongeldig e-mailadres ouder 1').nullable().optional(),
+  ouder_email_2: z.string().email('Ongeldig e-mailadres ouder 2').nullable().optional(),
+  lid_type: lidTypeSchema.default('niet-spelend-lid'),
 });
 
 // ── Bardienst Rooster ─────────────────────────────────────────────────────────

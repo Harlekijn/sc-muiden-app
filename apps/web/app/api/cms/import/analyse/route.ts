@@ -42,6 +42,9 @@ export async function POST(req: NextRequest) {
         ? rawRow.sport.split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean)
         : [],
       clubbase_id: rawRow.clubbase_id || null,
+      ouder_email_1: rawRow.ouder_email_1 || null,
+      ouder_email_2: rawRow.ouder_email_2 || null,
+      lid_type: rawRow.lid_type || undefined,
     });
 
     if (!parsed.success) {
@@ -100,6 +103,9 @@ export async function POST(req: NextRequest) {
         phone: data.phone ?? null,
         sport: data.sport,
         clubbase_id: data.clubbase_id ?? null,
+        ouder_email_1: data.ouder_email_1 ?? null,
+        ouder_email_2: data.ouder_email_2 ?? null,
+        lid_type: data.lid_type,
       },
       status: conflictId ? 'conflict' : 'new',
       conflictMemberId: conflictId,

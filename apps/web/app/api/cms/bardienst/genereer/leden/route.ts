@@ -24,7 +24,7 @@ function seasonBounds(season: string): { start: string; end: string } {
   };
 }
 
-const ELIGIBLE_LID_TYPES = ['spelend-lid', 'jeugdlid', 'relatie'];
+const ELIGIBLE_LID_TYPES = ['spelend-lid', 'relatie'];
 
 // GET /api/cms/bardienst/genereer/leden?type=barcommissie|regulier&sport=voetbal|hockey&season=2025-2026&exclude=id1,id2
 export async function GET(req: NextRequest) {

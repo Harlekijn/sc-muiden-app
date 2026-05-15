@@ -22,6 +22,8 @@ const mockMembers: Member[] = [
     is_vrijwilliger: false,
     is_barcommissie: false,
     clubbase_id: null,
+    ouder_email_1: null,
+    ouder_email_2: null,
     created_at: '2026-01-01T00:00:00',
     updated_at: '2026-01-01T00:00:00',
     deleted_at: null,
@@ -38,6 +40,8 @@ const mockMembers: Member[] = [
     is_vrijwilliger: true,
     is_barcommissie: false,
     clubbase_id: null,
+    ouder_email_1: null,
+    ouder_email_2: null,
     created_at: '2026-01-01T00:00:00',
     updated_at: '2026-01-01T00:00:00',
     deleted_at: null,
@@ -99,7 +103,7 @@ describe('LedenClient', () => {
   it('S15-C: inline wijziging roept supabase.update aan', async () => {
     render(<LedenClient members={mockMembers} />);
     const dropdown = screen.getByLabelText(/Ledentype van Sophie de Vries/i);
-    fireEvent.change(dropdown, { target: { value: 'jeugdlid' } });
+    fireEvent.change(dropdown, { target: { value: 'spelend-lid' } });
     await waitFor(() => {
       expect(createSupabaseBrowserClient).toHaveBeenCalled();
     });

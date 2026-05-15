@@ -197,12 +197,11 @@ describe('genereerPreviewVoorSlot', () => {
     }
   });
 
-  it('sluit niet-spelend-lid en trainingslid uit', () => {
+  it('sluit niet-spelend-lid uit', () => {
     const barLeden = maakBarLeden(2);
     const regulier = maakLeden(4);
     const uitgesloten = [
       { ...maakLid({ id: 'nsl-1' }), lid_type: 'niet-spelend-lid' as const },
-      { ...maakLid({ id: 'tl-1' }), lid_type: 'trainingslid' as const },
     ];
     const members = [...barLeden, ...regulier, ...uitgesloten];
     const result = genereerPreviewVoorSlot(SLOT_VOETBAL, members, new Map());

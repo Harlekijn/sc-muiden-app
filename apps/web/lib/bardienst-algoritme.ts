@@ -1,7 +1,7 @@
 import type { BarRosterPreview, BarShift, BarShiftMember, Sport } from '@sc-muiden/shared';
 
 export const SHIFT_DURATION_MINUTES = 150;
-export const ELIGIBLE_LID_TYPES = ['spelend-lid', 'jeugdlid', 'relatie'] as const;
+export const ELIGIBLE_LID_TYPES = ['spelend-lid', 'relatie'] as const;
 
 export function seasonBounds(season: string): { start: string; end: string } {
   const [startYear] = season.split('-').map(Number);
@@ -95,9 +95,7 @@ export function genereerPreviewVoorSlot(
   }
 
   const sportFiltered = allMembers.filter((m) => sportOverlap(m.sport, slot.sport));
-  const barcommissiePool = sportFiltered.filter(
-    (m) => m.is_barcommissie && !m.is_vrijwilliger
-  );
+  const barcommissiePool = sportFiltered.filter((m) => m.is_barcommissie);
   const regulierPool = sportFiltered.filter(
     (m) =>
       !m.is_barcommissie &&
