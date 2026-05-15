@@ -568,3 +568,43 @@ Aanmaken: `docs/scenarios/16-bardienst-rooster.md` — zie het afzonderlijk opge
 ## Open vragen
 
 _Geen._
+
+---
+
+## SRE Notes
+
+**Datum:** 15-05-2026
+
+### Logging
+- Geen console.log of console.error statements in nieuwe API routes — voldoet aan PII-beleid.
+- Supabase audit log is het primaire data-access log; applicatie logt niet extra.
+
+### Monitoring
+- Indexen aanwezig: `bar_day_slots_date_idx`, `bar_day_slots_season_idx`, `bar_day_slots_deleted_idx` (partial), `activities_bar_day_slot_id_idx`.
+- RLS policy `bar_day_slots_admin_all` scant niet de hele tabel: filtert via `is_admin()` functie die per JWT-claim evalueert.
+- Geen nieuwe React Query hooks (feature gebruikt directe fetch); geen staleTime check vereist.
+- Geen nieuwe Edge Functions geïntroduceerd.
+
+### Foutafhandeling
+- 4 `fetch()`-aanroepen hadden geen try/catch voor netwerkfouten — opgelost in:
+  - `BarDaySlotForm.handleSubmit`: toont "Geen verbinding — controleer je internetverbinding en probeer opnieuw."
+  - `DaySlotsTab.handleDelete`: zelfde melding bij netwerkfout.
+  - `GenereerWizard.handleGenereer`: zelfde melding bij netwerkfout.
+  - `GenereerWizard.handlePubliceer`: zelfde melding bij netwerkfout.
+- Alle foutmeldingen in het Nederlands; geen ruwe Supabase-fouttekst zichtbaar voor gebruiker.
+- Submit-knoppen uitgeschakeld during in-flight mutaties (BarDaySlotForm, DaySlotsTab, GenereerWizard).
+- Succes-feedback alleen na server-bevestiging.
+
+### Beveiliging
+- RLS policy op `bar_day_slots` vereist authenticatie via `public.is_admin()` — geen `USING (true)`.
+- `bar_day_slots` bevat geen `member_id`/`profile_id` kolom — geen risico op ownership-injection.
+- Alle API routes valideren input met Zod vóór elke DB-schrijfoperatie.
+- `SUPABASE_SECRET_KEY` uitsluitend in server-side Next.js API routes; niet in mobile bundle.
+- `publiceer` route leest sport uit de DB (niet uit de request body) — geen client-side injection mogelijk.
+- FK constraint op `bar_assignments.member_id` garandeert dat alleen bestaande leden worden toegewezen.
+
+### Bundle
+- Geen nieuwe packages toegevoegd aan `apps/mobile/` of root `package.json`.
+
+### Openstaande punten
+- Geen.

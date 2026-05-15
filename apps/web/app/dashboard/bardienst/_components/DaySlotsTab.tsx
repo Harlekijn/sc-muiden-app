@@ -41,7 +41,14 @@ export function DaySlotsTab({ daySlots }: Props) {
     if (!confirm('Day-slot verwijderen?')) return;
     setDeleting(id);
     setError(null);
-    const res = await fetch(`/api/cms/bardienst/day-slots/${id}`, { method: 'DELETE' });
+    let res: Response;
+    try {
+      res = await fetch(`/api/cms/bardienst/day-slots/${id}`, { method: 'DELETE' });
+    } catch {
+      setError('Geen verbinding — controleer je internetverbinding en probeer opnieuw.');
+      setDeleting(null);
+      return;
+    }
     if (res.ok) {
       setSlots((prev) => prev.filter((s) => s.id !== id));
     } else {

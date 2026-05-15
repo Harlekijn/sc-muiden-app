@@ -57,11 +57,18 @@ export function BarDaySlotForm({ initialValues, slotId }: Props) {
       : '/api/cms/bardienst/day-slots';
     const method = slotId ? 'PUT' : 'POST';
 
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      setServerError('Geen verbinding — controleer je internetverbinding en probeer opnieuw.');
+      setSaving(false);
+      return;
+    }
 
     if (res.ok) {
       router.push('/dashboard/bardienst?tab=day-slots');

@@ -92,11 +92,18 @@ export function GenereerWizard({ daySlots }: Props) {
     if (selectedIds.size === 0 || !season) return;
     setError(null);
     setGenerating(true);
-    const res = await fetch('/api/cms/bardienst/genereer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ season, bar_day_slot_ids: Array.from(selectedIds) }),
-    });
+    let res: Response;
+    try {
+      res = await fetch('/api/cms/bardienst/genereer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ season, bar_day_slot_ids: Array.from(selectedIds) }),
+      });
+    } catch {
+      setError('Geen verbinding — controleer je internetverbinding en probeer opnieuw.');
+      setGenerating(false);
+      return;
+    }
     const data = await res.json();
     if (!res.ok) {
       setError(data.error ?? 'Genereren mislukt. Probeer het opnieuw.');
@@ -137,11 +144,18 @@ export function GenereerWizard({ daySlots }: Props) {
   async function handlePubliceer() {
     setError(null);
     setPublishing(true);
-    const res = await fetch('/api/cms/bardienst/publiceer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ season, preview }),
-    });
+    let res: Response;
+    try {
+      res = await fetch('/api/cms/bardienst/publiceer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ season, preview }),
+      });
+    } catch {
+      setError('Geen verbinding — controleer je internetverbinding en probeer opnieuw.');
+      setPublishing(false);
+      return;
+    }
     const data = await res.json();
     if (!res.ok) {
       setError(data.error ?? 'Publicatie mislukt. Probeer het opnieuw.');
