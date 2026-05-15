@@ -147,6 +147,65 @@ export const csvImportRowDataSchema = z.object({
   clubbase_id: z.string().nullable().optional(),
 });
 
+// ── Bardienst Rooster ─────────────────────────────────────────────────────────
+
+export const createBarDaySlotSchema = z
+  .object({
+    date: z
+      .string()
+      .min(1, { message: 'Datum is verplicht' })
+      .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Ongeldige datum' }),
+    starts_at: z
+      .string()
+      .min(1, { message: 'Begintijd is verplicht' })
+      .regex(/^\d{2}:\d{2}$/, { message: 'Ongeldige begintijd' }),
+    ends_at: z
+      .string()
+      .min(1, { message: 'Eindtijd is verplicht' })
+      .regex(/^\d{2}:\d{2}$/, { message: 'Ongeldige eindtijd' }),
+    sport: z.enum(['voetbal', 'hockey']).nullable().optional(),
+    season: z.string().min(1, { message: 'Seizoen is verplicht' }),
+    notes: z.string().nullable().optional(),
+  })
+  .refine((data) => data.ends_at > data.starts_at, {
+    message: 'De eindtijd moet na de begintijd liggen',
+    path: ['ends_at'],
+  });
+
+export const updateBarDaySlotSchema = createBarDaySlotSchema;
+
+export const generateRosterSchema = z.object({
+  season: z.string().min(1, { message: 'Seizoen is verplicht' }),
+  bar_day_slot_ids: z
+    .array(z.string().uuid({ message: 'Ongeldig day-slot ID' }))
+    .min(1, { message: 'Selecteer minimaal één day-slot' }),
+});
+
+const barShiftMemberRefSchema = z.object({
+  member_id: z.string().uuid({ message: 'Ongeldig lid-ID' }),
+});
+
+const barShiftSchema = z.object({
+  starts_at: z.string().min(1, { message: 'Begintijd is verplicht' }),
+  ends_at: z.string().min(1, { message: 'Eindtijd is verplicht' }),
+  barcommissie_member: barShiftMemberRefSchema,
+  regular_members: z.tuple([barShiftMemberRefSchema, barShiftMemberRefSchema]),
+});
+
+const barRosterPreviewItemSchema = z.object({
+  bar_day_slot_id: z.string().uuid({ message: 'Ongeldig day-slot ID' }),
+  date: z.string().min(1, { message: 'Datum is verplicht' }),
+  sport: z.enum(['voetbal', 'hockey']).nullable(),
+  shifts: z.array(barShiftSchema).min(1, { message: 'Minimaal één dienst vereist' }),
+});
+
+export const publishRosterSchema = z.object({
+  season: z.string().min(1, { message: 'Seizoen is verplicht' }),
+  preview: z
+    .array(barRosterPreviewItemSchema)
+    .min(1, { message: 'Preview bevat geen diensten' }),
+});
+
 // ── Exported types ────────────────────────────────────────────────────────────
 
 export type CreateTeamInput = z.infer<typeof createTeamSchema>;
@@ -160,3 +219,7 @@ export type UpdateMemberInput = z.infer<typeof updateMemberSchema>;
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
 export type CsvColumnMappingInput = z.infer<typeof csvColumnMappingSchema>;
 export type CsvImportRowDataInput = z.infer<typeof csvImportRowDataSchema>;
+export type CreateBarDaySlotInput = z.infer<typeof createBarDaySlotSchema>;
+export type UpdateBarDaySlotInput = z.infer<typeof updateBarDaySlotSchema>;
+export type GenerateRosterInput = z.infer<typeof generateRosterSchema>;
+export type PublishRosterInput = z.infer<typeof publishRosterSchema>;

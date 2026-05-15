@@ -83,6 +83,7 @@ export type Database = {
       }
       activities: {
         Row: {
+          bar_day_slot_id: string | null
           created_at: string
           deleted_at: string | null
           ends_at: string | null
@@ -98,6 +99,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bar_day_slot_id?: string | null
           created_at?: string
           deleted_at?: string | null
           ends_at?: string | null
@@ -113,6 +115,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bar_day_slot_id?: string | null
           created_at?: string
           deleted_at?: string | null
           ends_at?: string | null
@@ -128,6 +131,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "activities_bar_day_slot_id_fkey"
+            columns: ["bar_day_slot_id"]
+            isOneToOne: false
+            referencedRelation: "bar_day_slots"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "activities_recurring_rule_id_fkey"
             columns: ["recurring_rule_id"]
@@ -229,6 +239,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      bar_day_slots: {
+        Row: {
+          created_at: string
+          date: string
+          deleted_at: string | null
+          ends_at: string
+          id: string
+          notes: string | null
+          season: string
+          sport: string | null
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          deleted_at?: string | null
+          ends_at: string
+          id?: string
+          notes?: string | null
+          season: string
+          sport?: string | null
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          deleted_at?: string | null
+          ends_at?: string
+          id?: string
+          notes?: string | null
+          season?: string
+          sport?: string | null
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       family_link_requests: {
         Row: {

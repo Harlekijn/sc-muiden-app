@@ -301,3 +301,41 @@ export interface AccountRequest {
   created_at: string;
   updated_at: string;
 }
+
+// ── Bardienst Rooster ─────────────────────────────────────────────────────────
+
+export interface BarDaySlot {
+  id: string;
+  date: string;           // ISO date bijv. '2026-04-26'
+  starts_at: string;      // bijv. '08:00:00'
+  ends_at: string;        // bijv. '18:00:00'
+  sport: Sport | null;    // null = club-breed
+  season: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface BarShiftMember {
+  member_id: string;
+  first_name: string;
+  last_name: string;
+  lid_type: LidType | null;
+  is_barcommissie: boolean;
+  diensten_count: number;
+}
+
+export interface BarShift {
+  starts_at: string;
+  ends_at: string;
+  barcommissie_member: BarShiftMember;
+  regular_members: [BarShiftMember, BarShiftMember];
+}
+
+export interface BarRosterPreview {
+  bar_day_slot_id: string;
+  date: string;
+  sport: Sport | null;
+  shifts: BarShift[];
+}
