@@ -1,7 +1,6 @@
 # DRAFT: Bardienst Rooster Generator
 
-> Status: concept — gepauzeerd. Eerst wordt het member/user datamodel herzien.
-> Hervat dit document zodra de member setup is afgerond.
+> Status: concept — klaar voor implementatie. Het member/user datamodel is afgerond (migration 20260513172517_leden_rollen.sql).
 
 ## Context
 SC Muiden heeft voor thuiswedstrijden en clubdagen medewerkers nodig achter de bar. Momenteel worden bardienst-activiteiten handmatig aangemaakt in de CMS, waarbij de admin zelf leden opzoekt en toewijst. Dit is tijdrovend en foutgevoelig bij grote aantallen leden. De nieuwe feature automatiseert dit: de admin configureert welke dagen bardienst nodig is, en het systeem genereert eerlijk een volledig rooster.
@@ -21,32 +20,34 @@ SC Muiden heeft voor thuiswedstrijden en clubdagen medewerkers nodig achter de b
 
 ### Eligibiliteitsregels
 
+Het datamodel gebruikt geen role-enum op `members` meer. Eligibiliteit wordt bepaald door combinaties van `lid_type` en boolean vlaggen op de `members` tabel.
+
 **Welk leden MOGEN ingepland worden (regulier slot):**
-- `role = 'lid'`
-- `role = 'ouder'`
+- `lid_type IN ('spelend-lid', 'jeugdlid', 'relatie')`
+- `is_vrijwilliger = false`
+- `is_barcommissie = false`
+- `deleted_at IS NULL`
 
 **Verplicht slot (barcommissie):**
-- `role = 'barcommissielid'` ← nieuw toe te voegen
+- `is_barcommissie = true`
+- `deleted_at IS NULL`
 
 **Uitgesloten:**
-- `role IN ('trainer', 'coach', 'teammanager', 'commissielid', 'beheerder')` — vrijwilligers
-- `role = 'niet_spelend_lid'` ← nieuw toe te voegen
-- `role = 'trainingslid'` ← nieuw toe te voegen
+- `is_vrijwilliger = true` — trainers, coaches, teammanagers, commissieleden
+- `lid_type IN ('niet-spelend-lid', 'trainingslid')` — niet-actieve leden
 
 ---
 
 ## Datamodel wijzigingen
 
-### 1. Nieuwe role-waarden (uitbreiding bestaand role-enum)
-Drie nieuwe waarden toevoegen aan de bestaande `role` CHECK-constraint in `members` en `profiles`:
-- `barcommissielid` — lid van de barcommissie, verplicht per bardienst dienst
-- `niet_spelend_lid` — niet-spelend lid, uitgesloten van bardienst
-- `trainingslid` — trainingslid, uitgesloten van bardienst
+### 1. Member tabel — geen wijzigingen nodig
+De benodigde velden zijn al aanwezig na migration `20260513172517_leden_rollen.sql`:
+- `lid_type text CHECK ('jeugdlid', 'niet-spelend-lid', 'trainingslid', 'spelend-lid', 'relatie')` — bepaalt of een lid regulier ingepland mag worden
+- `is_barcommissie boolean` — markeert barcommissieleden (verplicht slot per dienst)
+- `is_vrijwilliger boolean` — markeert vrijwilligers (uitgesloten van bardienst)
+- Partial indexes `members_barcommissie_idx` en `members_vrijwilliger_idx` zijn aanwezig
 
-**Impactvolle bestanden:**
-- `supabase/migrations/` — nieuwe migratie voor ALTER TABLE + CHECK update
-- `packages/shared/src/types/app.types.ts` — UserRole type uitbreiden
-- `packages/shared/src/schemas/cms.schema.ts` — userRoleSchema uitbreiden
+`UserRole` (`'lid' | 'beheerder'`) en `LidType` in `packages/shared/src/types/app.types.ts` hoeven **niet** te worden uitgebreid.
 
 ### 2. Nieuwe tabel: `bar_day_slots`
 Configureert welke dagen en tijdvensters bardienst nodig zijn.
@@ -95,8 +96,8 @@ Voor elke day-slot:
      bijv. 08:00–18:00 → [08:00–10:30, 10:30–13:00, 13:00–15:30, 15:30–18:00]
   
   2. Haal alle eligibele leden op:
-     - Regulier: role IN ('lid', 'ouder'), deleted_at IS NULL
-     - Barcommissie: role = 'barcommissielid', deleted_at IS NULL
+     - Regulier: lid_type IN ('spelend-lid', 'jeugdlid', 'relatie') AND is_vrijwilliger = false AND is_barcommissie = false, deleted_at IS NULL
+     - Barcommissie: is_barcommissie = true, deleted_at IS NULL
      - Filter op sport als day-slot sport-specifiek is
 
   3. Tel bestaande diensten per lid dit seizoen (fairness score)
@@ -153,9 +154,8 @@ Geen nieuwe schermen nodig. De gegenereerde diensten zijn gewone `bardienst`-act
 Dit wordt **Phase 8 — Bardienst Rooster** toegevoegd na Phase 7 (Beta & Polish). Schatting: **2 weken**.
 
 Subtaken voor in de roadmap:
-- [ ] DB: nieuwe role-waarden (barcommissielid, niet_spelend_lid, trainingslid)
+- [x] DB: `lid_type`, `is_vrijwilliger`, `is_barcommissie` op `members` (gereed — migration 20260513172517)
 - [ ] DB: `bar_day_slots` tabel + `bar_day_slot_id` kolom op activities
-- [ ] Shared: UserRole type + schema uitbreiden
 - [ ] CMS: day-slot beheer (lijst + formulier)
 - [ ] CMS: rooster generatie-wizard (selectie → preview → publiceren)
 - [ ] CMS: generatie-algoritme (eerlijke verdeling, randgevallen)
@@ -177,12 +177,11 @@ Subtaken voor in de roadmap:
 
 | Bestand | Wijziging |
 |---|---|
-| `supabase/migrations/` | Nieuwe migratie: role-enum + bar_day_slots + activities kolom |
-| `packages/shared/src/types/app.types.ts` | UserRole + BarDaySlot types |
-| `packages/shared/src/schemas/cms.schema.ts` | userRoleSchema + createBarDaySlotSchema |
+| `supabase/migrations/` | Nieuwe migratie: `bar_day_slots` tabel + `bar_day_slot_id` kolom op `activities` |
+| `packages/shared/src/types/app.types.ts` | `BarDaySlot` type toevoegen (UserRole/LidType ongewijzigd) |
+| `packages/shared/src/schemas/cms.schema.ts` | `createBarDaySlotSchema` toevoegen |
 | `apps/web/app/dashboard/bardienst/` | Nieuwe pagina's (day-slots, genereren, rooster) |
 | `apps/web/app/api/cms/bardienst/` | API routes voor day-slots CRUD + generatie |
-| `apps/web/app/dashboard/leden/importeren/_components/CsvImportWizard.tsx` | Nieuwe role-opties in dropdown |
 | `docs/ROADMAP_V1.md` | Phase 8 toevoegen |
 
 ---
