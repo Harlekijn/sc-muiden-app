@@ -96,6 +96,9 @@ interface AdminClient {
         single(): Promise<{ data: Row | null; error: { message: string } | null }>;
       };
     };
+    update(row: Row): {
+      eq(col: string, val: string): Promise<{ error: { message: string } | null }>;
+    };
     upsert(rows: Row | Row[], opts?: { onConflict?: string }): Promise<{ error: { message: string } | null }>;
   };
   auth: {
@@ -148,16 +151,17 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
   // ── Phase 1 ───────────────────────────────────────────────────────────────
 
   // 1. Create member records.
+  // Role is on profiles (lid | beheerder), not members. Members have lid_type + flags.
   const { data: members, error: membersErr } = await admin
     .from('members')
     .insert([
-      { first_name: 'Test', last_name: 'Beheerder',    email: E2E_BEHEERDER_EMAIL,    role: 'beheerder',    sport: [] },
-      { first_name: 'Test', last_name: 'Lid',          email: E2E_LID_EMAIL,          role: 'lid',          sport: ['voetbal'] },
-      { first_name: 'Test', last_name: 'Commissielid', email: E2E_COMMISSIELID_EMAIL, role: 'commissielid', sport: [] },
-      { first_name: 'Test', last_name: 'Voetballid',   email: E2E_VOETBAL_EMAIL,      role: 'lid',          sport: ['voetbal'] },
-      { first_name: 'Test', last_name: 'Hockeylid',    email: E2E_HOCKEY_EMAIL,       role: 'lid',          sport: ['hockey'] },
+      { first_name: 'Test', last_name: 'Beheerder',    email: E2E_BEHEERDER_EMAIL,    lid_type: 'spelend-lid',      is_vrijwilliger: false, is_barcommissie: false, sport: [] },
+      { first_name: 'Test', last_name: 'Lid',          email: E2E_LID_EMAIL,          lid_type: 'spelend-lid',      is_vrijwilliger: false, is_barcommissie: false, sport: ['voetbal'] },
+      { first_name: 'Test', last_name: 'Commissielid', email: E2E_COMMISSIELID_EMAIL, lid_type: 'niet-spelend-lid', is_vrijwilliger: true,  is_barcommissie: false, sport: [] },
+      { first_name: 'Test', last_name: 'Voetballid',   email: E2E_VOETBAL_EMAIL,      lid_type: 'spelend-lid',      is_vrijwilliger: false, is_barcommissie: false, sport: ['voetbal'] },
+      { first_name: 'Test', last_name: 'Hockeylid',    email: E2E_HOCKEY_EMAIL,       lid_type: 'spelend-lid',      is_vrijwilliger: false, is_barcommissie: false, sport: ['hockey'] },
       // Child member: no app account — represented by a clubbase_id for stable lookup.
-      { first_name: 'Test', last_name: 'Kindlid', email: null, role: 'lid', sport: ['voetbal'], clubbase_id: CHILD_CLUBBASE_ID },
+      { first_name: 'Test', last_name: 'Kindlid', email: null, lid_type: 'jeugdlid', is_vrijwilliger: false, is_barcommissie: false, sport: ['voetbal'], clubbase_id: CHILD_CLUBBASE_ID },
     ])
     .select('id, email, clubbase_id');
 
@@ -173,7 +177,22 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
   await createAuthUser(admin, E2E_VOETBAL_EMAIL);
   await createAuthUser(admin, E2E_HOCKEY_EMAIL);
 
-  // 3. Fetch the lid profile (created by the trigger).
+  // 3. Fetch the beheerder profile (trigger creates it with role='lid') and promote to 'beheerder'.
+  const { data: beheerderProfile, error: beheerderProfileErr } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('email', E2E_BEHEERDER_EMAIL)
+    .single();
+
+  const bp = must(beheerderProfile, beheerderProfileErr, 'fetch beheerder profile');
+  const { error: roleErr } = await admin
+    .from('profiles')
+    .update({ role: 'beheerder' })
+    .eq('id', bp.id as string);
+
+  if (roleErr) throw new Error(`seed set beheerder role: ${roleErr.message}`);
+
+  // 3b. Fetch the lid profile (created by the trigger).
   const { data: lidProfile, error: profileErr } = await admin
     .from('profiles')
     .select('id')
