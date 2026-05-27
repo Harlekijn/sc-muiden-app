@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from '../../../lib/supabase-server';
 import { createSupabaseAdminClient } from '../../../lib/supabase-admin';
 import { DaySlotsTab } from './_components/DaySlotsTab';
-import { RoosterTab } from './_components/RoosterTab';
+import { RoosterClient } from './_components/RoosterClient';
 
 interface PageProps {
   searchParams: { tab?: string };
@@ -21,16 +21,23 @@ export default async function BardienstPage({ searchParams }: PageProps) {
     .is('deleted_at', null)
     .order('date', { ascending: true });
 
-  const { data: roosterActivities } = await admin
-    .from('activities')
-    .select(`
-      id, title, type, sport, starts_at, ends_at, bar_day_slot_id,
-      bar_assignments(id, member_id, confirmed_at, members(id, first_name, last_name))
-    `)
-    .eq('type', 'bardienst')
-    .not('bar_day_slot_id', 'is', null)
-    .is('deleted_at', null)
-    .order('starts_at', { ascending: true });
+  const [{ data: roosterActivities }, { data: allMembers }] = await Promise.all([
+    admin
+      .from('activities')
+      .select(`
+        id, title, type, sport, starts_at, ends_at, bar_day_slot_id,
+        bar_assignments(id, member_id, confirmed_at, members(id, first_name, last_name, is_barcommissie))
+      `)
+      .eq('type', 'bardienst')
+      .not('bar_day_slot_id', 'is', null)
+      .is('deleted_at', null)
+      .order('starts_at', { ascending: true }),
+    admin
+      .from('members')
+      .select('id, first_name, last_name, is_barcommissie')
+      .is('deleted_at', null)
+      .order('last_name', { ascending: true }),
+  ]);
 
   return (
     <div style={s.page}>
@@ -49,7 +56,7 @@ export default async function BardienstPage({ searchParams }: PageProps) {
 
       {activeTab === 'day-slots' && <DaySlotsTab daySlots={daySlots ?? []} />}
       {activeTab === 'rooster' && (
-        <RoosterTab
+        <RoosterClient
           activities={(roosterActivities ?? []).map((a) => ({
             id: a.id,
             title: a.title,
@@ -64,6 +71,7 @@ export default async function BardienstPage({ searchParams }: PageProps) {
               members: Array.isArray(ba.members) ? ba.members[0] ?? null : ba.members ?? null,
             })),
           }))}
+          members={allMembers ?? []}
         />
       )}
     </div>

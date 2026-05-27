@@ -82,6 +82,18 @@ export async function POST(req: NextRequest) {
     }
     if (resultaat.shifts.length > 0) {
       previews.push(resultaat);
+      // Propageer nieuw ingeplande diensten naar de fairness map zodat de volgende
+      // slot andere leden kiest (anders start elke dag met dezelfde scores).
+      for (const shift of resultaat.shifts) {
+        const ids = [
+          shift.barcommissie_member.member_id,
+          shift.regular_members[0].member_id,
+          shift.regular_members[1].member_id,
+        ];
+        for (const id of ids) {
+          fairnessMap.set(id, (fairnessMap.get(id) ?? 0) + 1);
+        }
+      }
     }
   }
 
