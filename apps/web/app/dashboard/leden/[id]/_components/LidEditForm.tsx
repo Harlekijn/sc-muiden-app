@@ -7,9 +7,8 @@ import { updateMemberSchema, type UpdateMemberInput, type Member, type Sport, ty
 import { createSupabaseBrowserClient } from '../../../../../lib/supabase-client';
 
 const LID_TYPE_LABELS: Record<LidType, string> = {
-  'jeugdlid': 'Jeugdlid',
   'niet-spelend-lid': 'Niet-spelend lid',
-  'trainingslid': 'Trainingslid',
+
   'spelend-lid': 'Spelend lid',
   'relatie': 'Relatie',
 };
@@ -44,6 +43,8 @@ export function LidEditForm({ member }: Props) {
       lid_type: member.lid_type,
       is_vrijwilliger: member.is_vrijwilliger,
       is_barcommissie: member.is_barcommissie,
+      ouder_email_1: member.ouder_email_1 ?? undefined,
+      ouder_email_2: member.ouder_email_2 ?? undefined,
     },
   });
 
@@ -70,6 +71,8 @@ export function LidEditForm({ member }: Props) {
         email: data.email ?? null,
         phone: data.phone ?? null,
         sport: data.sport,
+        ouder_email_1: data.ouder_email_1 ?? null,
+        ouder_email_2: data.ouder_email_2 ?? null,
       })
       .eq('id', member.id);
 
@@ -148,6 +151,12 @@ export function LidEditForm({ member }: Props) {
             <Field label="Telefoon" error={errors.phone?.message}>
               <input {...register('phone')} style={s.input} />
             </Field>
+            <Field label="Ouder e-mail 1" error={errors.ouder_email_1?.message}>
+              <input type="email" {...register('ouder_email_1')} style={{ ...s.input, ...(errors.ouder_email_1 ? s.inputError : {}) }} />
+            </Field>
+            <Field label="Ouder e-mail 2" error={errors.ouder_email_2?.message}>
+              <input type="email" {...register('ouder_email_2')} style={{ ...s.input, ...(errors.ouder_email_2 ? s.inputError : {}) }} />
+            </Field>
           </div>
 
           <div style={s.sportField}>
@@ -186,6 +195,8 @@ export function LidEditForm({ member }: Props) {
           <DataRow label="E-mailadres" value={member.email ?? '—'} />
           <DataRow label="Telefoon" value={member.phone ?? '—'} />
           <DataRow label="Sport" value={member.sport.join(', ') || '—'} />
+          <DataRow label="Ouder e-mail 1" value={member.ouder_email_1 ?? '—'} />
+          <DataRow label="Ouder e-mail 2" value={member.ouder_email_2 ?? '—'} />
           {member.clubbase_id && (
             <DataRow label="ClubBase-ID" value={member.clubbase_id} muted />
           )}

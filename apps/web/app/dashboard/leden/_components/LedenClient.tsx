@@ -6,9 +6,8 @@ import type { Member, LidType } from '@sc-muiden/shared';
 import { createSupabaseBrowserClient } from '../../../../lib/supabase-client';
 
 export const LID_TYPE_LABELS: Record<LidType, string> = {
-  'jeugdlid': 'Jeugdlid',
   'niet-spelend-lid': 'Niet-spelend lid',
-  'trainingslid': 'Trainingslid',
+
   'spelend-lid': 'Spelend lid',
   'relatie': 'Relatie',
 };

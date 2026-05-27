@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { label: 'Account aanvragen', href: '/dashboard/account-aanvragen' },
   { label: 'Teams', href: '/dashboard/teams' },
   { label: 'Activiteiten', href: '/dashboard/activiteiten' },
+  { label: 'Bardienst', href: '/dashboard/bardienst' },
   { label: 'Aankondigingen', href: '/dashboard/aankondigingen' },
   { label: 'Gezinsverzoeken', href: '/dashboard/gezinsverzoeken' },
   { label: 'Rollen', href: '/dashboard/rollen' },

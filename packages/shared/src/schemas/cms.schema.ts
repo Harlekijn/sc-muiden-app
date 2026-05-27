@@ -3,9 +3,8 @@ import { z } from 'zod';
 const sportSchema = z.enum(['voetbal', 'hockey']);
 const userRoleSchema = z.enum(['lid', 'beheerder']);
 const lidTypeSchema = z.enum([
-  'jeugdlid',
   'niet-spelend-lid',
-  'trainingslid',
+
   'spelend-lid',
   'relatie',
 ]);
@@ -105,16 +104,29 @@ export const updateActivitySchema = z.object({
 
 // ── Members ───────────────────────────────────────────────────────────────────
 
+const optionalEmail = (msg: string) =>
+  z.preprocess(
+    (v) => (v === '' || v === undefined ? null : v),
+    z.string().email(msg).nullable(),
+  );
+
+const optionalString = z.preprocess(
+  (v) => (v === '' || v === undefined ? null : v),
+  z.string().nullable(),
+);
+
 export const updateMemberSchema = z.object({
   first_name: z.string().min(1, 'Voornaam is verplicht'),
   last_name: z.string().min(1, 'Achternaam is verplicht'),
-  birth_date: z.string().nullable().optional(),
-  email: z.string().email('Ongeldig e-mailadres').nullable().optional(),
-  phone: z.string().nullable().optional(),
+  birth_date: optionalString,
+  email: optionalEmail('Ongeldig e-mailadres'),
+  phone: optionalString,
   sport: z.array(sportSchema).default([]),
   lid_type: lidTypeSchema.nullable().optional(),
   is_vrijwilliger: z.boolean().optional(),
   is_barcommissie: z.boolean().optional(),
+  ouder_email_1: optionalEmail('Ongeldig e-mailadres ouder 1'),
+  ouder_email_2: optionalEmail('Ongeldig e-mailadres ouder 2'),
 });
 
 // ── Roles ─────────────────────────────────────────────────────────────────────
@@ -135,6 +147,8 @@ export const csvColumnMappingSchema = z.object({
   sport: z.string().optional(),
   rol: z.string().optional(),
   clubbase_id: z.string().optional(),
+  ouder_email_1: z.string().optional(),
+  ouder_email_2: z.string().optional(),
 });
 
 export const csvImportRowDataSchema = z.object({
@@ -145,6 +159,68 @@ export const csvImportRowDataSchema = z.object({
   phone: z.string().nullable().optional(),
   sport: z.array(sportSchema).default([]),
   clubbase_id: z.string().nullable().optional(),
+  ouder_email_1: z.string().email('Ongeldig e-mailadres ouder 1').nullable().optional(),
+  ouder_email_2: z.string().email('Ongeldig e-mailadres ouder 2').nullable().optional(),
+  lid_type: lidTypeSchema.default('niet-spelend-lid'),
+});
+
+// ── Bardienst Rooster ─────────────────────────────────────────────────────────
+
+export const createBarDaySlotSchema = z
+  .object({
+    date: z
+      .string()
+      .min(1, { message: 'Datum is verplicht' })
+      .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Ongeldige datum' }),
+    starts_at: z
+      .string()
+      .min(1, { message: 'Begintijd is verplicht' })
+      .regex(/^\d{2}:\d{2}$/, { message: 'Ongeldige begintijd' }),
+    ends_at: z
+      .string()
+      .min(1, { message: 'Eindtijd is verplicht' })
+      .regex(/^\d{2}:\d{2}$/, { message: 'Ongeldige eindtijd' }),
+    sport: z.enum(['voetbal', 'hockey']).nullable().optional(),
+    season: z.string().min(1, { message: 'Seizoen is verplicht' }),
+    notes: z.string().nullable().optional(),
+  })
+  .refine((data) => data.ends_at > data.starts_at, {
+    message: 'De eindtijd moet na de begintijd liggen',
+    path: ['ends_at'],
+  });
+
+export const updateBarDaySlotSchema = createBarDaySlotSchema;
+
+export const generateRosterSchema = z.object({
+  season: z.string().min(1, { message: 'Seizoen is verplicht' }),
+  bar_day_slot_ids: z
+    .array(z.string().uuid({ message: 'Ongeldig day-slot ID' }))
+    .min(1, { message: 'Selecteer minimaal één day-slot' }),
+});
+
+const barShiftMemberRefSchema = z.object({
+  member_id: z.string().uuid({ message: 'Ongeldig lid-ID' }),
+});
+
+const barShiftSchema = z.object({
+  starts_at: z.string().min(1, { message: 'Begintijd is verplicht' }),
+  ends_at: z.string().min(1, { message: 'Eindtijd is verplicht' }),
+  barcommissie_member: barShiftMemberRefSchema,
+  regular_members: z.tuple([barShiftMemberRefSchema, barShiftMemberRefSchema]),
+});
+
+const barRosterPreviewItemSchema = z.object({
+  bar_day_slot_id: z.string().uuid({ message: 'Ongeldig day-slot ID' }),
+  date: z.string().min(1, { message: 'Datum is verplicht' }),
+  sport: z.enum(['voetbal', 'hockey']).nullable(),
+  shifts: z.array(barShiftSchema).min(1, { message: 'Minimaal één dienst vereist' }),
+});
+
+export const publishRosterSchema = z.object({
+  season: z.string().min(1, { message: 'Seizoen is verplicht' }),
+  preview: z
+    .array(barRosterPreviewItemSchema)
+    .min(1, { message: 'Preview bevat geen diensten' }),
 });
 
 // ── Exported types ────────────────────────────────────────────────────────────
@@ -160,3 +236,7 @@ export type UpdateMemberInput = z.infer<typeof updateMemberSchema>;
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
 export type CsvColumnMappingInput = z.infer<typeof csvColumnMappingSchema>;
 export type CsvImportRowDataInput = z.infer<typeof csvImportRowDataSchema>;
+export type CreateBarDaySlotInput = z.infer<typeof createBarDaySlotSchema>;
+export type UpdateBarDaySlotInput = z.infer<typeof updateBarDaySlotSchema>;
+export type GenerateRosterInput = z.infer<typeof generateRosterSchema>;
+export type PublishRosterInput = z.infer<typeof publishRosterSchema>;

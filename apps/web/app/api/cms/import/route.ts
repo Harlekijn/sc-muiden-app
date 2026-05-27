@@ -4,6 +4,15 @@ import { createSupabaseServerClient } from '../../../../lib/supabase-server';
 import { csvImportRowDataSchema } from '@sc-muiden/shared';
 import type { CsvImportRow, CsvImportResult } from '@sc-muiden/shared';
 
+// Vertaal Postgres foutcodes naar leesbare Nederlandse meldingen (geen PII).
+function dbFoutmelding(code: string | undefined): string {
+  if (code === '23505') return 'E-mailadres of ClubBase-ID bestaat al in de database.';
+  if (code === '23503') return 'Ongeldige verwijzing (foreign key).';
+  if (code === '23514') return 'Waarde voldoet niet aan de validatieregels van de database.';
+  if (code === '22001') return 'Een veldwaarde is te lang.';
+  return 'Onverwachte databasefout bij opslaan.';
+}
+
 export async function POST(req: NextRequest) {
   const authClient = createSupabaseServerClient();
   const { data: { user } } = await authClient.auth.getUser();
@@ -37,8 +46,14 @@ export async function POST(req: NextRequest) {
     try {
       const validated = csvImportRowDataSchema.safeParse(row.data);
       if (!validated.success) {
-        console.error(`[cms-import] row_index=${row.index} outcome=validation_failed`);
-        failed.push(row);
+        const fieldErrors = validated.error.errors.map((e) =>
+          `${e.path.join('.') || 'veld'}: ${e.message}`
+        );
+        console.error(
+          `[cms-import] row_index=${row.index} outcome=validation_failed` +
+          ` fields=${validated.error.errors.map((e) => e.path.join('.')).join(',')}`
+        );
+        failed.push({ ...row, errors: fieldErrors });
         continue;
       }
       const safeData = validated.data;
@@ -52,11 +67,16 @@ export async function POST(req: NextRequest) {
           phone: safeData.phone ?? null,
           sport: safeData.sport ?? [],
           clubbase_id: safeData.clubbase_id ?? null,
+          ouder_email_1: safeData.ouder_email_1 ?? null,
+          ouder_email_2: safeData.ouder_email_2 ?? null,
+          lid_type: safeData.lid_type,
         });
         if (error) {
-          // Log only non-PII outcome
-          console.error(`[cms-import] row_index=${row.index} outcome=insert_failed`);
-          failed.push(row);
+          console.error(
+            `[cms-import] row_index=${row.index} outcome=insert_failed` +
+            ` pg_code=${error.code} pg_msg=${error.message}`
+          );
+          failed.push({ ...row, errors: [dbFoutmelding(error.code)] });
         } else {
           inserted++;
         }
@@ -71,18 +91,25 @@ export async function POST(req: NextRequest) {
             phone: safeData.phone ?? null,
             sport: safeData.sport ?? [],
             clubbase_id: safeData.clubbase_id ?? null,
+            ouder_email_1: safeData.ouder_email_1 ?? null,
+            ouder_email_2: safeData.ouder_email_2 ?? null,
+            lid_type: safeData.lid_type,
           })
           .eq('id', row.conflictMemberId);
         if (error) {
-          console.error(`[cms-import] row_index=${row.index} outcome=update_failed`);
-          failed.push(row);
+          console.error(
+            `[cms-import] row_index=${row.index} outcome=update_failed` +
+            ` pg_code=${error.code} pg_msg=${error.message}`
+          );
+          failed.push({ ...row, errors: [dbFoutmelding(error.code)] });
         } else {
           updated++;
         }
       }
-    } catch {
-      console.error(`[cms-import] row_index=${row.index} outcome=exception`);
-      failed.push(row);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[cms-import] row_index=${row.index} outcome=exception msg=${msg}`);
+      failed.push({ ...row, errors: ['Onverwachte fout bij verwerken van deze rij.'] });
     }
   }
 
