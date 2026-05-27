@@ -6,8 +6,9 @@ End-to-end flow voor de Agenda-tab: maandoverzicht, gezinsfilter, lege staat, en
 - Local Supabase running (`supabase start`)
 - Seed data applied (`cd apps/web && pnpm seed`)
 - Mobile app open en ingelogd als Test Lid (`e2e-lid@e2e.scmuiden.test` / `E2eTestWachtwoord123!`)
-- De seed heeft activiteiten aangemaakt: 1 training (vandaag), 1 wedstrijd (overmorgen), 1 bardienst (volgende week), 1 clubactiviteit (deze week)
-- Test Kindlid is via `team_members` gekoppeld aan het voetbalteam waarvoor de training en wedstrijd zijn gepland
+- De seed heeft een RecurringRule aangemaakt voor het voetbalteam (maandag 19:00, valid_from = 7 dagen geleden, valid_until = +180 dagen). Trainings worden on-the-fly gegenereerd via de view `activities_with_occurrences`.
+- De seed heeft daarnaast activiteiten aangemaakt: 1 wedstrijd (overmorgen), 1 bardienst (volgende week), 1 clubactiviteit (deze week)
+- Test Kindlid is via `team_members` gekoppeld aan het voetbalteam waarvoor de RecurringRule en wedstrijd zijn gepland
 - **Let op (vanaf federatie-integratie):** wedstrijd-activiteiten worden gevuld door de federatiesync. Het seed-script maakt een wedstrijd-activiteit + bijbehorend `matches` record met `status: 'gepland'` aan voor testdoeleinden.
 
 ---
@@ -34,7 +35,7 @@ End-to-end flow voor de Agenda-tab: maandoverzicht, gezinsfilter, lege staat, en
 
 **Verificatie via Studio:**
 
-Open Supabase Studio → `activities`. Controleer dat alle seed-activiteiten aanwezig zijn met `deleted_at IS NULL`.
+Open Supabase Studio → `activities_with_occurrences`. Controleer dat alle seed-activiteiten + de gegenereerde trainings aanwezig zijn met `deleted_at IS NULL`. Trainings hebben `is_generated = true` en bestaan niet als losse rijen in `activities`.
 
 ---
 

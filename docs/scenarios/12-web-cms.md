@@ -166,7 +166,7 @@ WHERE t.name = 'SC Muiden A1' AND tm.deleted_at IS NULL;
 
 ## S12-F — Training aanmaken (terugkerend)
 
-**Goal:** Beheerder maakt een wekelijks terugkerende training aan voor 4 weken.
+**Goal:** Beheerder maakt een wekelijks terugkerende training aan. Trainings worden on-the-fly gegenereerd uit `recurring_rules` (geen materialisatie meer).
 
 **Prerequisites:** Er bestaat een voetbalteam in de seed data.
 
@@ -174,25 +174,39 @@ WHERE t.name = 'SC Muiden A1' AND tm.deleted_at IS NULL;
 
 1. Navigeer naar `/dashboard/activiteiten/nieuw?type=training`.
 2. Selecteer het voetbalteam.
-3. Stel datum in op de eerstvolgende dinsdag, begintijd 19:00, eindtijd 20:30, locatie "Veld 1".
-4. Zet schakelaar "Wekelijks herhalen" op aan.
-5. Stel "Geldig tot" in op 4 weken na de startdatum.
-6. Klik "Opslaan".
+3. Stel dag-van-de-week in op dinsdag, begintijd 19:00, eindtijd 20:30, locatie "Veld 1".
+4. Stel "Geldig vanaf" in op de eerstvolgende dinsdag, "Geldig tot" 4 weken later.
+5. Klik "Opslaan".
 
 **Expected result:**
 
 - Redirect naar activiteitenlijst.
-- Toast: "Terugkerende training aangemaakt: 4 sessies gegenereerd."
-- In de activiteitenlijst zijn 4 trainingen zichtbaar op de vier dinsdagen.
+- Toast: "Trainingsschema opgeslagen."
+- In de activiteitenlijst zijn 4 trainingen zichtbaar op de vier dinsdagen — alle gegenereerd uit dezelfde RecurringRule.
+- Geen "Genereer terugkerende trainings"-knop zichtbaar (verwijderd).
 
 **Verificatie via Supabase Studio:**
 
 ```sql
-SELECT COUNT(*) FROM activities
-WHERE type = 'training' AND recurring_rule_id IS NOT NULL
-ORDER BY starts_at;
+-- RecurringRule is aangemaakt
+SELECT count(*) FROM recurring_rules
+ WHERE day_of_week = 2 AND start_time = '19:00';
 ```
-→ Verwacht: 4 rijen, allemaal dezelfde `recurring_rule_id`.
+→ Verwacht: 1 rij.
+
+```sql
+-- Activities-tabel bevat geen gematerialiseerde trainings voor deze rule
+SELECT count(*) FROM activities
+ WHERE type = 'training' AND recurring_rule_id IS NOT NULL;
+```
+→ Verwacht: 0 rijen (mits er geen overrides zijn aangemaakt).
+
+```sql
+-- View levert 4 occurrences
+SELECT count(*) FROM activities_with_occurrences
+ WHERE type = 'training' AND is_generated = true;
+```
+→ Verwacht: 4 rijen.
 
 ---
 

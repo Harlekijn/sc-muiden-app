@@ -6,7 +6,7 @@ End-to-end flow voor het instellen van notificatievoorkeuren in de mobiele app.
 - Local Supabase running (`supabase start`)
 - Seed data applied (`cd apps/web && pnpm seed`)
 - Mobile app open en ingelogd als Test Lid (`e2e-lid@e2e.scmuiden.test` / `E2eTestWachtwoord123!`)
-- Seed heeft een `notification_preferences`-rij voor Test Lid met alle typen aan (`wedstrijd = true`, `bardienst = true`, `training = true`)
+- Seed heeft een `notification_preferences`-rij voor Test Lid met alle typen aan (`wedstrijd = true`, `bardienst = true`, `aankondiging = true`)
 
 ---
 
@@ -23,8 +23,9 @@ End-to-end flow voor het instellen van notificatievoorkeuren in de mobiele app.
 **Expected result:**
 
 - Het scherm opent met de titel "Notificatie-instellingen".
-- Drie toggles zijn zichtbaar: "Wedstrijdherinneringen", "Bardienst-herinneringen", "Trainingsherinneringen".
+- Drie toggles zijn zichtbaar: "Wedstrijdherinneringen", "Bardienst-herinneringen", "Aankondigingen".
 - Alle drie de toggles staan aan (blauw/actief).
+- Geen "Trainingsherinneringen"-toggle (verwijderd in feature `kalender-recurring-on-the-fly`).
 - Onder de card staat een caption over de herinneringstijden.
 
 ---
@@ -50,7 +51,7 @@ End-to-end flow voor het instellen van notificatievoorkeuren in de mobiele app.
 Open Supabase Studio → `notification_preferences`. Filter op `profile_id = <Test Lid UUID>`. Controleer:
 - `wedstrijd = false`
 - `bardienst = true`
-- `training = true`
+- `aankondiging = true`
 
 ---
 
