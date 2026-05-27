@@ -151,28 +151,28 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 
 const s: Record<string, React.CSSProperties> = {
   form: {
-    background: '#fff', borderRadius: '10px',
+    background: 'var(--color-white)', borderRadius: '10px',
     boxShadow: '0 2px 8px rgba(1,29,80,0.08)', padding: '28px', maxWidth: '640px',
   },
   serverError: {
-    color: '#d63c3c', background: '#fef2f2', border: '1px solid #fca5a5',
+    color: 'var(--color-error)', background: 'var(--color-error-bg)', border: '1px solid var(--color-error)',
     borderRadius: '6px', padding: '10px 14px', fontSize: '14px', marginBottom: '16px',
   },
   row: { display: 'flex', gap: '16px' },
-  label: { display: 'block', fontSize: '14px', fontWeight: 500, color: '#0d1f3c', marginBottom: '6px' },
+  label: { display: 'block', fontSize: '14px', fontWeight: 500, color: 'var(--color-text)', marginBottom: '6px' },
   input: {
-    width: '100%', padding: '8px 12px', border: '1px solid #dde5f0',
-    borderRadius: '6px', fontSize: '14px', color: '#0d1f3c', boxSizing: 'border-box',
+    width: '100%', padding: '8px 12px', border: '1px solid var(--color-mid)',
+    borderRadius: '6px', fontSize: '14px', color: 'var(--color-text)', boxSizing: 'border-box',
   },
-  fieldError: { color: '#d63c3c', fontSize: '13px', margin: '4px 0 0' },
+  fieldError: { color: 'var(--color-error)', fontSize: '13px', margin: '4px 0 0' },
   footer: { display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' },
   cancelBtn: {
     padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 500,
-    color: '#5a6e8a', textDecoration: 'none', border: '1px solid #dde5f0',
-    background: '#fff', display: 'inline-block',
+    color: 'var(--color-text-2)', textDecoration: 'none', border: '1px solid var(--color-mid)',
+    background: 'var(--color-white)', display: 'inline-block',
   },
   submitBtn: {
     padding: '8px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: 600,
-    color: '#fff', background: '#046bba', border: 'none', cursor: 'pointer',
+    color: 'var(--color-white)', background: 'var(--color-blue)', border: 'none', cursor: 'pointer',
   },
 };

@@ -223,15 +223,15 @@ function StapIndicator({ step }: { step: Step }) {
             <div style={{
               width: '28px', height: '28px', borderRadius: '50%', display: 'flex',
               alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700,
-              background: active || done ? '#046bba' : '#dde5f0',
-              color: active || done ? '#fff' : '#5a6e8a',
+              background: active || done ? 'var(--color-blue)' : 'var(--color-mid)',
+              color: active || done ? 'var(--color-white)' : 'var(--color-text-2)',
             }}>
               {num}
             </div>
-            <span style={{ fontSize: '14px', fontWeight: active ? 600 : 400, color: active ? '#011d50' : '#5a6e8a' }}>
+            <span style={{ fontSize: '14px', fontWeight: active ? 600 : 400, color: active ? 'var(--color-navy)' : 'var(--color-text-2)' }}>
               {label}
             </span>
-            {i < stappen.length - 1 && <div style={{ width: '24px', height: '2px', background: '#dde5f0' }} />}
+            {i < stappen.length - 1 && <div style={{ width: '24px', height: '2px', background: 'var(--color-mid)' }} />}
           </div>
         );
       })}
@@ -268,7 +268,7 @@ function StapSelectie({
       {season && (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '14px', fontWeight: 600, color: '#011d50' }}>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-navy)' }}>
               Day-slots ({slots.length})
             </span>
             <button onClick={onToggleAll} style={s.ghostBtn}>
@@ -277,7 +277,7 @@ function StapSelectie({
           </div>
 
           {slots.length === 0 ? (
-            <p style={{ color: '#5a6e8a', fontSize: '14px' }}>
+            <p style={{ color: 'var(--color-text-2)', fontSize: '14px' }}>
               Geen day-slots gevonden voor seizoen {season}.
             </p>
           ) : (
@@ -288,9 +288,9 @@ function StapSelectie({
                     type="checkbox"
                     checked={selectedIds.has(slot.id)}
                     onChange={() => onToggle(slot.id)}
-                    style={{ marginRight: '10px', accentColor: '#046bba' }}
+                    style={{ marginRight: '10px', accentColor: 'var(--color-blue)' }}
                   />
-                  <span style={{ fontSize: '14px', color: '#0d1f3c', flex: 1 }}>
+                  <span style={{ fontSize: '14px', color: 'var(--color-text)', flex: 1 }}>
                     {formatDutchDate(slot.date)} · {slot.starts_at.slice(0, 5)}–{slot.ends_at.slice(0, 5)}
                   </span>
                   <span style={slot.sport ? s.sportBadge : s.sportBadgeNeutral}>
@@ -421,8 +421,8 @@ function MemberSlot({
     <div style={s.memberRow}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
         {isBarcommissie && <span style={s.barBadge}>Barcommissie</span>}
-        <span style={{ fontSize: '14px', color: '#0d1f3c' }}>{getMemberFullName(member)}</span>
-        <span style={{ fontSize: '12px', color: '#5a6e8a' }}>
+        <span style={{ fontSize: '14px', color: 'var(--color-text)' }}>{getMemberFullName(member)}</span>
+        <span style={{ fontSize: '12px', color: 'var(--color-text-2)' }}>
           {member.lid_type ?? '—'} · {member.diensten_count} diensten
         </span>
       </div>
@@ -440,7 +440,7 @@ function MemberSlot({
             {!loading && options.map((opt) => (
               <button key={opt.member_id} onClick={() => select(opt)} style={s.dropdownOption}>
                 <span>{getMemberFullName(opt)}</span>
-                <span style={{ fontSize: '12px', color: '#5a6e8a' }}>{opt.diensten_count} diensten</span>
+                <span style={{ fontSize: '12px', color: 'var(--color-text-2)' }}>{opt.diensten_count} diensten</span>
               </button>
             ))}
           </div>
@@ -467,7 +467,7 @@ function StapPubliceren({
     <div style={s.card}>
       {error && <p style={s.error}>{error}</p>}
 
-      <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#011d50', marginBottom: '16px' }}>
+      <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-navy)', marginBottom: '16px' }}>
         Samenvatting
       </h2>
 
@@ -477,7 +477,7 @@ function StapPubliceren({
         <SummaryRow label="Unieke leden ingepland" value={String(totalLeden)} />
       </div>
 
-      <p style={{ fontSize: '14px', color: '#5a6e8a', marginBottom: '24px' }}>
+      <p style={{ fontSize: '14px', color: 'var(--color-text-2)', marginBottom: '24px' }}>
         Na publicatie ontvangen betrokken leden een push-notificatie.
       </p>
 
@@ -493,79 +493,79 @@ function StapPubliceren({
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', padding: '8px 0', borderBottom: '1px solid #f0f4f9' }}>
-      <span style={{ color: '#5a6e8a' }}>{label}</span>
-      <span style={{ fontWeight: 600, color: '#011d50' }}>{value}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', padding: '8px 0', borderBottom: '1px solid var(--color-light)' }}>
+      <span style={{ color: 'var(--color-text-2)' }}>{label}</span>
+      <span style={{ fontWeight: 600, color: 'var(--color-navy)' }}>{value}</span>
     </div>
   );
 }
 
 const s: Record<string, React.CSSProperties> = {
   card: {
-    background: '#fff', borderRadius: '10px',
+    background: 'var(--color-white)', borderRadius: '10px',
     boxShadow: '0 2px 8px rgba(1,29,80,0.08)', padding: '28px', maxWidth: '800px',
   },
   dayCard: {
-    background: '#fff', borderRadius: '10px',
+    background: 'var(--color-white)', borderRadius: '10px',
     boxShadow: '0 2px 8px rgba(1,29,80,0.08)', padding: '20px 24px', marginBottom: '16px',
   },
-  dayTitle: { fontSize: '16px', fontWeight: 700, color: '#011d50', margin: '0 0 12px' },
-  shiftBlock: { borderTop: '1px solid #dde5f0', paddingTop: '10px', marginTop: '10px' },
-  shiftTime: { fontSize: '13px', fontWeight: 600, color: '#5a6e8a', margin: '0 0 8px' },
+  dayTitle: { fontSize: '16px', fontWeight: 700, color: 'var(--color-navy)', margin: '0 0 12px' },
+  shiftBlock: { borderTop: '1px solid var(--color-mid)', paddingTop: '10px', marginTop: '10px' },
+  shiftTime: { fontSize: '13px', fontWeight: 600, color: 'var(--color-text-2)', margin: '0 0 8px' },
   memberRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' },
-  label: { display: 'block', fontSize: '14px', fontWeight: 500, color: '#0d1f3c', marginBottom: '6px' },
+  label: { display: 'block', fontSize: '14px', fontWeight: 500, color: 'var(--color-text)', marginBottom: '6px' },
   input: {
-    width: '100%', padding: '8px 12px', border: '1px solid #dde5f0',
-    borderRadius: '6px', fontSize: '14px', color: '#0d1f3c', boxSizing: 'border-box',
+    width: '100%', padding: '8px 12px', border: '1px solid var(--color-mid)',
+    borderRadius: '6px', fontSize: '14px', color: 'var(--color-text)', boxSizing: 'border-box',
   },
   slotRow: {
     display: 'flex', alignItems: 'center', padding: '10px 14px',
-    border: '1px solid #dde5f0', borderRadius: '6px', cursor: 'pointer',
+    border: '1px solid var(--color-mid)', borderRadius: '6px', cursor: 'pointer',
   },
   sportBadge: {
     fontSize: '12px', fontWeight: 500, padding: '2px 8px',
-    background: '#046bba', color: '#fff', borderRadius: '4px',
+    background: 'var(--color-blue)', color: 'var(--color-white)', borderRadius: '4px',
   },
   sportBadgeNeutral: {
     fontSize: '12px', fontWeight: 500, padding: '2px 8px',
-    background: '#dde5f0', color: '#5a6e8a', borderRadius: '4px',
+    background: 'var(--color-mid)', color: 'var(--color-text-2)', borderRadius: '4px',
   },
   barBadge: {
     fontSize: '11px', fontWeight: 600, padding: '2px 7px',
-    background: '#f5c518', color: '#011d50', borderRadius: '4px',
+    background: 'var(--color-yellow)', color: 'var(--color-navy)', borderRadius: '4px',
   },
   error: {
-    color: '#d63c3c', background: '#fef2f2', border: '1px solid #fca5a5',
+    color: 'var(--color-error)', background: 'var(--color-error-bg)', border: '1px solid var(--color-error)',
     borderRadius: '6px', padding: '10px 14px', fontSize: '14px', marginBottom: '16px',
   },
   btn: {
     padding: '9px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: 600,
-    color: '#fff', background: '#046bba', border: 'none', cursor: 'pointer',
+    color: 'var(--color-white)', background: 'var(--color-blue)', border: 'none', cursor: 'pointer',
   },
   btnDisabled: {
     padding: '9px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: 600,
-    color: '#fff', background: '#a0b4cc', border: 'none', cursor: 'not-allowed',
+    color: 'var(--color-white)', background: 'var(--color-navy-40)', border: 'none', cursor: 'not-allowed',
   },
   ghostBtn: {
     padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 500,
-    color: '#5a6e8a', background: '#f0f4f9', border: '1px solid #dde5f0', cursor: 'pointer',
+    color: 'var(--color-text-2)', background: 'var(--color-light)', border: '1px solid var(--color-mid)', cursor: 'pointer',
   },
   navRow: { display: 'flex', justifyContent: 'space-between', marginTop: '24px' },
   swapBtn: {
     padding: '5px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 500,
-    color: '#046bba', background: '#f0f4f9', border: '1px solid #dde5f0', cursor: 'pointer',
+    color: 'var(--color-blue)', background: 'var(--color-light)', border: '1px solid var(--color-mid)', cursor: 'pointer',
   },
   dropdown: {
     position: 'absolute', right: 0, top: '100%', marginTop: '4px',
-    background: '#fff', border: '1px solid #dde5f0', borderRadius: '8px',
+    background: 'var(--color-white)', border: '1px solid var(--color-mid)', borderRadius: '8px',
     boxShadow: '0 4px 16px rgba(1,29,80,0.12)', minWidth: '260px',
     zIndex: 100, maxHeight: '240px', overflowY: 'auto',
   },
-  dropdownItem: { padding: '10px 14px', fontSize: '14px', color: '#5a6e8a', margin: 0 },
+  dropdownItem: { padding: '10px 14px', fontSize: '14px', color: 'var(--color-text-2)', margin: 0 },
   dropdownOption: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     width: '100%', padding: '9px 14px', background: 'none', border: 'none',
-    borderBottom: '1px solid #f0f4f9', cursor: 'pointer', fontSize: '14px',
-    color: '#0d1f3c', textAlign: 'left',
+    borderBottom: '1px solid var(--color-light)', cursor: 'pointer', fontSize: '14px',
+    color: 'var(--color-text)', textAlign: 'left',
   },
 };

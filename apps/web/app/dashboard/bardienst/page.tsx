@@ -81,14 +81,14 @@ export default async function BardienstPage({ searchParams }: PageProps) {
 const s: Record<string, React.CSSProperties> = {
   page: { padding: '32px' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' },
-  heading: { fontSize: '24px', fontWeight: 700, color: '#011d50', margin: 0 },
-  tabBar: { display: 'flex', gap: '4px', borderBottom: '2px solid #dde5f0', marginBottom: '24px' },
+  heading: { fontSize: '24px', fontWeight: 700, color: 'var(--color-navy)', margin: 0 },
+  tabBar: { display: 'flex', gap: '4px', borderBottom: '2px solid var(--color-mid)', marginBottom: '24px' },
   tab: {
-    padding: '10px 16px', fontSize: '14px', fontWeight: 500, color: '#5a6e8a',
+    padding: '10px 16px', fontSize: '14px', fontWeight: 500, color: 'var(--color-text-2)',
     textDecoration: 'none', borderBottom: '2px solid transparent', marginBottom: '-2px',
   },
   tabActive: {
-    padding: '10px 16px', fontSize: '14px', fontWeight: 600, color: '#046bba',
-    textDecoration: 'none', borderBottom: '2px solid #046bba', marginBottom: '-2px',
+    padding: '10px 16px', fontSize: '14px', fontWeight: 600, color: 'var(--color-blue)',
+    textDecoration: 'none', borderBottom: '2px solid var(--color-blue)', marginBottom: '-2px',
   },
 };

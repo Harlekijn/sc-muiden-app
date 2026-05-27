@@ -104,18 +104,29 @@ export const updateActivitySchema = z.object({
 
 // ── Members ───────────────────────────────────────────────────────────────────
 
+const optionalEmail = (msg: string) =>
+  z.preprocess(
+    (v) => (v === '' || v === undefined ? null : v),
+    z.string().email(msg).nullable(),
+  );
+
+const optionalString = z.preprocess(
+  (v) => (v === '' || v === undefined ? null : v),
+  z.string().nullable(),
+);
+
 export const updateMemberSchema = z.object({
   first_name: z.string().min(1, 'Voornaam is verplicht'),
   last_name: z.string().min(1, 'Achternaam is verplicht'),
-  birth_date: z.string().nullable().optional(),
-  email: z.string().email('Ongeldig e-mailadres').nullable().optional(),
-  phone: z.string().nullable().optional(),
+  birth_date: optionalString,
+  email: optionalEmail('Ongeldig e-mailadres'),
+  phone: optionalString,
   sport: z.array(sportSchema).default([]),
   lid_type: lidTypeSchema.nullable().optional(),
   is_vrijwilliger: z.boolean().optional(),
   is_barcommissie: z.boolean().optional(),
-  ouder_email_1: z.string().email('Ongeldig e-mailadres ouder 1').nullable().optional(),
-  ouder_email_2: z.string().email('Ongeldig e-mailadres ouder 2').nullable().optional(),
+  ouder_email_1: optionalEmail('Ongeldig e-mailadres ouder 1'),
+  ouder_email_2: optionalEmail('Ongeldig e-mailadres ouder 2'),
 });
 
 // ── Roles ─────────────────────────────────────────────────────────────────────

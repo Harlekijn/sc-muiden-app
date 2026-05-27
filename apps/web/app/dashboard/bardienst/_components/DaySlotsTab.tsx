@@ -120,35 +120,35 @@ export function DaySlotsTab({ daySlots }: Props) {
 const s: Record<string, React.CSSProperties> = {
   toolbar: { display: 'flex', gap: '12px', marginBottom: '16px' },
   btn: {
-    display: 'inline-block', padding: '8px 16px', background: '#046bba', color: '#fff',
+    display: 'inline-block', padding: '8px 16px', background: 'var(--color-blue)', color: 'var(--color-white)',
     borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 500,
   },
   btnSecondary: {
-    display: 'inline-block', padding: '8px 16px', background: '#f0f4f9', color: '#011d50',
+    display: 'inline-block', padding: '8px 16px', background: 'var(--color-light)', color: 'var(--color-navy)',
     borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 500,
   },
-  error: { color: '#d63c3c', marginBottom: '12px', fontSize: '14px' },
-  empty: { padding: '48px', textAlign: 'center', color: '#5a6e8a' },
+  error: { color: 'var(--color-error)', marginBottom: '12px', fontSize: '14px' },
+  empty: { padding: '48px', textAlign: 'center', color: 'var(--color-text-2)' },
   emptyTitle: { fontSize: '16px', fontWeight: 600, margin: '0 0 8px' },
   emptyText: { fontSize: '14px', margin: 0 },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: '14px' },
   th: {
-    textAlign: 'left', padding: '10px 12px', fontWeight: 600, color: '#5a6e8a',
-    borderBottom: '2px solid #dde5f0', fontSize: '12px', textTransform: 'uppercase',
+    textAlign: 'left', padding: '10px 12px', fontWeight: 600, color: 'var(--color-text-2)',
+    borderBottom: '2px solid var(--color-mid)', fontSize: '12px', textTransform: 'uppercase',
   },
-  row: { borderBottom: '1px solid #dde5f0' },
-  td: { padding: '12px', color: '#0d1f3c', verticalAlign: 'middle' },
+  row: { borderBottom: '1px solid var(--color-mid)' },
+  td: { padding: '12px', color: 'var(--color-text)', verticalAlign: 'middle' },
   sportBadge: {
-    display: 'inline-block', padding: '2px 8px', background: '#046bba', color: '#fff',
+    display: 'inline-block', padding: '2px 8px', background: 'var(--color-blue)', color: 'var(--color-white)',
     borderRadius: '4px', fontSize: '12px', fontWeight: 500,
   },
   sportBadgeNeutral: {
-    display: 'inline-block', padding: '2px 8px', background: '#dde5f0', color: '#5a6e8a',
+    display: 'inline-block', padding: '2px 8px', background: 'var(--color-mid)', color: 'var(--color-text-2)',
     borderRadius: '4px', fontSize: '12px', fontWeight: 500,
   },
-  actionLink: { color: '#046bba', textDecoration: 'none', marginRight: '12px', fontSize: '14px' },
+  actionLink: { color: 'var(--color-blue)', textDecoration: 'none', marginRight: '12px', fontSize: '14px' },
   deleteBtn: {
-    background: 'none', border: 'none', color: '#d63c3c', cursor: 'pointer',
+    background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer',
     fontSize: '14px', padding: 0,
   },
 };

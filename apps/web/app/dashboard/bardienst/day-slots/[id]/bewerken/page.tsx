@@ -38,6 +38,6 @@ export default async function BewerkDaySlotPage({ params }: PageProps) {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  back: { color: '#5a6e8a', textDecoration: 'none', fontSize: '14px', display: 'block', marginBottom: '8px' },
-  heading: { fontSize: '24px', fontWeight: 700, color: '#011d50', margin: 0 },
+  back: { color: 'var(--color-text-2)', textDecoration: 'none', fontSize: '14px', display: 'block', marginBottom: '8px' },
+  heading: { fontSize: '24px', fontWeight: 700, color: 'var(--color-navy)', margin: 0 },
 };
