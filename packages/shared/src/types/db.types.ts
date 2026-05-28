@@ -473,7 +473,6 @@ export type Database = {
           created_at: string
           id: string
           profile_id: string
-          training: boolean
           updated_at: string
           wedstrijd: boolean
         }
@@ -483,7 +482,6 @@ export type Database = {
           created_at?: string
           id?: string
           profile_id: string
-          training?: boolean
           updated_at?: string
           wedstrijd?: boolean
         }
@@ -493,7 +491,6 @@ export type Database = {
           created_at?: string
           id?: string
           profile_id?: string
-          training?: boolean
           updated_at?: string
           wedstrijd?: boolean
         }
@@ -854,10 +851,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      activities_with_occurrences: {
+        Row: {
+          bar_day_slot_id: string | null
+          created_at: string | null
+          deleted_at: string | null
+          ends_at: string | null
+          id: string | null
+          is_generated: boolean | null
+          location: string | null
+          notes: string | null
+          recurring_rule_id: string | null
+          sport: string | null
+          starts_at: string | null
+          team_id: string | null
+          title: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      training_occurrence_id: {
+        Args: { p_date: string; p_rule_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
@@ -1543,4 +1563,3 @@ export const Constants = {
     },
   },
 } as const
-

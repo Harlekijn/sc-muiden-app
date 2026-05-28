@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bell, ChevronLeft, Clock, Dumbbell, Newspaper } from 'lucide-react-native';
+import { Bell, ChevronLeft, Clock, Newspaper } from 'lucide-react-native';
 import { colors, radius, spacing, typography } from '@sc-muiden/shared';
 import { Text } from '../components/ui/Text';
 import { useNotificationPreferences } from '../hooks/useNotificationPreferences';
@@ -50,7 +50,7 @@ export default function NotificatieInstellingenScreen() {
   const { data: prefs, isLoading } = useNotificationPreferences();
   const { mutate: update, isPending } = useUpdateNotificationPreferences();
 
-  function handleToggle(field: 'wedstrijd' | 'bardienst' | 'training' | 'aankondiging', value: boolean) {
+  function handleToggle(field: 'wedstrijd' | 'bardienst' | 'aankondiging', value: boolean) {
     update(
       { [field]: value },
       {
@@ -63,7 +63,6 @@ export default function NotificatieInstellingenScreen() {
 
   const wedstrijd    = prefs?.wedstrijd    ?? true;
   const bardienst    = prefs?.bardienst    ?? true;
-  const training     = prefs?.training     ?? true;
   const aankondiging = prefs?.aankondiging ?? true;
 
   return (
@@ -105,13 +104,6 @@ export default function NotificatieInstellingenScreen() {
               label="Bardienst-herinneringen"
               value={bardienst}
               onValueChange={(v) => handleToggle('bardienst', v)}
-              disabled={isPending}
-            />
-            <ToggleRow
-              icon={<Dumbbell size={20} color={colors.blue} />}
-              label="Trainingsherinneringen"
-              value={training}
-              onValueChange={(v) => handleToggle('training', v)}
               disabled={isPending}
             />
             <ToggleRow

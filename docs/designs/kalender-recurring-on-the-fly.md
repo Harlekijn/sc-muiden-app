@@ -596,3 +596,34 @@ training voor die datum.
 1. **UUID v5 implementatie:** lukt de bovenstaande pure-SQL UUID v5 implementatie of moet het terugvallen op `md5(text)::uuid` (deterministisch maar niet strikt v5)? **Default tijdens implementatie:** start met v5, fallback naar md5 als de bytes-manipulatie te broos blijkt.
 2. **`activities_with_occurrences` view en match-FK:** `matches.activity_id` is FK naar `activities`, niet naar de view. Voor trainings is dit niet relevant (geen match). Maar de huidige hook `useActivityDetail` joint via `matches(...)`. Verifieer dat de join leeg returnt voor view-rijen i.p.v. een fout te gooien. Test in S17-A.
 3. **CMS bewerk-flow voor view-uuid:** wat doet de huidige `[id]/bewerken/page.tsx` als de id een view-uuid is en niet in `activities`-tabel staat? Beslissing voor MVP: 404 met link "Bewerk het trainingsschema" → rule-edit-page.
+
+---
+
+## SRE Notes
+
+**Datum:** 28-05-2026
+
+### Logging
+- `reminder-scheduler` logt alleen event, type en geaggregeerde count — geen profile_id, member_id of e-mailadres.
+- Start- en eindtimestamps blijven aanwezig voor duurmeting per scheduler-run.
+
+### Monitoring
+- Index `recurring_rules_validity_idx (valid_from, valid_until) WHERE deleted_at IS NULL` toegevoegd voor view-filter.
+- Index `activities_rule_starts_at_idx (recurring_rule_id, starts_at)` toegevoegd voor de NOT EXISTS-override-check.
+- Geen nieuwe tabellen → geen nieuwe RLS-paths te indexeren.
+- React Query hooks (`useAgendaActivities`, `useUpcomingActivities`, `useActivityDetail`) zetten `staleTime: 5min` en projecteren expliciet de gebruikte kolommen.
+
+### Foutafhandeling
+- Web: bewerk- en cancel-foutpaden leveren Nederlandse, action-oriented strings ("Opslaan mislukt. Probeer het opnieuw.") en bevatten geen Supabase- of HTTP-tekst.
+- Submit-knoppen blijven `disabled={isSubmitting}` houden (react-hook-form pattern, geen dubbele submits).
+
+### Beveiliging
+- View `activities_with_occurrences` gebruikt `security_invoker = true`: RLS van onderliggende `activities`/`recurring_rules`/`teams` blijft gelden voor `auth.uid()`.
+- Geen nieuwe RLS-policies of secret-key-gebruik.
+- Override-insert vanuit het CMS gebruikt de bestaande `activities`-RLS (alleen `beheerder`).
+
+### Bundle
+- Geen nieuwe packages.
+
+### Openstaande punten
+- Geen — alle Phase 1 design open vragen zijn afgehandeld in implementatie (md5-fallback gekozen, view-uuid-edge-case in `[id]/bewerken/page.tsx` afgehandeld via override-insert i.p.v. 404).

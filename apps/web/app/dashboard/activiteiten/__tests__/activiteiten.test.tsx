@@ -32,6 +32,8 @@ const mockActivities = [
     ends_at: null,
     location: 'Veld 1',
     notes: null,
+    recurring_rule_id: 'rule-1',
+    is_generated: true,
     teams: { id: 'team-1', name: 'JO15-1', sport: 'voetbal' },
   },
   {
@@ -44,6 +46,8 @@ const mockActivities = [
     ends_at: null,
     location: null,
     notes: null,
+    recurring_rule_id: null,
+    is_generated: false,
     teams: null,
   },
   {
@@ -56,6 +60,8 @@ const mockActivities = [
     ends_at: null,
     location: 'Kantine',
     notes: null,
+    recurring_rule_id: null,
+    is_generated: false,
     teams: null,
   },
 ];
@@ -66,6 +72,9 @@ beforeEach(() => {
       update: jest.fn().mockReturnValue({
         eq: jest.fn().mockResolvedValue({ error: null }),
       }),
+      // Voor gegenereerde occurrences wordt cancel uitgevoerd via een
+      // override-insert (soft-deleted activities-rij).
+      insert: jest.fn().mockResolvedValue({ error: null }),
     }),
   });
   window.confirm = jest.fn().mockReturnValue(true);
@@ -118,7 +127,15 @@ describe('ActiviteitenClient', () => {
   });
 
   // S12-J — Activiteit annuleren via window.confirm
-  it('S12-J: annuleer-bevestiging via window.confirm verbergt activiteit', async () => {
+  // S17-C — Soft-deleted override = afgelaste training (generated occurrence)
+  it('S12-J / S17-C: annuleer-bevestiging op gegenereerde training inserteert override met deleted_at', async () => {
+    const insertMock = jest.fn().mockResolvedValue({ error: null });
+    const updateEqMock = jest.fn().mockResolvedValue({ error: null });
+    const updateMock = jest.fn().mockReturnValue({ eq: updateEqMock });
+    createSupabaseBrowserClient.mockReturnValue({
+      from: jest.fn().mockReturnValue({ insert: insertMock, update: updateMock }),
+    });
+
     render(
       <ActiviteitenClient
         activities={mockActivities}
@@ -135,6 +152,48 @@ describe('ActiviteitenClient', () => {
       expect(window.confirm).toHaveBeenCalled();
       expect(screen.queryByText('Training JO15-1')).not.toBeInTheDocument();
     });
+
+    // Generated occurrence: insert override met deleted_at, geen update.
+    expect(insertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'training',
+        recurring_rule_id: 'rule-1',
+        deleted_at: expect.any(String),
+      })
+    );
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  // S17-C — Niet-gegenereerde activiteit (bardienst): soft-delete via update
+  it('S17-C: annuleer op niet-gegenereerde activiteit gebruikt update i.p.v. insert', async () => {
+    const insertMock = jest.fn().mockResolvedValue({ error: null });
+    const updateEqMock = jest.fn().mockResolvedValue({ error: null });
+    const updateMock = jest.fn().mockReturnValue({ eq: updateEqMock });
+    createSupabaseBrowserClient.mockReturnValue({
+      from: jest.fn().mockReturnValue({ insert: insertMock, update: updateMock }),
+    });
+
+    render(
+      <ActiviteitenClient
+        activities={mockActivities}
+        currentType="alle"
+        currentPeriode="aankomend"
+        currentSport="alle"
+      />
+    );
+
+    // De tweede annuleer-knop hoort bij act-3 (bardienst, niet-gegenereerd).
+    // Wedstrijd (act-2) heeft geen annuleer-knop.
+    const annuleerKnoppen = screen.getAllByTitle('Annuleren');
+    fireEvent.click(annuleerKnoppen[1]);
+
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ deleted_at: expect.any(String) })
+      );
+      expect(updateEqMock).toHaveBeenCalledWith('id', 'act-3');
+    });
+    expect(insertMock).not.toHaveBeenCalled();
   });
 });
 

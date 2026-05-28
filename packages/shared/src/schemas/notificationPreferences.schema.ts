@@ -5,7 +5,6 @@ export const NotificationPreferencesSchema = z.object({
   profile_id:   z.string().uuid({ message: 'Ongeldig profiel-ID formaat' }),
   wedstrijd:    z.boolean(),
   bardienst:    z.boolean(),
-  training:     z.boolean(),
   aankondiging: z.boolean(),
   created_at:   z.string(),
   updated_at:   z.string(),
@@ -14,7 +13,6 @@ export const NotificationPreferencesSchema = z.object({
 export const UpdateNotificationPreferencesSchema = z.object({
   wedstrijd:    z.boolean().optional(),
   bardienst:    z.boolean().optional(),
-  training:     z.boolean().optional(),
   aankondiging: z.boolean().optional(),
 }).refine(
   (data) => Object.keys(data).length > 0,

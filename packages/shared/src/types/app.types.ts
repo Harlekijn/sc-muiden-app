@@ -192,7 +192,6 @@ export interface PushToken {
 export type NotificationType =
   | 'wedstrijd_herinnering'
   | 'bardienst_herinnering'
-  | 'training_herinnering'
   | 'aankondiging';
 
 export interface NotificationPreferences {
@@ -200,7 +199,6 @@ export interface NotificationPreferences {
   profile_id: string;
   wedstrijd: boolean;
   bardienst: boolean;
-  training: boolean;
   aankondiging: boolean;
   created_at: string;
   updated_at: string;

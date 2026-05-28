@@ -37,7 +37,7 @@ if (command === 'teardown') {
       console.log(`[seed]   family link    → ${result.familyLinkId}`);
       console.log('[seed] Phase 2:');
       console.log(`[seed]   team           → ${result.teamId}`);
-      console.log(`[seed]   training       → activity ${result.activityTrainingId}`);
+      console.log(`[seed]   training       → recurring_rule ${result.recurringRuleId}`);
       console.log(`[seed]   wedstrijd      → activity ${result.activityWedstrijdId}`);
       console.log(`[seed]   bardienst      → activity ${result.activityBardienstId}`);
       console.log(`[seed]   clubactiviteit → activity ${result.activityClubactiviteitId}`);

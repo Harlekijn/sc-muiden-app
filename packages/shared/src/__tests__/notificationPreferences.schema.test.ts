@@ -7,7 +7,6 @@ describe('NotificationPreferencesSchema', () => {
     profile_id: '00000000-0000-0000-0000-000000000002',
     wedstrijd: true,
     bardienst: false,
-    training: true,
     aankondiging: true,
     created_at: '2026-05-08T12:00:00Z',
     updated_at: '2026-05-08T12:00:00Z',
@@ -41,7 +40,7 @@ describe('UpdateNotificationPreferencesSchema', () => {
   });
 
   it('accepteert meerdere velden tegelijk', () => {
-    const result = UpdateNotificationPreferencesSchema.safeParse({ wedstrijd: false, training: true });
+    const result = UpdateNotificationPreferencesSchema.safeParse({ wedstrijd: false, bardienst: true });
     expect(result.success).toBe(true);
   });
 

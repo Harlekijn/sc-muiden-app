@@ -5,11 +5,11 @@ const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-type ActivityType = 'wedstrijd' | 'training' | 'bardienst';
+type ActivityType = 'wedstrijd' | 'bardienst';
 
 interface ReminderWindow {
   type: ActivityType;
-  prefField: 'wedstrijd' | 'training' | 'bardienst';
+  prefField: 'wedstrijd' | 'bardienst';
   notificationType: string;
   hoursAhead: number;
   windowHours: number;
@@ -25,18 +25,6 @@ const WINDOWS: ReminderWindow[] = [
     hoursAhead: 24,
     windowHours: 4,
     titleFn: (title) => `Wedstrijd morgen: ${title}`,
-    bodyFn: (title, startsAt) => {
-      const time = new Date(startsAt).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-      return `${title} begint morgen om ${time}.`;
-    },
-  },
-  {
-    type: 'training',
-    prefField: 'training',
-    notificationType: 'training_herinnering',
-    hoursAhead: 24,
-    windowHours: 4,
-    titleFn: (title) => `Training morgen: ${title}`,
     bodyFn: (title, startsAt) => {
       const time = new Date(startsAt).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
       return `${title} begint morgen om ${time}.`;
