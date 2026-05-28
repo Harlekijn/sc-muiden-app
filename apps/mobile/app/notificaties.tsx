@@ -1,6 +1,6 @@
 import { View, FlatList, StyleSheet, SafeAreaView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bell, Calendar, ChevronLeft, Clock, Dumbbell, Newspaper } from 'lucide-react-native';
+import { Bell, Calendar, ChevronLeft, Clock, Newspaper } from 'lucide-react-native';
 import { colors, radius, spacing } from '@sc-muiden/shared';
 import type { NotificationWithContext } from '@sc-muiden/shared';
 import { Text } from '../components/ui/Text';
@@ -19,8 +19,6 @@ function typeIcon(type: string | null, isUnread: boolean) {
       return <Calendar size={size} color={color} />;
     case 'bardienst_herinnering':
       return <Clock size={size} color={color} />;
-    case 'training_herinnering':
-      return <Dumbbell size={size} color={color} />;
     default:
       return <Bell size={size} color={color} />;
   }

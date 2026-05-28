@@ -18,7 +18,8 @@
 //  Phase 2
 //    teams:          E2E Voetbalteam JO11-1  (federation_team_id = 'e2e-team-001')
 //    team_members:   kindlid → team  (role: speler)
-//    activities:     training, wedstrijd, bardienst, clubactiviteit  (relative to seed date)
+//    activities:     wedstrijd, bardienst, clubactiviteit  (relative to seed date)
+//    recurring_rules: weekly training voor het team (gegenereerd via view)
 //    matches:        linked to wedstrijd  (status: gepland)
 //    bar_assignments: bardienst → kindlid  (not confirmed)
 //
@@ -52,8 +53,10 @@ const E2E_TEAM_FEDERATION_ID = 'e2e-team-001';
 const E2E_MATCH_FEDERATION_ID = 'e2e-match-001';
 
 // Activity titles — used to identify and clean up E2E rows.
+// Trainings worden niet meer als activities-rij aangemaakt (komen uit
+// activities_with_occurrences-view via recurring_rules), dus 'Training JO11-1'
+// staat niet meer in deze lijst.
 const E2E_ACTIVITY_TITLES = [
-  'Training JO11-1',
   'Wedstrijd JO11-1 vs FC Diemen',
   'Bardienst zaterdag',
   'Ledenvergadering SC Muiden',
@@ -69,7 +72,7 @@ export interface SeedResult {
   familyLinkId: string;
   // Phase 2
   teamId: string;
-  activityTrainingId: string;
+  recurringRuleId: string;
   activityWedstrijdId: string;
   activityBardienstId: string;
   activityClubactiviteitId: string;
@@ -213,7 +216,7 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
   const { error: prefErr } = await admin
     .from('notification_preferences')
     .upsert(
-      { profile_id: profile.id, wedstrijd: true, bardienst: true, training: true, aankondiging: true },
+      { profile_id: profile.id, wedstrijd: true, bardienst: true, aankondiging: true },
       { onConflict: 'profile_id' }
     );
 
@@ -230,7 +233,7 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
       await admin
         .from('notification_preferences')
         .upsert(
-          { profile_id: sportProfile.id, wedstrijd: true, bardienst: true, training: true, aankondiging: true },
+          { profile_id: sportProfile.id, wedstrijd: true, bardienst: true, aankondiging: true },
           { onConflict: 'profile_id' }
         );
     }
@@ -261,18 +264,39 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
 
   if (teamMemberErr) throw new Error(`seed team_members: ${teamMemberErr.message}`);
 
-  // 7. Create activities (all relative to the seed date).
+  // 7a. Create recurring rule for the team's weekly training. Trainings worden
+  // on-the-fly gegenereerd door de view activities_with_occurrences — er wordt
+  // dus geen activities-rij meer ingevoegd voor de training.
+  const trainingDate = new Date();
+  trainingDate.setHours(0, 0, 0, 0);
+  // ISO day-of-week: 1=maandag .. 7=zondag.
+  const isoDow = ((trainingDate.getDay() + 6) % 7) + 1;
+  const validFrom = trainingDate.toISOString().substring(0, 10);
+  const validUntilDate = new Date(trainingDate);
+  validUntilDate.setMonth(validUntilDate.getMonth() + 6);
+  const validUntil = validUntilDate.toISOString().substring(0, 10);
+
+  const { data: ruleRows, error: ruleErr } = await admin
+    .from('recurring_rules')
+    .insert({
+      team_id: teamId,
+      day_of_week: isoDow,
+      start_time: '09:00:00',
+      end_time: '10:00:00',
+      location: 'Sportpark De Volharding',
+      notes: null,
+      valid_from: validFrom,
+      valid_until: validUntil,
+    })
+    .select('id');
+
+  const ruleRow = must(ruleRows, ruleErr, 'seed recurring_rule');
+  const recurringRuleId = (ruleRow[0] as Row).id as string;
+
+  // 7b. Create activities (all relative to the seed date) — geen training meer.
   const { data: activityRows, error: activityErr } = await admin
     .from('activities')
     .insert([
-      {
-        type: 'training',
-        sport: 'voetbal',
-        team_id: teamId,
-        title: 'Training JO11-1',
-        starts_at: activityAt(0, 9, 0),
-        location: 'Sportpark De Volharding',
-      },
       {
         type: 'wedstrijd',
         sport: 'voetbal',
@@ -301,7 +325,6 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
   const findActivity = (title: string) =>
     (activityRowList.find((r) => r.title === title) as Row).id as string;
 
-  const activityTrainingId      = findActivity('Training JO11-1');
   const activityWedstrijdId     = findActivity('Wedstrijd JO11-1 vs FC Diemen');
   const activityBardienstId     = findActivity('Bardienst zaterdag');
   const activityClubactiviteitId = findActivity('Ledenvergadering SC Muiden');
@@ -338,7 +361,7 @@ export async function seed(admin: AdminClient): Promise<SeedResult> {
     childMemberId:     childMember.id as string,
     familyLinkId:      (link[0] as Row).id as string,
     teamId,
-    activityTrainingId,
+    recurringRuleId,
     activityWedstrijdId,
     activityBardienstId,
     activityClubactiviteitId,

@@ -29,6 +29,8 @@ interface ActivityRow {
   ends_at: string | null;
   location: string | null;
   notes: string | null;
+  recurring_rule_id: string | null;
+  is_generated: boolean;
   teams: { id: string; name: string; sport: string } | null;
 }
 
@@ -63,18 +65,36 @@ export function ActiviteitenClient({ activities, currentType, currentPeriode, cu
     return `/dashboard/activiteiten?${params.toString()}`;
   }
 
-  async function handleCancel(id: string, type: string) {
-    if (type === 'wedstrijd') return;
+  async function handleCancel(act: ActivityRow) {
+    if (act.type === 'wedstrijd') return;
     if (!confirm('Weet je zeker dat je deze activiteit wilt annuleren? Deelnemers ontvangen geen automatische notificatie.')) return;
 
-    setCancellingId(id);
+    setCancellingId(act.id);
     const supabase = createSupabaseBrowserClient();
-    await supabase
-      .from('activities')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', id);
 
-    setCancelledIds((prev) => new Set([...prev, id]));
+    if (act.is_generated && act.recurring_rule_id) {
+      // Een gegenereerde occurrence afgelasten: insert een override-Activity met
+      // deleted_at gevuld. De view excludeert dan de generated row.
+      await supabase.from('activities').insert({
+        type: 'training',
+        team_id: act.team_id,
+        sport: act.sport,
+        title: act.title,
+        starts_at: act.starts_at,
+        ends_at: act.ends_at,
+        location: act.location,
+        notes: act.notes,
+        recurring_rule_id: act.recurring_rule_id,
+        deleted_at: new Date().toISOString(),
+      });
+    } else {
+      await supabase
+        .from('activities')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', act.id);
+    }
+
+    setCancelledIds((prev) => new Set([...prev, act.id]));
     setCancellingId(null);
   }
 
@@ -154,7 +174,7 @@ export function ActiviteitenClient({ activities, currentType, currentPeriode, cu
                       ✏
                     </a>
                     <button
-                      onClick={() => handleCancel(act.id, act.type)}
+                      onClick={() => handleCancel(act)}
                       disabled={cancellingId === act.id}
                       style={s.cancelBtn}
                       title="Annuleren"

@@ -15,9 +15,12 @@ export default async function ActiviteitenPage({ searchParams }: PageProps) {
   const now = new Date().toISOString();
   const isVerleden = searchParams.periode === 'verleden';
 
+  // Lees uit activities_with_occurrences-view: bevat zowel materialized rows als
+  // on-the-fly gegenereerde trainings. teams(...) embedden werkt niet op deze
+  // UNION-view (PostgREST kan FK's niet inferreren); we joinen daarom client-side.
   let query = supabase
-    .from('activities')
-    .select('id, type, sport, team_id, title, starts_at, ends_at, location, notes, created_at, updated_at, deleted_at, recurring_rule_id, teams(id, name, sport)')
+    .from('activities_with_occurrences')
+    .select('id, type, sport, team_id, title, starts_at, ends_at, location, notes, created_at, updated_at, deleted_at, recurring_rule_id, is_generated')
     .is('deleted_at', null)
     .order('starts_at', { ascending: !isVerleden })
     .limit(100);
@@ -36,7 +39,21 @@ export default async function ActiviteitenPage({ searchParams }: PageProps) {
     query = query.eq('sport', searchParams.sport);
   }
 
-  const { data: activities, error } = await query;
+  const { data: rawActivities, error } = await query;
+
+  const teamIds = Array.from(
+    new Set((rawActivities ?? []).map((a) => a.team_id).filter((id): id is string => !!id)),
+  );
+
+  const { data: teamsData } = teamIds.length > 0
+    ? await supabase.from('teams').select('id, name, sport').in('id', teamIds)
+    : { data: [] as Array<{ id: string; name: string; sport: string }> };
+
+  const teamById = new Map((teamsData ?? []).map((t) => [t.id, t]));
+  const activities = (rawActivities ?? []).map((a) => ({
+    ...a,
+    teams: a.team_id ? teamById.get(a.team_id) ?? null : null,
+  }));
 
   return (
     <div>
@@ -53,7 +70,7 @@ export default async function ActiviteitenPage({ searchParams }: PageProps) {
         <p style={{ color: 'var(--color-error)' }}>Activiteiten konden niet worden geladen.</p>
       ) : (
         <ActiviteitenClient
-          activities={(activities ?? []) as unknown as Parameters<typeof ActiviteitenClient>[0]['activities']}
+          activities={activities as unknown as Parameters<typeof ActiviteitenClient>[0]['activities']}
           currentType={searchParams.type ?? 'alle'}
           currentPeriode={searchParams.periode ?? 'aankomend'}
           currentSport={searchParams.sport ?? 'alle'}

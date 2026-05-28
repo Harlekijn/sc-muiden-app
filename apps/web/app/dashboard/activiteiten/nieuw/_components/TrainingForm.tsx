@@ -22,8 +22,9 @@ export function TrainingForm({ teams }: Props) {
     const supabase = createSupabaseBrowserClient();
 
     if (data.is_recurring && data.valid_from && data.valid_until) {
-      // Create recurring rule and generate activities via API
-      const { data: rule, error: ruleErr } = await supabase
+      // Recurring training: alleen RecurringRule aanmaken — afzonderlijke activities-rijen
+      // zijn niet nodig, de view activities_with_occurrences genereert die on-the-fly.
+      const { error: ruleErr } = await supabase
         .from('recurring_rules')
         .insert({
           team_id: data.team_id,
@@ -34,37 +35,14 @@ export function TrainingForm({ teams }: Props) {
           notes: data.notes ?? null,
           valid_from: data.valid_from,
           valid_until: data.valid_until,
-        })
-        .select('id')
-        .single();
+        });
 
-      if (ruleErr || !rule) {
+      if (ruleErr) {
         setError('root', { message: 'Training aanmaken mislukt. Probeer het opnieuw.' });
         return;
       }
 
-      const res = await fetch('/api/cms/activities/generate-recurring', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recurring_rule_id: rule.id,
-          team_id: data.team_id,
-          starts_at: data.starts_at,
-          ends_at: data.ends_at,
-          location: data.location,
-          notes: data.notes,
-          valid_from: data.valid_from,
-          valid_until: data.valid_until,
-        }),
-      });
-
-      if (!res.ok) {
-        setError('root', { message: 'Training aanmaken mislukt. Probeer het opnieuw.' });
-        return;
-      }
-
-      const { count } = await res.json();
-      router.push(`/dashboard/activiteiten?toast=${count}`);
+      router.push('/dashboard/activiteiten');
     } else {
       // Single activity
       const team = teams.find((t) => t.id === data.team_id);

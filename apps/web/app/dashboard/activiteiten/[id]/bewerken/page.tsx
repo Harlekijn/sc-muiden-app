@@ -18,6 +18,7 @@ interface ActivityRow {
   sport: string | null;
   team_id: string | null;
   recurring_rule_id: string | null;
+  is_generated: boolean;
 }
 
 export default function BewerkenPage() {
@@ -35,8 +36,8 @@ export default function BewerkenPage() {
     async function load() {
       const supabase = createSupabaseBrowserClient();
       const { data, error } = await supabase
-        .from('activities')
-        .select('id, type, title, starts_at, ends_at, location, notes, sport, team_id, recurring_rule_id')
+        .from('activities_with_occurrences')
+        .select('id, type, title, starts_at, ends_at, location, notes, sport, team_id, recurring_rule_id, is_generated')
         .eq('id', params.id)
         .is('deleted_at', null)
         .single();
@@ -65,18 +66,40 @@ export default function BewerkenPage() {
     const supabase = createSupabaseBrowserClient();
 
     if (activity.recurring_rule_id && data.update_scope === 'future') {
-      // Update all future occurrences of this recurring rule
-      const now = new Date().toISOString();
+      // 'Alle toekomstige sessies' bij een recurring training: pas de regel aan,
+      // niet individuele occurrences. Bestaande overrides blijven staan.
+      const startTime = data.starts_at ? data.starts_at.substring(11, 16) + ':00' : undefined;
+      const endTime = data.ends_at ? data.ends_at.substring(11, 16) + ':00' : null;
+      const update: Record<string, unknown> = {
+        location: data.location ?? null,
+        notes: data.notes ?? null,
+      };
+      if (startTime) update.start_time = startTime;
+      if (data.ends_at !== undefined) update.end_time = endTime;
+
       const { error } = await supabase
-        .from('activities')
-        .update({
-          title: data.title,
-          location: data.location ?? null,
-          notes: data.notes ?? null,
-        })
-        .eq('recurring_rule_id', activity.recurring_rule_id)
-        .gte('starts_at', now)
-        .is('deleted_at', null);
+        .from('recurring_rules')
+        .update(update)
+        .eq('id', activity.recurring_rule_id);
+
+      if (error) {
+        setError('root', { message: 'Opslaan mislukt. Probeer het opnieuw.' });
+        return;
+      }
+    } else if (activity.is_generated && activity.recurring_rule_id) {
+      // 'Alleen deze sessie' op een gegenereerde occurrence: maak een override-rij
+      // in activities die de generated row vervangt voor deze datum.
+      const { error } = await supabase.from('activities').insert({
+        type: activity.type,
+        team_id: activity.team_id,
+        sport: data.sport ?? activity.sport,
+        title: data.title ?? activity.title,
+        starts_at: data.starts_at,
+        ends_at: data.ends_at ?? null,
+        location: data.location ?? null,
+        notes: data.notes ?? null,
+        recurring_rule_id: activity.recurring_rule_id,
+      });
 
       if (error) {
         setError('root', { message: 'Opslaan mislukt. Probeer het opnieuw.' });
