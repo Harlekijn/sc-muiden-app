@@ -53,12 +53,12 @@ export type AlgorithmMember = {
   is_vrijwilliger: boolean;
 };
 
-export type AlgorithmSlot = {
-  id: string;
-  date: string;
-  starts_at: string;
+export type AlgorithmDay = {
+  preview_id: string;          // client-side UUID, uniek per dag in een wizard-run
+  date: string;                // 'YYYY-MM-DD'
+  starts_at: string;           // 'HH:MM' of 'HH:MM:SS'
   ends_at: string;
-  sport: string | null;
+  sport: Sport | null;
 };
 
 export type GenereerFout = {
@@ -79,22 +79,24 @@ function toBarShiftMember(m: AlgorithmMember, count: number): BarShiftMember {
   };
 }
 
-export function genereerPreviewVoorSlot(
-  slot: AlgorithmSlot,
+export function genereerPreviewVoorDag(
+  day: AlgorithmDay,
   allMembers: AlgorithmMember[],
   fairnessMap: Map<string, number>
 ): BarRosterPreview | GenereerFout {
-  const shiftTimes = splitIntoShifts(slot.date, slot.starts_at, slot.ends_at);
+  const shiftTimes = splitIntoShifts(day.date, day.starts_at, day.ends_at);
   if (shiftTimes.length === 0) {
     return {
-      bar_day_slot_id: slot.id,
-      date: slot.date,
-      sport: slot.sport as Sport | null,
+      preview_id: day.preview_id,
+      date: day.date,
+      sport: day.sport,
+      starts_at: day.starts_at,
+      ends_at: day.ends_at,
       shifts: [],
     };
   }
 
-  const sportFiltered = allMembers.filter((m) => sportOverlap(m.sport, slot.sport));
+  const sportFiltered = allMembers.filter((m) => sportOverlap(m.sport, day.sport));
   const barcommissiePool = sportFiltered.filter((m) => m.is_barcommissie);
   const regulierPool = sportFiltered.filter(
     (m) =>
@@ -107,13 +109,13 @@ export function genereerPreviewVoorSlot(
   if (barcommissiePool.length < shiftTimes.length) {
     return {
       code: 'INSUFFICIENT_BARCOMMISSIE',
-      error: `Onvoldoende barcommissieleden beschikbaar voor ${slot.date}.`,
+      error: `Onvoldoende barcommissieleden beschikbaar voor ${day.date}.`,
     };
   }
   if (regulierPool.length < shiftTimes.length * 2) {
     return {
       code: 'INSUFFICIENT_REGULAR',
-      error: `Onvoldoende reguliere leden beschikbaar voor ${slot.date}.`,
+      error: `Onvoldoende reguliere leden beschikbaar voor ${day.date}.`,
     };
   }
 
@@ -161,9 +163,11 @@ export function genereerPreviewVoorSlot(
   }
 
   return {
-    bar_day_slot_id: slot.id,
-    date: slot.date,
-    sport: slot.sport as Sport | null,
+    preview_id: day.preview_id,
+    date: day.date,
+    sport: day.sport,
+    starts_at: day.starts_at,
+    ends_at: day.ends_at,
     shifts,
   };
 }

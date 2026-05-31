@@ -16,7 +16,9 @@ Zie design doc bij `docs/designs/kalender-recurring-on-the-fly.md`.
 
 ## R-02 — `BarDaySlot` opheffen; `Activity(type='bardienst')` is de bar-dag
 
-**Status:** open — geplakt na R-01
+**Status:** afgerond — `feature/bardienst-activity-merge`
+
+Zie design doc bij `docs/designs/bardienst-activity-merge.md`.
 
 ### Probleem
 

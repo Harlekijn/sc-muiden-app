@@ -8,7 +8,6 @@ import {
   updateActivitySchema,
   updateMemberSchema,
   updateRoleSchema,
-  createBarDaySlotSchema,
   generateRosterSchema,
   publishRosterSchema,
 } from '../schemas/cms.schema';
@@ -190,28 +189,37 @@ describe('updateRoleSchema', () => {
 
 // ── Bardienst Rooster ──────────────────────────────────────────────────────────
 
-describe('createBarDaySlotSchema', () => {
-  const valid = { date: '2026-04-26', starts_at: '08:00', ends_at: '18:00', season: '2025-2026' };
+describe('generateRosterSchema', () => {
+  const validDay = {
+    date: '2026-04-26',
+    starts_at: '08:00',
+    ends_at: '18:00',
+    sport: 'voetbal' as const,
+  };
 
   it('geldige invoer slaagt', () => {
-    expect(createBarDaySlotSchema.safeParse(valid).success).toBe(true);
+    const result = generateRosterSchema.safeParse({ season: '2025-2026', dagen: [validDay] });
+    expect(result.success).toBe(true);
   });
 
-  it('met sport slaagt', () => {
-    expect(createBarDaySlotSchema.safeParse({ ...valid, sport: 'voetbal' }).success).toBe(true);
+  it('club-brede dag (sport=null) slaagt', () => {
+    const result = generateRosterSchema.safeParse({
+      season: '2025-2026',
+      dagen: [{ ...validDay, sport: null }],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('lege dagen-lijst geeft fout', () => {
+    const result = generateRosterSchema.safeParse({ season: '2025-2026', dagen: [] });
+    expect(result.success).toBe(false);
   });
 
   it('eindtijd gelijk aan begintijd geeft fout', () => {
-    const result = createBarDaySlotSchema.safeParse({ ...valid, ends_at: '08:00' });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const issues = result.error.flatten().fieldErrors;
-      expect(issues.ends_at).toBeDefined();
-    }
-  });
-
-  it('eindtijd voor begintijd geeft fout met Nederlandse melding', () => {
-    const result = createBarDaySlotSchema.safeParse({ ...valid, ends_at: '07:00' });
+    const result = generateRosterSchema.safeParse({
+      season: '2025-2026',
+      dagen: [{ ...validDay, ends_at: '08:00' }],
+    });
     expect(result.success).toBe(false);
     if (!result.success) {
       const msg = result.error.issues[0]?.message;
@@ -219,37 +227,28 @@ describe('createBarDaySlotSchema', () => {
     }
   });
 
-  it('leeg seizoen geeft fout', () => {
-    const result = createBarDaySlotSchema.safeParse({ ...valid, season: '' });
+  it('eindtijd vóór begintijd geeft fout met Nederlandse melding', () => {
+    const result = generateRosterSchema.safeParse({
+      season: '2025-2026',
+      dagen: [{ ...validDay, ends_at: '07:00' }],
+    });
     expect(result.success).toBe(false);
+    if (!result.success) {
+      const msg = result.error.issues[0]?.message;
+      expect(msg).toContain('eindtijd');
+    }
   });
 
   it('ongeldige datum-opmaak geeft fout', () => {
-    const result = createBarDaySlotSchema.safeParse({ ...valid, date: '26-04-2026' });
-    expect(result.success).toBe(false);
-  });
-});
-
-describe('generateRosterSchema', () => {
-  const validId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-
-  it('geldige invoer slaagt', () => {
-    const result = generateRosterSchema.safeParse({ season: '2025-2026', bar_day_slot_ids: [validId] });
-    expect(result.success).toBe(true);
-  });
-
-  it('lege ids-lijst geeft fout', () => {
-    const result = generateRosterSchema.safeParse({ season: '2025-2026', bar_day_slot_ids: [] });
-    expect(result.success).toBe(false);
-  });
-
-  it('ongeldig UUID in ids geeft fout', () => {
-    const result = generateRosterSchema.safeParse({ season: '2025-2026', bar_day_slot_ids: ['geen-uuid'] });
+    const result = generateRosterSchema.safeParse({
+      season: '2025-2026',
+      dagen: [{ ...validDay, date: '26-04-2026' }],
+    });
     expect(result.success).toBe(false);
   });
 
   it('leeg seizoen geeft fout', () => {
-    const result = generateRosterSchema.safeParse({ season: '', bar_day_slot_ids: [validId] });
+    const result = generateRosterSchema.safeParse({ season: '', dagen: [validDay] });
     expect(result.success).toBe(false);
   });
 });
@@ -258,10 +257,10 @@ describe('publishRosterSchema', () => {
   const uuid1 = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
   const uuid2 = 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff';
   const uuid3 = 'cccccccc-dddd-eeee-ffff-000000000000';
-  const slotId = 'eeeeeeee-ffff-0000-1111-222222222222';
+  const previewId = 'eeeeeeee-ffff-0000-1111-222222222222';
 
   const validPreviewItem = {
-    bar_day_slot_id: slotId,
+    preview_id: previewId,
     date: '2026-04-26',
     sport: null,
     shifts: [{
@@ -290,6 +289,12 @@ describe('publishRosterSchema', () => {
         regular_members: [{ member_id: uuid2 }],
       }],
     };
+    const result = publishRosterSchema.safeParse({ season: '2025-2026', preview: [item] });
+    expect(result.success).toBe(false);
+  });
+
+  it('ongeldig preview_id geeft fout', () => {
+    const item = { ...validPreviewItem, preview_id: 'geen-uuid' };
     const result = publishRosterSchema.safeParse({ season: '2025-2026', preview: [item] });
     expect(result.success).toBe(false);
   });

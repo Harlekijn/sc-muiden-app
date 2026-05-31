@@ -68,9 +68,7 @@ export async function POST(req: NextRequest) {
     memberToProfile.set(link.member_id, link.profile_id);
   }
 
-  // Verwerk elk day-slot in sequence; rollback niet automatisch maar we vangen fouten op
   const activitiesInserted: string[] = [];
-  const assignmentsInserted: string[] = [];
   const notificationsToInsert: Array<{
     recipient_profile_id: string;
     title: string;
@@ -80,13 +78,6 @@ export async function POST(req: NextRequest) {
   }> = [];
 
   for (const item of preview) {
-    // Laad slot-data voor de sport en datum
-    const { data: slot } = await admin
-      .from('bar_day_slots')
-      .select('sport, date')
-      .eq('id', item.bar_day_slot_id)
-      .single();
-
     for (const shift of item.shifts) {
       const { datum, tijd: beginTijd } = formatDutchDateTime(shift.starts_at);
       const { tijd: eindTijd } = formatDutchDateTime(shift.ends_at);
@@ -96,16 +87,14 @@ export async function POST(req: NextRequest) {
         .insert({
           type: 'bardienst',
           title: `Bardienst ${datum}`,
-          sport: slot?.sport ?? null,
+          sport: item.sport,
           starts_at: shift.starts_at,
           ends_at: shift.ends_at,
-          bar_day_slot_id: item.bar_day_slot_id,
         })
         .select('id')
         .single();
 
       if (actError || !activity) {
-        // Cleanup eerder aangemaakte activiteiten en toewijzingen
         if (activitiesInserted.length > 0) {
           await admin.from('bar_assignments').delete().in('activity_id', activitiesInserted);
           await admin.from('activities').delete().in('id', activitiesInserted);
@@ -130,8 +119,6 @@ export async function POST(req: NextRequest) {
         await admin.from('activities').delete().in('id', activitiesInserted);
         return NextResponse.json({ error: 'Publicatie mislukt. Probeer het opnieuw.' }, { status: 500 });
       }
-
-      assignmentsInserted.push(activity.id);
 
       // Stel notificaties op voor leden met een gekoppeld profiel
       for (const memberId of memberIds) {

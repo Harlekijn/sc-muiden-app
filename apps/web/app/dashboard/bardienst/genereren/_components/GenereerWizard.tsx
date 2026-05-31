@@ -2,22 +2,39 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { BarRosterPreview, BarShiftMember } from '@sc-muiden/shared';
+import { X } from 'lucide-react';
+import type { BarRosterPreview, BarShiftMember, Sport } from '@sc-muiden/shared';
 
-interface DaySlotOption {
-  id: string;
+type Step = 1 | 2 | 3;
+
+type SportKeuze = '' | 'voetbal' | 'hockey' | 'club';
+
+interface WizardDay {
+  id: string;             // local row-id voor React keys
   date: string;
   starts_at: string;
   ends_at: string;
-  sport: string | null;
-  season: string;
+  sport: SportKeuze;
 }
 
-interface Props {
-  daySlots: DaySlotOption[];
+function emptyDay(): WizardDay {
+  return {
+    id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36),
+    date: '',
+    starts_at: '',
+    ends_at: '',
+    sport: '',
+  };
 }
 
-type Step = 1 | 2 | 3;
+function sportFromKeuze(keuze: SportKeuze): Sport | null {
+  if (keuze === 'voetbal' || keuze === 'hockey') return keuze;
+  return null;
+}
+
+function isCompleteDag(d: WizardDay): boolean {
+  return d.date !== '' && d.starts_at !== '' && d.ends_at !== '' && d.sport !== '';
+}
 
 function formatDutchDate(dateStr: string): string {
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -28,12 +45,6 @@ function formatDutchDate(dateStr: string): string {
 
 function formatTime(isoDatetime: string): string {
   return new Date(isoDatetime).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-}
-
-function sportLabel(sport: string | null): string {
-  if (sport === 'voetbal') return 'Voetbal';
-  if (sport === 'hockey') return 'Hockey';
-  return 'Club-breed';
 }
 
 function getMemberFullName(m: BarShiftMember): string {
@@ -56,41 +67,32 @@ function countShifts(preview: BarRosterPreview[]): number {
   return preview.reduce((acc, item) => acc + item.shifts.length, 0);
 }
 
-export function GenereerWizard({ daySlots }: Props) {
+export function GenereerWizard() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
   const [season, setSeason] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [dagen, setDagen] = useState<WizardDay[]>([emptyDay()]);
   const [preview, setPreview] = useState<BarRosterPreview[]>([]);
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const filteredSlots = season
-    ? daySlots.filter((s) => s.season === season)
-    : daySlots;
+  const allDagenComplete = dagen.length > 0 && dagen.every(isCompleteDag);
 
-  const seasons = Array.from(new Set(daySlots.map((s) => s.season))).sort().reverse();
-
-  function toggleSlot(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  function updateDag(id: string, patch: Partial<WizardDay>) {
+    setDagen((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
   }
 
-  function toggleAll() {
-    if (selectedIds.size === filteredSlots.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredSlots.map((s) => s.id)));
-    }
+  function addDag() {
+    setDagen((prev) => [...prev, emptyDay()]);
+  }
+
+  function removeDag(id: string) {
+    setDagen((prev) => (prev.length <= 1 ? prev : prev.filter((d) => d.id !== id)));
   }
 
   async function handleGenereer() {
-    if (selectedIds.size === 0 || !season) return;
+    if (!season || !allDagenComplete) return;
     setError(null);
     setGenerating(true);
     let res: Response;
@@ -98,7 +100,15 @@ export function GenereerWizard({ daySlots }: Props) {
       res = await fetch('/api/cms/bardienst/genereer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ season, bar_day_slot_ids: Array.from(selectedIds) }),
+        body: JSON.stringify({
+          season,
+          dagen: dagen.map((d) => ({
+            date: d.date,
+            starts_at: d.starts_at,
+            ends_at: d.ends_at,
+            sport: sportFromKeuze(d.sport),
+          })),
+        }),
       });
     } catch {
       setError('Geen verbinding — controleer je internetverbinding en probeer opnieuw.');
@@ -163,7 +173,7 @@ export function GenereerWizard({ daySlots }: Props) {
       setPublishing(false);
       return;
     }
-    router.push('/dashboard/bardienst?tab=rooster');
+    router.push('/dashboard/bardienst');
     router.refresh();
   }
 
@@ -172,14 +182,14 @@ export function GenereerWizard({ daySlots }: Props) {
       <StapIndicator step={step} />
 
       {step === 1 && (
-        <StapSelectie
-          seasons={seasons}
+        <StapDagen
           season={season}
-          onSeasonChange={(s) => { setSeason(s); setSelectedIds(new Set()); }}
-          slots={filteredSlots}
-          selectedIds={selectedIds}
-          onToggle={toggleSlot}
-          onToggleAll={toggleAll}
+          onSeasonChange={setSeason}
+          dagen={dagen}
+          onUpdateDag={updateDag}
+          onAddDag={addDag}
+          onRemoveDag={removeDag}
+          allComplete={allDagenComplete}
           onGenereer={handleGenereer}
           generating={generating}
           error={error}
@@ -199,7 +209,7 @@ export function GenereerWizard({ daySlots }: Props) {
       {step === 3 && (
         <StapPubliceren
           preview={preview}
-          selectedCount={selectedIds.size}
+          dagenCount={dagen.length}
           onVorige={() => setStep(2)}
           onPubliceer={handlePubliceer}
           publishing={publishing}
@@ -211,7 +221,7 @@ export function GenereerWizard({ daySlots }: Props) {
 }
 
 function StapIndicator({ step }: { step: Step }) {
-  const stappen = ['Selectie', 'Preview', 'Publiceren'];
+  const stappen = ['Dagen', 'Preview', 'Publiceren'];
   return (
     <div style={{ display: 'flex', gap: '8px', marginBottom: '28px', alignItems: 'center' }}>
       {stappen.map((label, i) => {
@@ -239,16 +249,17 @@ function StapIndicator({ step }: { step: Step }) {
   );
 }
 
-function StapSelectie({
-  seasons, season, onSeasonChange, slots, selectedIds, onToggle, onToggleAll, onGenereer, generating, error,
+function StapDagen({
+  season, onSeasonChange, dagen, onUpdateDag, onAddDag, onRemoveDag,
+  allComplete, onGenereer, generating, error,
 }: {
-  seasons: string[];
   season: string;
   onSeasonChange: (s: string) => void;
-  slots: DaySlotOption[];
-  selectedIds: Set<string>;
-  onToggle: (id: string) => void;
-  onToggleAll: () => void;
+  dagen: WizardDay[];
+  onUpdateDag: (id: string, patch: Partial<WizardDay>) => void;
+  onAddDag: () => void;
+  onRemoveDag: (id: string) => void;
+  allComplete: boolean;
   onGenereer: () => void;
   generating: boolean;
   error: string | null;
@@ -258,62 +269,89 @@ function StapSelectie({
       {error && <p style={s.error}>{error}</p>}
 
       <div style={{ marginBottom: '20px' }}>
-        <label style={s.label}>Seizoen</label>
-        <select value={season} onChange={(e) => onSeasonChange(e.target.value)} style={s.input}>
-          <option value="">Kies een seizoen</option>
-          {seasons.map((se) => <option key={se} value={se}>{se}</option>)}
-        </select>
+        <label style={s.label} htmlFor="season">Seizoen</label>
+        <input
+          id="season"
+          type="text"
+          value={season}
+          placeholder="2025-2026"
+          onChange={(e) => onSeasonChange(e.target.value)}
+          style={s.input}
+        />
       </div>
 
-      {season && (
-        <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-navy)' }}>
-              Day-slots ({slots.length})
-            </span>
-            <button onClick={onToggleAll} style={s.ghostBtn}>
-              {selectedIds.size === slots.length ? 'Deselecteer alles' : 'Selecteer alles'}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-navy)' }}>
+          Dagen ({dagen.length})
+        </span>
+        <button onClick={onAddDag} style={s.ghostBtn}>+ Dag toevoegen</button>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
+        {dagen.map((d) => (
+          <div key={d.id} style={s.dagRow}>
+            <input
+              aria-label="Datum"
+              type="date"
+              value={d.date}
+              onChange={(e) => onUpdateDag(d.id, { date: e.target.value })}
+              style={s.dagInputDatum}
+            />
+            <input
+              aria-label="Begintijd"
+              type="time"
+              value={d.starts_at}
+              onChange={(e) => onUpdateDag(d.id, { starts_at: e.target.value })}
+              style={s.dagInputTijd}
+            />
+            <span style={{ color: 'var(--color-text-2)' }}>–</span>
+            <input
+              aria-label="Eindtijd"
+              type="time"
+              value={d.ends_at}
+              onChange={(e) => onUpdateDag(d.id, { ends_at: e.target.value })}
+              style={s.dagInputTijd}
+            />
+            <select
+              aria-label="Sport"
+              value={d.sport}
+              onChange={(e) => onUpdateDag(d.id, { sport: e.target.value as SportKeuze })}
+              style={s.dagInputSport}
+            >
+              <option value="">Sport...</option>
+              <option value="voetbal">Voetbal</option>
+              <option value="hockey">Hockey</option>
+              <option value="club">Club-breed</option>
+            </select>
+            <button
+              onClick={() => onRemoveDag(d.id)}
+              disabled={dagen.length <= 1}
+              style={dagen.length <= 1 ? s.removeBtnDisabled : s.removeBtn}
+              aria-label="Dag verwijderen"
+            >
+              <X size={16} />
             </button>
           </div>
-
-          {slots.length === 0 ? (
-            <p style={{ color: 'var(--color-text-2)', fontSize: '14px' }}>
-              Geen day-slots gevonden voor seizoen {season}.
-            </p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
-              {slots.map((slot) => (
-                <label key={slot.id} style={s.slotRow}>
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(slot.id)}
-                    onChange={() => onToggle(slot.id)}
-                    style={{ marginRight: '10px', accentColor: 'var(--color-blue)' }}
-                  />
-                  <span style={{ fontSize: '14px', color: 'var(--color-text)', flex: 1 }}>
-                    {formatDutchDate(slot.date)} · {slot.starts_at.slice(0, 5)}–{slot.ends_at.slice(0, 5)}
-                  </span>
-                  <span style={slot.sport ? s.sportBadge : s.sportBadgeNeutral}>
-                    {sportLabel(slot.sport)}
-                  </span>
-                </label>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+        ))}
+      </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button
           onClick={onGenereer}
-          disabled={generating || selectedIds.size === 0 || !season}
-          style={generating || selectedIds.size === 0 || !season ? s.btnDisabled : s.btn}
+          disabled={generating || !season || !allComplete}
+          style={generating || !season || !allComplete ? s.btnDisabled : s.btn}
         >
           {generating ? 'Genereren...' : 'Genereer preview'}
         </button>
       </div>
     </div>
   );
+}
+
+function sportLabel(sport: Sport | null): string {
+  if (sport === 'voetbal') return 'Voetbal';
+  if (sport === 'hockey') return 'Hockey';
+  return 'Club-breed';
 }
 
 function StapPreview({
@@ -328,8 +366,11 @@ function StapPreview({
   return (
     <div>
       {preview.map((item, slotIndex) => (
-        <div key={item.bar_day_slot_id} style={s.dayCard}>
-          <h2 style={s.dayTitle}>{formatDutchDate(item.date)}</h2>
+        <div key={item.preview_id} style={s.dayCard}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={s.dayTitle}>{formatDutchDate(item.date)}</h2>
+            <span style={item.sport ? s.sportBadge : s.sportBadgeNeutral}>{sportLabel(item.sport)}</span>
+          </div>
           {item.shifts.map((shift, shiftIndex) => (
             <div key={shiftIndex} style={s.shiftBlock}>
               <p style={s.shiftTime}>
@@ -387,7 +428,7 @@ function MemberSlot({
 }: {
   member: BarShiftMember;
   isBarcommissie?: boolean;
-  sport: string | null;
+  sport: Sport | null;
   season: string;
   currentPreviewIds: string[];
   onSwap: (m: BarShiftMember) => void;
@@ -451,10 +492,10 @@ function MemberSlot({
 }
 
 function StapPubliceren({
-  preview, selectedCount, onVorige, onPubliceer, publishing, error,
+  preview, dagenCount, onVorige, onPubliceer, publishing, error,
 }: {
   preview: BarRosterPreview[];
-  selectedCount: number;
+  dagenCount: number;
   onVorige: () => void;
   onPubliceer: () => void;
   publishing: boolean;
@@ -472,7 +513,7 @@ function StapPubliceren({
       </h2>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-        <SummaryRow label="Day-slots geselecteerd" value={String(selectedCount)} />
+        <SummaryRow label="Dagen ingepland" value={String(dagenCount)} />
         <SummaryRow label="Diensten gegenereerd" value={String(totalShifts)} />
         <SummaryRow label="Unieke leden ingepland" value={String(totalLeden)} />
       </div>
@@ -518,9 +559,32 @@ const s: Record<string, React.CSSProperties> = {
     width: '100%', padding: '8px 12px', border: '1px solid var(--color-mid)',
     borderRadius: '6px', fontSize: '14px', color: 'var(--color-text)', boxSizing: 'border-box',
   },
-  slotRow: {
-    display: 'flex', alignItems: 'center', padding: '10px 14px',
-    border: '1px solid var(--color-mid)', borderRadius: '6px', cursor: 'pointer',
+  dagRow: {
+    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px',
+    border: '1px solid var(--color-mid)', borderRadius: '8px',
+  },
+  dagInputDatum: {
+    flex: '1 1 160px', minWidth: '140px', padding: '6px 10px',
+    border: '1px solid var(--color-mid)', borderRadius: '6px', fontSize: '14px', color: 'var(--color-text)',
+  },
+  dagInputTijd: {
+    width: '100px', padding: '6px 10px',
+    border: '1px solid var(--color-mid)', borderRadius: '6px', fontSize: '14px', color: 'var(--color-text)',
+  },
+  dagInputSport: {
+    flex: '0 1 140px', padding: '6px 10px',
+    border: '1px solid var(--color-mid)', borderRadius: '6px', fontSize: '14px', color: 'var(--color-text)',
+    background: 'var(--color-white)',
+  },
+  removeBtn: {
+    width: '32px', height: '32px', padding: 0, background: 'var(--color-light)',
+    color: 'var(--color-error)', border: '1px solid var(--color-mid)', borderRadius: '6px',
+    fontSize: '14px', cursor: 'pointer',
+  },
+  removeBtnDisabled: {
+    width: '32px', height: '32px', padding: 0, background: 'var(--color-light)',
+    color: 'var(--color-text-2)', border: '1px solid var(--color-mid)', borderRadius: '6px',
+    fontSize: '14px', cursor: 'not-allowed',
   },
   sportBadge: {
     fontSize: '12px', fontWeight: 500, padding: '2px 8px',
