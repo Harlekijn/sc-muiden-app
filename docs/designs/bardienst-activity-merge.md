@@ -514,3 +514,52 @@ zichtbaar voor de mobile-flow.
 ## Open vragen
 
 _Geen._
+
+---
+
+## SRE Notes
+
+**Datum:** 31-05-2026
+
+### Logging
+
+- Geen `console.log` / `console.error` in `genereer/route.ts`, `publiceer/route.ts`, `genereer/leden/route.ts`, `rooster/assignments/[id]/route.ts` of `lib/bardienst-algoritme.ts` — voldoet aan PII-beleid.
+- Supabase audit log blijft de primaire data-access log; applicatie logt niet extra.
+- Geen edge functions toegevoegd in deze refactor.
+
+### Monitoring
+
+- Bestaande indexes dekken alle nieuwe query-paden:
+  - `activities_type_idx` — gebruikt door rooster-pagina (`type='bardienst'`) en fairness-query
+  - `activities_starts_at_idx` — gebruikt door rooster-sortering en fairness-bounds (`starts_at BETWEEN season-start AND season-end`)
+  - `activities_team_id_idx` — pre-existing, ongewijzigd
+- Geen nieuwe RLS-policies; bestaande admin-policies op `activities` / `bar_assignments` blijven van kracht.
+- Geen nieuwe React Query hooks (CMS gebruikt server components + directe `fetch()`).
+
+### Foutafhandeling
+
+- Alle gebruikersgerichte foutmeldingen Nederlands; geen ruwe Supabase-fouttekst zichtbaar.
+- Netwerkfout-tekst consistent: `"Geen verbinding — controleer je internetverbinding en probeer opnieuw."` in `RoosterClient.handleSaveAssignment`, `GenereerWizard.handleGenereer`, `GenereerWizard.handlePubliceer`.
+- Submit-knoppen uitgeschakeld tijdens in-flight mutaties (`generating`, `publishing`, `savingId`).
+- Succes-feedback (redirect via `router.push`) gebeurt pas na server-bevestiging.
+- Publicatie-rollback bij DB-fout aanwezig (cleanup van eerder ingevoegde `activities` + `bar_assignments`).
+
+### Beveiliging
+
+- Alle 4 actieve API-routes (`genereer`, `genereer/leden`, `publiceer`, `rooster/assignments/[id]`) hebben:
+  - Role-guard via `getAdminUser()` (403 zonder `role='beheerder'`)
+  - Zod-validatie vóór elke DB-write (`generateRosterSchema`, `publishRosterSchema`, `patchSchema`)
+  - `createSupabaseAdminClient()` (server-side `SUPABASE_SECRET_KEY`, niet in mobile bundle)
+- Trust-boundary verschoven: `publiceer`-route leest sport nu uit `preview.sport` (client) i.p.v. uit `bar_day_slots`. Geen privilege-escalation: Zod beperkt sport tot `'voetbal' | 'hockey' | null` en `activities.sport` heeft DB-check-constraint op dezelfde waarden. Effect blijft binnen admin-scope.
+- `crypto.randomUUID` server-side gebruikt voor `preview_id` — niet exposed aan client-bundle.
+- Geen file uploads, geen secrets gelekt naar `EXPO_PUBLIC_` of `NEXT_PUBLIC_`.
+- FK constraint op `bar_assignments.member_id` garandeert dat alleen bestaande leden worden toegewezen.
+
+### Bundle
+
+- Geen nieuwe packages toegevoegd aan `apps/mobile/package.json`, `apps/web/package.json` of root `package.json`.
+- `crypto.randomUUID` is een Node built-in (server-side only).
+
+### Openstaande punten
+
+- Geen.
