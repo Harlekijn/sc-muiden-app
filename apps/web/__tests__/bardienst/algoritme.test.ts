@@ -5,9 +5,9 @@ import {
   splitIntoShifts,
   sportOverlap,
   seasonBounds,
-  genereerPreviewVoorSlot,
+  genereerPreviewVoorDag,
   type AlgorithmMember,
-  type AlgorithmSlot,
+  type AlgorithmDay,
 } from '../../lib/bardienst-algoritme';
 
 function maakLid(overrides: Partial<AlgorithmMember> & { id: string }): AlgorithmMember {
@@ -26,8 +26,8 @@ function maakBarLid(overrides: Partial<AlgorithmMember> & { id: string }): Algor
   return maakLid({ ...overrides, is_barcommissie: true, lid_type: null });
 }
 
-const SLOT_VOETBAL: AlgorithmSlot = {
-  id: 'slot-1',
+const DAG_VOETBAL: AlgorithmDay = {
+  preview_id: '11111111-1111-1111-1111-111111111111',
   date: '2026-04-26',
   starts_at: '08:00:00',
   ends_at: '13:00:00',
@@ -89,7 +89,7 @@ describe('seasonBounds', () => {
   });
 });
 
-describe('genereerPreviewVoorSlot', () => {
+describe('genereerPreviewVoorDag', () => {
   function maakLeden(n: number, sport: string[] = ['voetbal']): AlgorithmMember[] {
     return Array.from({ length: n }, (_, i) => maakLid({ id: `lid-${i}`, sport, last_name: `Lid${i}` }));
   }
@@ -100,7 +100,7 @@ describe('genereerPreviewVoorSlot', () => {
 
   it('genereert 2 diensten voor slot 08:00–13:00 met genoeg leden', () => {
     const members = [...maakBarLeden(2), ...maakLeden(4)];
-    const result = genereerPreviewVoorSlot(SLOT_VOETBAL, members, new Map());
+    const result = genereerPreviewVoorDag(DAG_VOETBAL, members, new Map());
     expect('shifts' in result).toBe(true);
     if ('shifts' in result) {
       expect(result.shifts).toHaveLength(2);
@@ -112,7 +112,7 @@ describe('genereerPreviewVoorSlot', () => {
   it('retourneert INSUFFICIENT_BARCOMMISSIE als er te weinig barcommissieleden zijn', () => {
     // Slot 08:00–13:00 → 2 diensten, maar slechts 1 barcommissielid
     const members = [...maakBarLeden(1), ...maakLeden(4)];
-    const result = genereerPreviewVoorSlot(SLOT_VOETBAL, members, new Map());
+    const result = genereerPreviewVoorDag(DAG_VOETBAL, members, new Map());
     expect('code' in result).toBe(true);
     if ('code' in result) {
       expect(result.code).toBe('INSUFFICIENT_BARCOMMISSIE');
@@ -123,7 +123,7 @@ describe('genereerPreviewVoorSlot', () => {
   it('retourneert INSUFFICIENT_REGULAR als er te weinig reguliere leden zijn', () => {
     // 2 diensten → 4 reguliere leden nodig, maar slechts 3
     const members = [...maakBarLeden(2), ...maakLeden(3)];
-    const result = genereerPreviewVoorSlot(SLOT_VOETBAL, members, new Map());
+    const result = genereerPreviewVoorDag(DAG_VOETBAL, members, new Map());
     expect('code' in result).toBe(true);
     if ('code' in result) {
       expect(result.code).toBe('INSUFFICIENT_REGULAR');
@@ -135,7 +135,7 @@ describe('genereerPreviewVoorSlot', () => {
     const hockeyLeden = maakLeden(2, ['hockey']).map((m, i) => ({ ...m, id: `hockey-${i}` }));
     const barLeden = maakBarLeden(2, ['voetbal']);
     const members = [...barLeden, ...voetbalLeden, ...hockeyLeden];
-    const result = genereerPreviewVoorSlot(SLOT_VOETBAL, members, new Map());
+    const result = genereerPreviewVoorDag(DAG_VOETBAL, members, new Map());
     expect('shifts' in result).toBe(true);
     if ('shifts' in result) {
       for (const shift of result.shifts) {
@@ -148,7 +148,7 @@ describe('genereerPreviewVoorSlot', () => {
 
   it('pland niemand twee keer in op dezelfde dag', () => {
     const members = [...maakBarLeden(2), ...maakLeden(4)];
-    const result = genereerPreviewVoorSlot(SLOT_VOETBAL, members, new Map());
+    const result = genereerPreviewVoorDag(DAG_VOETBAL, members, new Map());
     expect('shifts' in result).toBe(true);
     if ('shifts' in result) {
       const allIds = result.shifts.flatMap((sh) => [
@@ -171,7 +171,7 @@ describe('genereerPreviewVoorSlot', () => {
       maakLid({ id: 'lid-3', last_name: 'Dam' }),
     ];
     const fairness = new Map([['lid-0', 3]]);
-    const result = genereerPreviewVoorSlot(SLOT_VOETBAL, [...bar, ...regulier], fairness);
+    const result = genereerPreviewVoorDag(DAG_VOETBAL, [...bar, ...regulier], fairness);
     expect('shifts' in result).toBe(true);
     if ('shifts' in result) {
       const firstShiftRegIds = result.shifts[0].regular_members.map((m) => m.member_id);
@@ -185,7 +185,7 @@ describe('genereerPreviewVoorSlot', () => {
     const regulier = maakLeden(4);
     const vrijwilliger = { ...maakLid({ id: 'vrijwilliger-1' }), is_vrijwilliger: true };
     const members = [...barLeden, ...regulier, vrijwilliger];
-    const result = genereerPreviewVoorSlot(SLOT_VOETBAL, members, new Map());
+    const result = genereerPreviewVoorDag(DAG_VOETBAL, members, new Map());
     expect('shifts' in result).toBe(true);
     if ('shifts' in result) {
       const allIds = result.shifts.flatMap((sh) => [
@@ -204,7 +204,7 @@ describe('genereerPreviewVoorSlot', () => {
       { ...maakLid({ id: 'nsl-1' }), lid_type: 'niet-spelend-lid' as const },
     ];
     const members = [...barLeden, ...regulier, ...uitgesloten];
-    const result = genereerPreviewVoorSlot(SLOT_VOETBAL, members, new Map());
+    const result = genereerPreviewVoorDag(DAG_VOETBAL, members, new Map());
     expect('shifts' in result).toBe(true);
     if ('shifts' in result) {
       const allIds = result.shifts.flatMap((sh) => [

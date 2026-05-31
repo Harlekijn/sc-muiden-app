@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { createSupabaseAdminClient } from '../../../../../lib/supabase-admin';
 import { createSupabaseServerClient } from '../../../../../lib/supabase-server';
 import { generateRosterSchema } from '@sc-muiden/shared';
-import { seasonBounds, genereerPreviewVoorSlot } from '../../../../../lib/bardienst-algoritme';
+import { seasonBounds, genereerPreviewVoorDag, type AlgorithmDay } from '../../../../../lib/bardienst-algoritme';
 
 async function getAdminUser() {
   const authClient = createSupabaseServerClient();
@@ -36,19 +37,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { season, bar_day_slot_ids } = parsed.data;
+  const { season, dagen } = parsed.data;
   const admin = createSupabaseAdminClient();
-
-  const { data: slots, error: slotsError } = await admin
-    .from('bar_day_slots')
-    .select('*')
-    .in('id', bar_day_slot_ids)
-    .is('deleted_at', null)
-    .order('date', { ascending: true });
-
-  if (slotsError || !slots?.length) {
-    return NextResponse.json({ error: 'Day-slots niet gevonden.' }, { status: 404 });
-  }
 
   const bounds = seasonBounds(season);
   const { data: assignments } = await admin
@@ -75,15 +65,22 @@ export async function POST(req: NextRequest) {
 
   const previews = [];
 
-  for (const slot of slots) {
-    const resultaat = genereerPreviewVoorSlot(slot, allMembers, fairnessMap);
+  for (const dag of dagen) {
+    const algoDag: AlgorithmDay = {
+      preview_id: randomUUID(),
+      date: dag.date,
+      starts_at: dag.starts_at,
+      ends_at: dag.ends_at,
+      sport: dag.sport,
+    };
+    const resultaat = genereerPreviewVoorDag(algoDag, allMembers, fairnessMap);
     if ('code' in resultaat) {
       return NextResponse.json({ error: resultaat.error, code: resultaat.code }, { status: 422 });
     }
     if (resultaat.shifts.length > 0) {
       previews.push(resultaat);
       // Propageer nieuw ingeplande diensten naar de fairness map zodat de volgende
-      // slot andere leden kiest (anders start elke dag met dezelfde scores).
+      // dag andere leden kiest (anders start elke dag met dezelfde scores).
       for (const shift of resultaat.shifts) {
         const ids = [
           shift.barcommissie_member.member_id,

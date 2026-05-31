@@ -22,7 +22,6 @@ interface Activity {
   sport: string | null;
   starts_at: string;
   ends_at: string | null;
-  bar_day_slot_id: string | null;
   bar_assignments: BarAssignment[];
 }
 
@@ -43,13 +42,17 @@ function formatTime(isoDatetime: string): string {
   });
 }
 
-function groupBySlot(activities: Activity[]): Map<string, Activity[]> {
+function dateKey(isoDatetime: string): string {
+  return isoDatetime.slice(0, 10);
+}
+
+function groupByDate(activities: Activity[]): Map<string, Activity[]> {
   const map = new Map<string, Activity[]>();
   for (const a of activities) {
-    if (!a.bar_day_slot_id) continue;
-    const existing = map.get(a.bar_day_slot_id) ?? [];
+    const key = dateKey(a.starts_at);
+    const existing = map.get(key) ?? [];
     existing.push(a);
-    map.set(a.bar_day_slot_id, existing);
+    map.set(key, existing);
   }
   return map;
 }
@@ -58,7 +61,6 @@ export function RoosterClient({ activities: initialActivities, members }: Props)
   const [activities, setActivities] = useState(initialActivities);
   const [van, setVan] = useState('');
   const [tot, setTot] = useState('');
-  const [deletingSlot, setDeletingSlot] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editMemberId, setEditMemberId] = useState('');
   const [editIsBarcommissie, setEditIsBarcommissie] = useState(false);
@@ -67,29 +69,12 @@ export function RoosterClient({ activities: initialActivities, members }: Props)
 
   const filtered = useMemo(() => {
     let list = activities;
-    if (van) list = list.filter((a) => a.starts_at.slice(0, 10) >= van);
-    if (tot) list = list.filter((a) => a.starts_at.slice(0, 10) <= tot);
+    if (van) list = list.filter((a) => dateKey(a.starts_at) >= van);
+    if (tot) list = list.filter((a) => dateKey(a.starts_at) <= tot);
     return list;
   }, [activities, van, tot]);
 
-  const grouped = useMemo(() => groupBySlot(filtered), [filtered]);
-
-  async function handleDeleteDag(slotId: string) {
-    if (!confirm('Alle diensten voor deze dag verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
-    setDeletingSlot(slotId);
-    setError(null);
-    try {
-      const res = await fetch(`/api/cms/bardienst/rooster/${slotId}`, { method: 'DELETE' });
-      if (res.ok) {
-        setActivities((prev) => prev.filter((a) => a.bar_day_slot_id !== slotId));
-      } else {
-        setError('Verwijderen mislukt. Probeer het opnieuw.');
-      }
-    } catch {
-      setError('Geen verbinding — controleer je internetverbinding en probeer opnieuw.');
-    }
-    setDeletingSlot(null);
-  }
+  const grouped = useMemo(() => groupByDate(filtered), [filtered]);
 
   async function handleSaveAssignment(assignmentId: string) {
     setSavingId(assignmentId);
@@ -126,7 +111,7 @@ export function RoosterClient({ activities: initialActivities, members }: Props)
     return (
       <div style={s.empty}>
         <p style={s.emptyTitle}>Nog geen rooster gepubliceerd</p>
-        <p style={s.emptyText}>Genereer een rooster via de knop op het tabblad &quot;Day slots&quot;.</p>
+        <p style={s.emptyText}>Genereer een rooster via de knop hierboven.</p>
       </div>
     );
   }
@@ -168,17 +153,10 @@ export function RoosterClient({ activities: initialActivities, members }: Props)
           <p style={s.emptyTitle}>Geen diensten in deze periode</p>
         </div>
       ) : (
-        Array.from(grouped.entries()).map(([slotId, dayActivities]) => (
-          <div key={slotId} style={s.dayCard}>
+        Array.from(grouped.entries()).map(([key, dayActivities]) => (
+          <div key={key} style={s.dayCard}>
             <div style={s.dayHeader}>
               <h2 style={s.dayTitle}>{formatDutchDate(dayActivities[0].starts_at)}</h2>
-              <button
-                onClick={() => handleDeleteDag(slotId)}
-                disabled={deletingSlot === slotId}
-                style={s.deleteDagBtn}
-              >
-                {deletingSlot === slotId ? 'Verwijderen...' : 'Dag verwijderen'}
-              </button>
             </div>
 
             {dayActivities.map((activity) => (
@@ -281,10 +259,6 @@ const s: Record<string, React.CSSProperties> = {
   },
   dayHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' },
   dayTitle: { fontSize: '16px', fontWeight: 700, color: 'var(--color-navy)', margin: 0 },
-  deleteDagBtn: {
-    background: 'none', border: '1px solid var(--color-error)', color: 'var(--color-error)',
-    borderRadius: '6px', padding: '4px 12px', fontSize: '13px', cursor: 'pointer',
-  },
   shiftBlock: { borderTop: '1px solid var(--color-mid)', paddingTop: '12px', marginTop: '12px' },
   shiftTime: { fontSize: '13px', fontWeight: 600, color: 'var(--color-text-2)', margin: '0 0 8px' },
   membersList: { display: 'flex', flexDirection: 'column', gap: '8px' },

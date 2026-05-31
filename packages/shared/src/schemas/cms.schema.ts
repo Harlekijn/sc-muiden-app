@@ -166,7 +166,7 @@ export const csvImportRowDataSchema = z.object({
 
 // ── Bardienst Rooster ─────────────────────────────────────────────────────────
 
-export const createBarDaySlotSchema = z
+const wizardDaySchema = z
   .object({
     date: z
       .string()
@@ -180,22 +180,18 @@ export const createBarDaySlotSchema = z
       .string()
       .min(1, { message: 'Eindtijd is verplicht' })
       .regex(/^\d{2}:\d{2}$/, { message: 'Ongeldige eindtijd' }),
-    sport: z.enum(['voetbal', 'hockey']).nullable().optional(),
-    season: z.string().min(1, { message: 'Seizoen is verplicht' }),
-    notes: z.string().nullable().optional(),
+    sport: z.enum(['voetbal', 'hockey']).nullable(),
   })
   .refine((data) => data.ends_at > data.starts_at, {
     message: 'De eindtijd moet na de begintijd liggen',
     path: ['ends_at'],
   });
 
-export const updateBarDaySlotSchema = createBarDaySlotSchema;
-
 export const generateRosterSchema = z.object({
   season: z.string().min(1, { message: 'Seizoen is verplicht' }),
-  bar_day_slot_ids: z
-    .array(z.string().uuid({ message: 'Ongeldig day-slot ID' }))
-    .min(1, { message: 'Selecteer minimaal één day-slot' }),
+  dagen: z
+    .array(wizardDaySchema)
+    .min(1, { message: 'Voer minimaal één dag in' }),
 });
 
 const barShiftMemberRefSchema = z.object({
@@ -210,8 +206,10 @@ const barShiftSchema = z.object({
 });
 
 const barRosterPreviewItemSchema = z.object({
-  bar_day_slot_id: z.string().uuid({ message: 'Ongeldig day-slot ID' }),
-  date: z.string().min(1, { message: 'Datum is verplicht' }),
+  preview_id: z.string().uuid({ message: 'Ongeldig preview-ID' }),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Ongeldige datum' }),
   sport: z.enum(['voetbal', 'hockey']).nullable(),
   shifts: z.array(barShiftSchema).min(1, { message: 'Minimaal één dienst vereist' }),
 });
@@ -236,7 +234,6 @@ export type UpdateMemberInput = z.infer<typeof updateMemberSchema>;
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
 export type CsvColumnMappingInput = z.infer<typeof csvColumnMappingSchema>;
 export type CsvImportRowDataInput = z.infer<typeof csvImportRowDataSchema>;
-export type CreateBarDaySlotInput = z.infer<typeof createBarDaySlotSchema>;
-export type UpdateBarDaySlotInput = z.infer<typeof updateBarDaySlotSchema>;
+export type WizardDayInput = z.infer<typeof wizardDaySchema>;
 export type GenerateRosterInput = z.infer<typeof generateRosterSchema>;
 export type PublishRosterInput = z.infer<typeof publishRosterSchema>;
