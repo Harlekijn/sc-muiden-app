@@ -41,6 +41,13 @@ WHERE title = 'Trainingstijden gewijzigd';
 ```
 → Verwacht: 1 rij, `published_at IS NULL`, `deleted_at IS NULL`.
 
+```sql
+SELECT count(*) FROM announcement_teams at2
+JOIN announcements a ON a.id = at2.announcement_id
+WHERE a.title = 'Trainingstijden gewijzigd';
+```
+→ Verwacht: 0 rijen (sport-filter, geen team-koppeling).
+
 ---
 
 ## S13-B — Aankondiging publiceren via CMS (push-notificaties verstuurd)

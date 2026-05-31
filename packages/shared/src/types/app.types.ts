@@ -161,12 +161,16 @@ export interface Announcement {
   title: string;
   body: string;
   sport: Sport[] | null;
-  teams: string[] | null;
   published_at: string | null;
   author_id: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+}
+
+export interface AnnouncementTeam {
+  announcement_id: string;
+  team_id: string;
 }
 
 export interface Notification {

@@ -20,6 +20,17 @@ describe('createAnnouncementSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('teams-veld wordt genegeerd (kolom bestaat niet meer)', () => {
+    const result = createAnnouncementSchema.safeParse({
+      title: 'Test',
+      body: '<p>Bericht.</p>',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect('teams' in result.data).toBe(false);
+    }
+  });
+
   it('lege titel geeft Nederlandse foutmelding', () => {
     const result = createAnnouncementSchema.safeParse({
       title: '',
