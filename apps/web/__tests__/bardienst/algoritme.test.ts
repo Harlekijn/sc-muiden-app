@@ -1,6 +1,5 @@
-// S16-B/C/F/G/H — Algoritme: shift-splitsing, eerlijke verdeling, sport-filtering, dag-overlap, onvoldoende leden
-// S16-D is E2E scope (Playwright) — vereist browser + live Supabase
-// S16-A/E zijn gedekt door schema-unit-tests in packages/shared
+// S16-B/E/F/G — Algoritme: shift-splitsing, fairness-cross-dag, sport-filtering, onvoldoende leden
+// S16-A (alleen "Rooster"-tab), S16-C (preview omwisselen), S16-D (publicatie), S16-H (groeperen op datum) zijn UI/E2E scope
 import {
   splitIntoShifts,
   sportOverlap,

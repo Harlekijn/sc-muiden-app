@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { X } from 'lucide-react';
 import type { BarRosterPreview, BarShiftMember, Sport } from '@sc-muiden/shared';
 
 type Step = 1 | 2 | 3;
@@ -328,7 +329,7 @@ function StapDagen({
               style={dagen.length <= 1 ? s.removeBtnDisabled : s.removeBtn}
               aria-label="Dag verwijderen"
             >
-              ✕
+              <X size={16} />
             </button>
           </div>
         ))}
