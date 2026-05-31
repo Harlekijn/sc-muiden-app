@@ -7,7 +7,6 @@ export const announcementSchema = z.object({
   title: z.string().min(1),
   body: z.string().min(1),
   sport: z.array(sportSchema).nullable(),
-  teams: z.array(z.string().uuid()).nullable(),
   published_at: z.string().datetime().nullable(),
   author_id: z.string().uuid().nullable(),
   created_at: z.string().datetime(),
@@ -19,7 +18,6 @@ export const createAnnouncementSchema = z.object({
   title: z.string().min(1, 'Titel is verplicht').max(200, 'Titel mag maximaal 200 tekens bevatten'),
   body: z.string().min(1, 'Bericht is verplicht'),
   sport: z.array(sportSchema).nullable().optional(),
-  teams: z.array(z.string().uuid()).nullable().optional(),
   published_at: z.string().datetime().nullable().optional(),
 });
 
