@@ -1,0 +1,8 @@
+- [Bardienst rooster](bardienst-rooster.md) — admin-only generator met 2,5u-diensten, fairness-sortering, sport-filter en transactionele publicatie via notifications-tabel
+- [Design system tokens](design-system-tokens.md) — CMS-componenten gebruiken alleen CSS custom properties uit globals.css; hardcoded hex is PR-gate blocker
+- [Push-notificaties](push-notificaties.md) — alleen via DB-insert in `notifications`; push-trigger Edge Function verstuurt; nooit Expo direct
+- [Recurring trainings view](recurring-trainings-view.md) — trainings on-the-fly uit activities_with_occurrences-view; geen materialisatie meer; override-pattern voor afwijkingen
+- [Two-pass enrich pattern](two-pass-enrich-pattern.md) — PostgREST embedded select werkt niet op UNION-view; gebruik enrichActivities-helper voor teams/matches/bar_assignments
+- [Announcement teams](announcement-teams.md) — `announcement_teams` junction table vervangt `announcements.teams uuid[]`; queries via join, niet array-kolom
+- [CSV import pattern](csv-import-pattern.md) — wizard (upload/mapping/preview/done), beheerder-only auth guard, dbFoutmelding helper, soft-delete revival; established by member import
+- [Relative import paths](relative-import-paths.md) — lib/ is at apps/web/lib/; count directory levels carefully from the route file depth

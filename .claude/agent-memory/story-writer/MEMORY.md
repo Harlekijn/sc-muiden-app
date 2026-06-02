@@ -1,0 +1,4 @@
+- [CSV import wizard patroon](project-csv-import-pattern.md) — 4-staps wizard, endpoint-structuur, duplicaatdetectie, soft delete herleving voor leden- en teams-import
+- [Scenario ID-reeksen](project-scenario-ids.md) — overzicht van gebruikte S-reeksen per feature; S01 = teams-import
+- [Design- en scenariobestand conventies](project-design-doc-conventions.md) — naamgeving, structuur en UC-nummering voor docs/designs/ en docs/scenarios/
+- [Roltoegangpatronen CMS](project-role-access-patterns.md) — beheerder-only voor import; commissielid geblokkeerd ondanks algemene CMS-toegang

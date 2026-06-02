@@ -1,0 +1,3 @@
+- [CSV Import Pattern](csv-import-pattern.md) — wizard (upload/mapping/preview/done), beheerder-only auth guard, dbFoutmelding helper, soft-delete revival; established by member import and teams import
+- [UserRole Type Gap](userrole-type-gap.md) — UserRole type only has lid|beheerder; commissielid and other roles from CLAUDE.md are missing from the type system
+- [Hardcoded RGBA in Components](hardcoded-rgba.md) — rgba() values for badge backgrounds and row highlights are a recurring design-system violation in wizard components; must use CSS custom properties

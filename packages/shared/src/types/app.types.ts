@@ -1,6 +1,6 @@
 export type Sport = 'voetbal' | 'hockey';
 
-export type UserRole = 'lid' | 'beheerder';
+export type UserRole = 'lid' | 'ouder' | 'trainer' | 'coach' | 'teammanager' | 'commissielid' | 'beheerder';
 
 export type LidType =
 
@@ -276,6 +276,21 @@ export interface CsvImportResult {
   inserted: number;
   updated: number;
   failed: CsvImportRow[];
+}
+
+export interface CsvImportTeamRow {
+  index: number;
+  data: Partial<Team>;
+  status: CsvImportRowStatus;
+  conflictTeamId?: string;
+  conflictReason?: string;
+  errors?: string[];
+}
+
+export interface CsvImportTeamResult {
+  inserted: number;
+  updated: number;
+  failed: CsvImportTeamRow[];
 }
 
 export interface AnnouncementWithAuthor extends Announcement {

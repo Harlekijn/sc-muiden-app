@@ -1,0 +1,684 @@
+'use client';
+
+import { useState, useRef } from 'react';
+import type { CsvImportTeamRow, CsvImportTeamResult } from '@sc-muiden/shared';
+
+type Step = 'upload' | 'mapping' | 'preview' | 'done';
+
+const APP_FIELDS = [
+  { value: 'name', label: 'Teamnaam' },
+  { value: 'sport', label: 'Sport' },
+  { value: 'season', label: 'Seizoen' },
+  { value: 'age_category', label: 'Leeftijdscategorie' },
+  { value: 'federation_team_id', label: 'Federatie-ID' },
+  { value: '', label: '(overslaan)' },
+] as const;
+
+// Case-insensitive CSV header → app field name mapping
+const AUTO_MAP: Record<string, string> = {
+  name: 'name',
+  naam: 'name',
+  teamnaam: 'name',
+  sport: 'sport',
+  season: 'season',
+  seizoen: 'season',
+  age_category: 'age_category',
+  leeftijdscategorie: 'age_category',
+  categorie: 'age_category',
+  federation_team_id: 'federation_team_id',
+  federatieid: 'federation_team_id',
+  knvb_id: 'federation_team_id',
+  knhb_id: 'federation_team_id',
+};
+
+// Simple CSV parser: split on comma, remove surrounding quotes.
+// Limitation: field values must not contain commas.
+function parseCsv(text: string): { headers: string[]; rows: Record<string, string>[] } {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return { headers: [], rows: [] };
+  const headers = lines[0].split(',').map((h) => h.trim().replace(/^"|"$/g, ''));
+  const rawRows = lines.slice(1).map((line) =>
+    line.split(',').map((v) => v.trim().replace(/^"|"$/g, ''))
+  );
+  const rows = rawRows.map((cells) => {
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => {
+      obj[h] = cells[i] ?? '';
+    });
+    return obj;
+  });
+  return { headers, rows };
+}
+
+export function TeamsImportWizard() {
+  const [step, setStep] = useState<Step>('upload');
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [csvRows, setCsvRows] = useState<Record<string, string>[]>([]);
+  // mapping: column index → app field name
+  const [mapping, setMapping] = useState<Record<number, string>>({});
+  const [previewRows, setPreviewRows] = useState<CsvImportTeamRow[]>([]);
+  const [selectedConflicts, setSelectedConflicts] = useState<Set<number>>(new Set());
+  const [analysing, setAnalysing] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<CsvImportTeamResult | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function resetState() {
+    setStep('upload');
+    setFileError(null);
+    setCsvHeaders([]);
+    setCsvRows([]);
+    setMapping({});
+    setPreviewRows([]);
+    setSelectedConflicts(new Set());
+    setAnalysing(false);
+    setImporting(false);
+    setImportResult(null);
+    setImportError(null);
+  }
+
+  function handleFileSelect(file: File) {
+    setFileError(null);
+    if (!file.name.endsWith('.csv')) {
+      setFileError('Alleen CSV-bestanden zijn toegestaan.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setFileError('Bestand mag niet groter zijn dan 5 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const { headers, rows } = parseCsv(text);
+      if (headers.length === 0) {
+        setFileError('Het bestand bevat geen geldige kolomkoppen.');
+        return;
+      }
+      setCsvHeaders(headers);
+      setCsvRows(rows);
+      // Auto-detect mapping by index
+      const autoMapping: Record<number, string> = {};
+      headers.forEach((h, i) => {
+        autoMapping[i] = AUTO_MAP[h.toLowerCase()] ?? '';
+      });
+      setMapping(autoMapping);
+      setStep('mapping');
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+  }
+
+  async function handleAnalyse() {
+    if (analysing) return;
+    setAnalysing(true);
+    setFileError(null);
+
+    // Build row objects using the column-index mapping
+    const rowObjects = csvRows.map((row) => {
+      const obj: Record<string, string> = {};
+      csvHeaders.forEach((header, i) => {
+        const field = mapping[i];
+        if (field) obj[field] = row[header] ?? '';
+      });
+      return obj;
+    });
+
+    try {
+      const res = await fetch('/api/cms/teams/import/analyse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows: rowObjects }),
+      });
+
+      if (!res.ok) {
+        setFileError('Analyse mislukt. Probeer het opnieuw.');
+        setAnalysing(false);
+        return;
+      }
+
+      const data: CsvImportTeamRow[] = await res.json();
+      setPreviewRows(data);
+      setSelectedConflicts(new Set());
+      setAnalysing(false);
+      setStep('preview');
+    } catch {
+      setFileError('Analyse mislukt. Controleer de verbinding en probeer het opnieuw.');
+      setAnalysing(false);
+    }
+  }
+
+  function toggleConflict(index: number) {
+    setSelectedConflicts((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
+
+  function toggleAllConflicts() {
+    const conflictIndexes = previewRows
+      .filter((r) => r.status === 'conflict')
+      .map((r) => r.index);
+    if (conflictIndexes.every((i) => selectedConflicts.has(i))) {
+      setSelectedConflicts(new Set());
+    } else {
+      setSelectedConflicts(new Set(conflictIndexes));
+    }
+  }
+
+  async function handleImport() {
+    setImporting(true);
+    setImportError(null);
+
+    // Only send new rows + selected conflict rows; skip unselected conflicts and invalid rows
+    const toImport = previewRows.filter(
+      (r) => r.status === 'new' || (r.status === 'conflict' && selectedConflicts.has(r.index))
+    );
+
+    try {
+      const res = await fetch('/api/cms/teams/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows: toImport }),
+      });
+
+      setImporting(false);
+
+      if (!res.ok) {
+        setImportError('Import mislukt. Probeer het opnieuw.');
+        return;
+      }
+
+      const result: CsvImportTeamResult = await res.json();
+      setImportResult(result);
+      setStep('done');
+    } catch {
+      setImporting(false);
+      setImportError('Import mislukt. Controleer de verbinding en probeer het opnieuw.');
+    }
+  }
+
+  const newCount = previewRows.filter((r) => r.status === 'new').length;
+  const conflictCount = previewRows.filter((r) => r.status === 'conflict').length;
+  const invalidCount = previewRows.filter((r) => r.status === 'invalid').length;
+
+  return (
+    <div style={s.container}>
+      {step === 'upload' && (
+        <div>
+          <div
+            style={s.dropZone}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onClick={() => fileRef.current?.click()}
+            role="button"
+            tabIndex={0}
+            aria-label="CSV-bestand uploaden"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') fileRef.current?.click();
+            }}
+          >
+            <div style={s.dropIcon}>&#8679;</div>
+            <p style={s.dropText}>Sleep een CSV-bestand hierheen of klik om te selecteren</p>
+            <p style={s.dropSub}>Maximaal 5 MB. Komma-gescheiden.</p>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileSelect(file);
+              }}
+            />
+          </div>
+          {fileError && <p style={s.errorText} role="alert">{fileError}</p>}
+        </div>
+      )}
+
+      {step === 'mapping' && (
+        <div>
+          <h2 style={s.stepTitle}>Kolomkoppeling</h2>
+          <p style={s.stepDesc}>
+            Koppel de CSV-kolommen aan de juiste velden. Kies &ldquo;(overslaan)&rdquo; voor kolommen die niet relevant zijn.
+          </p>
+          <div style={s.mappingTable}>
+            <div style={{ ...s.mappingRow, ...s.mappingHeader }}>
+              <span>CSV-kolom</span>
+              <span>Applicatieveld</span>
+            </div>
+            {csvHeaders.map((header, i) => (
+              <div key={header} style={s.mappingRow}>
+                <span style={s.mappingColName}>{header}</span>
+                <select
+                  value={mapping[i] ?? ''}
+                  onChange={(e) =>
+                    setMapping((prev) => ({ ...prev, [i]: e.target.value }))
+                  }
+                  style={s.select}
+                  aria-label={`Koppel kolom ${header}`}
+                >
+                  {APP_FIELDS.map((f) => (
+                    <option key={f.value} value={f.value}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+          {fileError && <p style={s.errorText} role="alert">{fileError}</p>}
+          <div style={s.actions}>
+            <button
+              onClick={handleAnalyse}
+              disabled={analysing}
+              style={s.primaryBtn}
+            >
+              {analysing ? 'Analyseren...' : 'Analyseren'}
+            </button>
+            <button onClick={resetState} style={s.secondaryBtn}>
+              Terug
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 'preview' && (
+        <div>
+          <h2 style={s.stepTitle}>Importpreview</h2>
+          <p style={s.summaryBar}>
+            <span style={s.summaryNew}>{newCount} nieuwe teams</span>
+            {' · '}
+            <span style={s.summaryConflict}>{conflictCount} conflicten</span>
+            {' · '}
+            <span style={s.summaryInvalid}>{invalidCount} ongeldige rijen</span>
+          </p>
+
+          <div style={s.previewTable}>
+            <div style={{ ...s.previewRow, ...s.previewHeader }}>
+              <span>
+                {conflictCount > 0 && (
+                  <input
+                    type="checkbox"
+                    onChange={toggleAllConflicts}
+                    checked={
+                      conflictCount > 0 &&
+                      previewRows
+                        .filter((r) => r.status === 'conflict')
+                        .every((r) => selectedConflicts.has(r.index))
+                    }
+                    aria-label="Selecteer alle conflicten"
+                  />
+                )}
+              </span>
+              <span>Teamnaam</span>
+              <span>Sport</span>
+              <span>Seizoen</span>
+              <span>Status</span>
+            </div>
+            {previewRows.map((row) => {
+              const rowBg =
+                row.status === 'new'
+                  ? 'var(--color-success-tint)'
+                  : row.status === 'conflict'
+                  ? 'var(--color-warning-tint)'
+                  : 'var(--color-error-tint)';
+
+              // The backend already embeds the revival note in conflictReason when
+              // the matched team has deleted_at set. Use it directly as the tooltip.
+              const conflictTitle = row.conflictReason;
+
+              return (
+                <div key={row.index} style={{ ...s.previewRow, background: rowBg }}>
+                  <span>
+                    {row.status === 'conflict' && (
+                      <input
+                        type="checkbox"
+                        checked={selectedConflicts.has(row.index)}
+                        onChange={() => toggleConflict(row.index)}
+                        aria-label={`Conflict voor rij ${row.index + 2} selecteren`}
+                      />
+                    )}
+                  </span>
+                  <span style={s.previewCell}>{row.data.name ?? '—'}</span>
+                  <span style={s.previewCell}>{row.data.sport ?? '—'}</span>
+                  <span style={{ ...s.previewCell, color: 'var(--color-text-2)' }}>
+                    {row.data.season ?? '—'}
+                  </span>
+                  <span style={s.previewCell}>
+                    {row.status === 'new' && (
+                      <span style={s.badgeNew}>Nieuw</span>
+                    )}
+                    {row.status === 'conflict' && (
+                      <span
+                        style={s.badgeConflict}
+                        title={conflictTitle}
+                      >
+                        Conflict
+                      </span>
+                    )}
+                    {row.status === 'invalid' && (
+                      <span style={s.badgeInvalid}>
+                        {row.errors?.[0] ?? 'Ongeldig'}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {importError && <p style={s.errorText} role="alert">{importError}</p>}
+
+          <div style={s.actions}>
+            <button
+              onClick={handleImport}
+              disabled={importing}
+              style={s.primaryBtn}
+            >
+              {importing ? 'Importeren...' : 'Importeren'}
+            </button>
+            <button onClick={resetState} style={s.secondaryBtn}>
+              Opnieuw beginnen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 'done' && importResult && (
+        <div style={s.doneBox}>
+          <p style={s.doneTitle}>Import voltooid</p>
+          <p style={s.doneText}>
+            {importResult.inserted} nieuwe teams toegevoegd.{' '}
+            {importResult.updated} teams bijgewerkt.
+          </p>
+
+          {importResult.failed.length > 0 && (
+            <div style={s.failedBox}>
+              <p style={s.failedTitle}>
+                {importResult.failed.length}{' '}
+                {importResult.failed.length === 1 ? 'rij' : 'rijen'} niet geïmporteerd
+              </p>
+              <div style={s.failedTable}>
+                <div style={{ ...s.failedRow, ...s.failedHeader }}>
+                  <span>Rijnummer</span>
+                  <span>Naam</span>
+                  <span>Reden</span>
+                </div>
+                {importResult.failed.map((row) => (
+                  <div key={row.index} style={s.failedRow}>
+                    <span style={s.failedRowNum}>#{row.index + 2}</span>
+                    <span style={s.failedName}>{row.data.name ?? '—'}</span>
+                    <span style={s.failedReason}>
+                      {row.errors && row.errors.length > 0
+                        ? row.errors.join(' · ')
+                        : 'Onbekende fout'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <a href="/dashboard/teams" style={s.backLink}>
+            Terug naar teams
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const s: Record<string, React.CSSProperties> = {
+  container: { maxWidth: 800 },
+  dropZone: {
+    border: '2px dashed var(--color-mid)',
+    borderRadius: 'var(--radius-lg)',
+    padding: 'var(--space-12) var(--space-8)',
+    textAlign: 'center',
+    cursor: 'pointer',
+    background: 'var(--color-light)',
+  },
+  dropIcon: {
+    fontSize: 40,
+    color: 'var(--color-blue)',
+    marginBottom: 'var(--space-3)',
+  },
+  dropText: {
+    fontSize: 'var(--text-base)',
+    color: 'var(--color-text-2)',
+    marginBottom: 'var(--space-2)',
+  },
+  dropSub: {
+    fontSize: 'var(--text-xs)',
+    color: 'var(--color-text-2)',
+  },
+  errorText: {
+    color: 'var(--color-error)',
+    fontSize: 'var(--text-sm)',
+    marginTop: 'var(--space-3)',
+  },
+  stepTitle: {
+    fontFamily: 'var(--font-display)',
+    fontSize: 'var(--text-xl)',
+    fontWeight: 700,
+    color: 'var(--color-navy)',
+    marginBottom: 'var(--space-2)',
+  },
+  stepDesc: {
+    color: 'var(--color-text-2)',
+    fontSize: 'var(--text-sm)',
+    marginBottom: 'var(--space-6)',
+  },
+  mappingTable: {
+    border: '1px solid var(--color-mid)',
+    borderRadius: 'var(--radius-md)',
+    overflow: 'hidden',
+    marginBottom: 'var(--space-6)',
+  },
+  mappingRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 'var(--space-4)',
+    padding: 'var(--space-3) var(--space-4)',
+    borderBottom: '1px solid var(--color-mid)',
+    alignItems: 'center',
+  },
+  mappingHeader: {
+    background: 'var(--color-light)',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 600,
+    color: 'var(--color-text-2)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+  mappingColName: {
+    fontSize: 'var(--text-sm)',
+    color: 'var(--color-text)',
+    fontWeight: 500,
+  },
+  select: {
+    padding: 'var(--space-2) var(--space-3)',
+    borderRadius: 'var(--radius-md)',
+    border: '1.5px solid var(--color-mid)',
+    fontSize: 'var(--text-sm)',
+    fontFamily: 'var(--font-body)',
+    color: 'var(--color-text)',
+    background: 'var(--color-white)',
+    width: '100%',
+  },
+  summaryBar: {
+    fontSize: 'var(--text-sm)',
+    marginBottom: 'var(--space-4)',
+  },
+  summaryNew: { color: 'var(--color-success)' },
+  summaryConflict: { color: 'var(--color-warning)' },
+  summaryInvalid: { color: 'var(--color-error)' },
+  previewTable: {
+    border: '1px solid var(--color-mid)',
+    borderRadius: 'var(--radius-md)',
+    overflow: 'hidden',
+    marginBottom: 'var(--space-6)',
+  },
+  previewRow: {
+    display: 'grid',
+    gridTemplateColumns: '32px 2fr 100px 120px 140px',
+    gap: 'var(--space-3)',
+    padding: 'var(--space-2) var(--space-4)',
+    borderBottom: '1px solid var(--color-mid)',
+    alignItems: 'center',
+  },
+  previewHeader: {
+    background: 'var(--color-light)',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 600,
+    color: 'var(--color-text-2)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+  previewCell: { fontSize: 'var(--text-sm)', color: 'var(--color-text)' },
+  badgeNew: {
+    display: 'inline-block',
+    padding: '2px 8px',
+    borderRadius: 'var(--radius-pill)',
+    background: 'var(--color-success-badge)',
+    color: 'var(--color-success)',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 600,
+  },
+  badgeConflict: {
+    display: 'inline-block',
+    padding: '2px 8px',
+    borderRadius: 'var(--radius-pill)',
+    background: 'var(--color-warning-badge)',
+    color: 'var(--color-warning)',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 600,
+    cursor: 'help',
+  },
+  badgeInvalid: {
+    display: 'inline-block',
+    padding: '2px 8px',
+    borderRadius: 'var(--radius-pill)',
+    background: 'var(--color-error-badge)',
+    color: 'var(--color-error)',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 600,
+  },
+  actions: {
+    display: 'flex',
+    gap: 'var(--space-3)',
+  },
+  primaryBtn: {
+    padding: 'var(--space-2) var(--space-6)',
+    borderRadius: 'var(--radius-md)',
+    border: 'none',
+    background: 'var(--color-navy)',
+    color: 'var(--color-white)',
+    fontSize: 'var(--text-base)',
+    fontFamily: 'var(--font-body)',
+    fontWeight: 600,
+    cursor: 'pointer',
+    minHeight: 44,
+  },
+  secondaryBtn: {
+    padding: 'var(--space-2) var(--space-4)',
+    borderRadius: 'var(--radius-md)',
+    border: '1.5px solid var(--color-mid)',
+    background: 'none',
+    color: 'var(--color-text)',
+    fontSize: 'var(--text-base)',
+    fontFamily: 'var(--font-body)',
+    fontWeight: 500,
+    cursor: 'pointer',
+    minHeight: 44,
+  },
+  doneBox: {
+    padding: 'var(--space-8)',
+    background: 'var(--color-light)',
+    borderRadius: 'var(--radius-lg)',
+    maxWidth: 480,
+  },
+  doneTitle: {
+    fontFamily: 'var(--font-display)',
+    fontSize: 'var(--text-xl)',
+    fontWeight: 700,
+    color: 'var(--color-navy)',
+    marginBottom: 'var(--space-2)',
+  },
+  doneText: {
+    fontSize: 'var(--text-sm)',
+    color: 'var(--color-text)',
+    marginBottom: 'var(--space-4)',
+  },
+  backLink: {
+    color: 'var(--color-blue)',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 600,
+    textDecoration: 'none',
+  },
+  failedBox: {
+    marginBottom: 'var(--space-5)',
+    border: '1px solid var(--color-error-border)',
+    borderRadius: 'var(--radius-md)',
+    overflow: 'hidden',
+  },
+  failedTitle: {
+    fontSize: 'var(--text-sm)',
+    fontWeight: 600,
+    color: 'var(--color-error)',
+    padding: 'var(--space-3) var(--space-4)',
+    background: 'var(--color-error-tint)',
+    margin: 0,
+    borderBottom: '1px solid var(--color-error-badge)',
+  },
+  failedTable: {
+    maxHeight: '280px',
+    overflowY: 'auto' as const,
+  },
+  failedRow: {
+    display: 'grid',
+    gridTemplateColumns: '60px 1fr 2fr',
+    gap: 'var(--space-3)',
+    padding: 'var(--space-2) var(--space-4)',
+    borderBottom: '1px solid var(--color-mid)',
+    alignItems: 'start',
+  },
+  failedHeader: {
+    background: 'var(--color-light)',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 600,
+    color: 'var(--color-text-2)',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+  },
+  failedRowNum: {
+    fontSize: 'var(--text-xs)',
+    color: 'var(--color-text-2)',
+    fontVariantNumeric: 'tabular-nums',
+    paddingTop: '2px',
+  },
+  failedName: {
+    fontSize: 'var(--text-sm)',
+    color: 'var(--color-text)',
+    fontWeight: 500,
+  },
+  failedReason: {
+    fontSize: 'var(--text-xs)',
+    color: 'var(--color-error)',
+    lineHeight: '1.5',
+  },
+};

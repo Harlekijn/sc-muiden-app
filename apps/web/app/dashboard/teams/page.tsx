@@ -29,7 +29,10 @@ export default async function TeamsPage() {
     <div>
       <div style={s.header}>
         <h1 style={s.heading}>Teams</h1>
-        <a href="/dashboard/teams/nieuw" style={s.newBtn}>+ Nieuw team</a>
+        <div style={s.headerActions}>
+          <a href="/dashboard/teams/importeren" style={s.importBtn}>Importeren</a>
+          <a href="/dashboard/teams/nieuw" style={s.newBtn}>+ Nieuw team</a>
+        </div>
       </div>
 
       {error ? (
@@ -52,7 +55,7 @@ export default async function TeamsPage() {
               <span>
                 <span style={{
                   ...s.sportBadge,
-                  background: team.sport === 'voetbal' ? 'rgba(1,29,80,0.1)' : 'rgba(4,107,186,0.1)',
+                  background: team.sport === 'voetbal' ? 'var(--color-navy-tint)' : 'var(--color-blue-tint)',
                   color: team.sport === 'voetbal' ? 'var(--color-navy)' : 'var(--color-blue)',
                 }}>
                   {team.sport.charAt(0).toUpperCase() + team.sport.slice(1)}
@@ -77,12 +80,31 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     marginBottom: 'var(--space-6)',
   },
+  headerActions: {
+    display: 'flex',
+    gap: 'var(--space-3)',
+    alignItems: 'center',
+  },
   heading: {
     fontFamily: 'var(--font-display)',
     fontSize: 'var(--text-3xl)',
     fontWeight: 700,
     color: 'var(--color-navy)',
     margin: 0,
+  },
+  importBtn: {
+    padding: 'var(--space-2) var(--space-4)',
+    borderRadius: 'var(--radius-md)',
+    border: '1.5px solid var(--color-mid)',
+    background: 'none',
+    color: 'var(--color-text)',
+    fontSize: 'var(--text-sm)',
+    fontFamily: 'var(--font-body)',
+    fontWeight: 500,
+    textDecoration: 'none',
+    minHeight: 44,
+    display: 'inline-flex',
+    alignItems: 'center',
   },
   newBtn: {
     padding: 'var(--space-2) var(--space-4)',
