@@ -18,6 +18,17 @@
   --color-warning: #e07b12;
   --color-info: #046bba;
 
+  /* Semantic tints (for row backgrounds and badges) */
+  --color-success-tint: rgba(26, 140, 92, 0.05);
+  --color-success-badge: rgba(26, 140, 92, 0.12);
+  --color-warning-tint: rgba(245, 197, 24, 0.08);
+  --color-warning-badge: rgba(245, 197, 24, 0.2);
+  --color-error-tint: rgba(214, 60, 60, 0.06);
+  --color-error-badge: rgba(214, 60, 60, 0.1);
+  --color-error-border: rgba(214, 60, 60, 0.3);
+  --color-navy-tint: rgba(1, 29, 80, 0.1);
+  --color-blue-tint: rgba(4, 107, 186, 0.1);
+
   /* Navy tints */
   --color-navy-90: rgba(1, 29, 80, 0.90);
   --color-navy-70: rgba(1, 29, 80, 0.70);

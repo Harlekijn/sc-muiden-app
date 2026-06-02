@@ -136,7 +136,19 @@ export const updateRoleSchema = z.object({
   new_role: userRoleSchema,
 });
 
-// ── CSV import ────────────────────────────────────────────────────────────────
+// ── CSV import — Teams ────────────────────────────────────────────────────────
+
+export const csvImportTeamRowDataSchema = z.object({
+  name: z.string().min(1, 'Teamnaam is verplicht'),
+  sport: z.enum(['voetbal', 'hockey'], {
+    errorMap: () => ({ message: 'Sport is verplicht (voetbal of hockey)' }),
+  }),
+  age_category: z.string().nullable().optional(),
+  season: z.string().nullable().optional(),
+  federation_team_id: z.string().nullable().optional(),
+});
+
+// ── CSV import — Leden ────────────────────────────────────────────────────────
 
 export const csvColumnMappingSchema = z.object({
   voornaam: z.string().optional(),
@@ -234,6 +246,7 @@ export type UpdateMemberInput = z.infer<typeof updateMemberSchema>;
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
 export type CsvColumnMappingInput = z.infer<typeof csvColumnMappingSchema>;
 export type CsvImportRowDataInput = z.infer<typeof csvImportRowDataSchema>;
+export type CsvImportTeamRowDataInput = z.infer<typeof csvImportTeamRowDataSchema>;
 export type WizardDayInput = z.infer<typeof wizardDaySchema>;
 export type GenerateRosterInput = z.infer<typeof generateRosterSchema>;
 export type PublishRosterInput = z.infer<typeof publishRosterSchema>;

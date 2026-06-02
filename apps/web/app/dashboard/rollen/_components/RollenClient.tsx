@@ -7,6 +7,11 @@ import { createSupabaseBrowserClient } from '../../../../lib/supabase-client';
 
 const ROLE_LABELS: Record<UserRole, string> = {
   lid: 'Lid',
+  ouder: 'Ouder',
+  trainer: 'Trainer',
+  coach: 'Coach',
+  teammanager: 'Teammanager',
+  commissielid: 'Commissielid',
   beheerder: 'Beheerder',
 };
 

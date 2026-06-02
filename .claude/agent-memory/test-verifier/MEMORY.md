@@ -1,0 +1,2 @@
+- [E2E testing conventions](e2e-conventions.md) — Playwright setup: storageState paths, admin client, seed patterns, `browser` fixture for unauthed tests
+- [Teams import test patterns](teams-import-patterns.md) — CSV file upload via setInputFiles, wizard navigation helpers, API-driven AC-8 pattern for DB-error testing

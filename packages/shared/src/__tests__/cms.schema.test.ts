@@ -10,6 +10,7 @@ import {
   updateRoleSchema,
   generateRosterSchema,
   publishRosterSchema,
+  csvImportTeamRowDataSchema,
 } from '../schemas/cms.schema';
 
 // ── Teams ──────────────────────────────────────────────────────────────────────
@@ -250,6 +251,102 @@ describe('generateRosterSchema', () => {
   it('leeg seizoen geeft fout', () => {
     const result = generateRosterSchema.safeParse({ season: '', dagen: [validDay] });
     expect(result.success).toBe(false);
+  });
+});
+
+// ── CSV import — Teams ─────────────────────────────────────────────────────────
+
+describe('csvImportTeamRowDataSchema', () => {
+  it('minimale geldige invoer slaagt (naam + sport)', () => {
+    const result = csvImportTeamRowDataSchema.safeParse({
+      name: 'JO11-1',
+      sport: 'voetbal',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('geldige invoer met alle optionele velden slaagt', () => {
+    const result = csvImportTeamRowDataSchema.safeParse({
+      name: 'Dames 1',
+      sport: 'hockey',
+      age_category: 'Dames',
+      season: '2025/2026',
+      federation_team_id: 'knhb-12345',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('ontbrekende naam geeft fout "Teamnaam is verplicht"', () => {
+    const result = csvImportTeamRowDataSchema.safeParse({ name: '', sport: 'voetbal' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const msg = result.error.issues.find((i) => i.path.includes('name'))?.message;
+      expect(msg).toBe('Teamnaam is verplicht');
+    }
+  });
+
+  it('ongeldige sport geeft fout "Sport is verplicht (voetbal of hockey)"', () => {
+    const result = csvImportTeamRowDataSchema.safeParse({ name: 'JO11-1', sport: 'baseball' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const msg = result.error.issues.find((i) => i.path.includes('sport'))?.message;
+      expect(msg).toBe('Sport is verplicht (voetbal of hockey)');
+    }
+  });
+
+  it('sport met hoofdletter ("Voetbal") slaagt niet (geen normalisatie in schema)', () => {
+    // Normalisatie (toLowerCase) is verantwoordelijkheid van de aanroeper (API route).
+    const result = csvImportTeamRowDataSchema.safeParse({ name: 'JO11-1', sport: 'Voetbal' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const msg = result.error.issues.find((i) => i.path.includes('sport'))?.message;
+      expect(msg).toBe('Sport is verplicht (voetbal of hockey)');
+    }
+  });
+
+  it('optionele velden mogen null zijn', () => {
+    const result = csvImportTeamRowDataSchema.safeParse({
+      name: 'JO11-1',
+      sport: 'voetbal',
+      age_category: null,
+      season: null,
+      federation_team_id: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('optionele velden mogen weggelaten worden', () => {
+    const result = csvImportTeamRowDataSchema.safeParse({
+      name: 'JO11-1',
+      sport: 'hockey',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.age_category).toBeUndefined();
+      expect(result.data.season).toBeUndefined();
+      expect(result.data.federation_team_id).toBeUndefined();
+    }
+  });
+
+  it('ontbrekende naam (undefined) geeft fout', () => {
+    const result = csvImportTeamRowDataSchema.safeParse({ sport: 'voetbal' });
+    expect(result.success).toBe(false);
+  });
+
+  it('ontbrekende sport (undefined) geeft fout', () => {
+    const result = csvImportTeamRowDataSchema.safeParse({ name: 'JO11-1' });
+    expect(result.success).toBe(false);
+  });
+
+  it('alle foutmeldingen zijn in het Nederlands', () => {
+    const result = csvImportTeamRowDataSchema.safeParse({ name: '', sport: 'fout' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        // Verify no English fallback messages appear
+        expect(issue.message).not.toMatch(/required|invalid|expected/i);
+      }
+    }
   });
 });
 

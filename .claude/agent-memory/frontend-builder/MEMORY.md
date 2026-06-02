@@ -1,0 +1,1 @@
+- [CSV import wizard pattern](csv-import-pattern.md) — 4-step wizard shape, state management, AUTO_MAP, parseCsv, resetState, conflict tooltip behaviour
