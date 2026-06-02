@@ -15,7 +15,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   beheerder: 'Beheerder',
 };
 
-const ROLE_OPTIONS: UserRole[] = ['lid', 'ouder', 'trainer', 'coach', 'teammanager', 'commissielid', 'beheerder'];
+const ROLE_OPTIONS: UserRole[] = ['lid', 'beheerder'];
 
 interface Props {
   profiles: ProfileRow[];
